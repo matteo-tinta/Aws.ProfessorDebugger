@@ -24,7 +24,10 @@ namespace Core
             private readonly AmazonSimpleNotificationServiceClient _snsClient;
             private readonly AmazonS3Client _s3Client;
 
-            public AwsServiceExplorer(AmazonLambdaClient lambdaClient, AmazonSQSClient sqsClient, AmazonSimpleNotificationServiceClient snsClient, AmazonS3Client s3Client)
+            public AwsServiceExplorer(AmazonLambdaClient lambdaClient, 
+                AmazonSQSClient sqsClient, 
+                AmazonSimpleNotificationServiceClient snsClient, 
+                AmazonS3Client s3Client)
             {
                 _lambdaClient = lambdaClient;
                 _sqsClient = sqsClient;

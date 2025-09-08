@@ -1,0 +1,68 @@
+﻿using Amazon.Lambda;
+using Amazon.S3;
+using Amazon.SimpleNotificationService;
+using Amazon.SQS;
+using Core.ResourceResolvers;
+using Models;
+
+namespace Core
+{
+    internal class AwsResourceResolver
+    {
+        private readonly AmazonLambdaClient lambdaClient;
+        private readonly AmazonSQSClient sqsClient;
+        private readonly AmazonSimpleNotificationServiceClient snsClient;
+        private readonly AmazonS3Client s3Client;
+
+        private HashSet<string> visited = [];
+        
+        public AwsResourceResolver(
+            AmazonLambdaClient lambdaClient,
+            AmazonSQSClient sqsClient,
+            AmazonSimpleNotificationServiceClient snsClient,
+            AmazonS3Client s3Client)
+        {
+            this.lambdaClient = lambdaClient;
+            this.sqsClient = sqsClient;
+            this.snsClient = snsClient;
+            this.s3Client = s3Client;
+        }
+
+        public async Task<AwsResourceGraph> TraverseAsync(string arn)
+        {
+            if (visited.Contains(arn))
+            {
+                return new AwsResourceGraph(); //TEMP
+            }
+            visited.Add(arn);
+
+            //find the correct resolver
+            var resolver = GetResolverByArn(arn);
+            AwsResourceGraph result = new AwsResourceGraph();
+            var node = result.GetOrCreateNode(arn, "");
+
+            List<string> parentsArn = await resolver.GetUpstreamResourcesAsync();
+            foreach (string parentArn in parentsArn)
+            {
+                var traversed = await TraverseAsync(parentArn);
+
+                foreach (var foundNode in traversed.GetAllNodes())
+                {
+                    node.Parents.Add(foundNode);
+                }
+            }
+
+            return result;
+        }
+
+        private IAwsResourceResolver GetResolverByArn(string arn)
+            => arn.ToLower(System.Globalization.CultureInfo.CurrentCulture) switch
+            {
+                (var arn2) when arn2.Contains(":lambda:") => new AwsResourceLambdaResolver(arn, lambdaClient),
+                (var arn2) when arn2.Contains(":sqs:") => new AwsResourceSQSResolver(arn, sqsClient),
+                (var arn2) when arn2.Contains(":sns:") => new AwsResourceSNSResolver(arn, s3Client),
+                (var arn2) when arn2.Contains(":::") => new AwsResourceS3Resolver(arn),
+                _ => throw new NotImplementedException(),
+            };
+    }
+}
