@@ -1,4 +1,5 @@
-﻿using System.Text.Json;
+﻿using System.ComponentModel;
+using System.Text.Json;
 using Models;
 
 namespace Core.Printers
@@ -19,14 +20,9 @@ namespace Core.Printers
             //Clearing the console so that the output is clean
             Console.Clear();
 
-            JsonGraphSerializable json = new JsonGraphSerializable()
-            {
-                Arn = node.Arn,
-                Name = node.Name,
-                Type = node.Type,
-                Children = BuildChildren(graph, node),
-                Parents = BuildParents(graph, node)
-            };
+            var visited = new HashSet<string>();
+
+            JsonGraphSerializable json = BuildNode(graph, node, visited);
 
             var serializedJson = JsonSerializer.Serialize(json, new JsonSerializerOptions
             {
@@ -37,39 +33,52 @@ namespace Core.Printers
             Console.WriteLine(serializedJson);
         }
 
-        private static Dictionary<string, JsonGraphSerializable> BuildChildren(AwsResourceGraph graph, AwsResourceNode node)
+        private static JsonGraphSerializable BuildNode(AwsResourceGraph graph, AwsResourceNode node, HashSet<string> visited)
+        {
+            if (visited.Contains(node.Arn))
+            {
+                // Prevent infinite recursion
+                return new JsonGraphSerializable
+                {
+                    Arn = node.Arn,
+                    Name = node.Name,
+                    Type = node.Type,
+                    Children = [],
+                    Parents = []
+                };
+            }
+
+            visited.Add(node.Arn);
+
+            return new JsonGraphSerializable
+            {
+                Arn = node.Arn,
+                Name = node.Name,
+                Type = node.Type,
+                Children = BuildChildren(graph, node, visited),
+                Parents = BuildParents(graph, node, visited)
+            };
+        }
+
+        private static Dictionary<string, JsonGraphSerializable> BuildChildren(AwsResourceGraph graph, AwsResourceNode node, HashSet<string> visited)
         {
             Dictionary<string, JsonGraphSerializable> children = [];
             foreach (var child in node.Children)
             {
                 var childNode = graph.GetOrCreateNode(child);
-                children.Add(child, new JsonGraphSerializable()
-                {
-                    Arn = childNode.Arn,
-                    Name = childNode.Name,
-                    Type = childNode.Type,
-                    Children = BuildChildren(graph, childNode),
-                    Parents = BuildParents(graph, childNode),
-                });
+                children[child] = BuildNode(graph, childNode, visited);
             }
 
             return children;
         }
 
-        private static Dictionary<string, JsonGraphSerializable> BuildParents(AwsResourceGraph graph, AwsResourceNode node)
+        private static Dictionary<string, JsonGraphSerializable> BuildParents(AwsResourceGraph graph, AwsResourceNode node, HashSet<string> visited)
         {
             Dictionary<string, JsonGraphSerializable> parents = [];
             foreach (var parent in node.Parents)
             {
                 var parentNode = graph.GetOrCreateNode(parent);
-                parents.Add(parent, new JsonGraphSerializable()
-                {
-                    Arn = parentNode.Arn,
-                    Name = parentNode.Name,
-                    Type = parentNode.Type,
-                    Children = BuildChildren(graph, parentNode),
-                    Parents = BuildParents(graph, parentNode),
-                });
+                parents[parent] = BuildNode(graph, parentNode, visited);
             }
 
             return parents;

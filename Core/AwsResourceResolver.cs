@@ -85,6 +85,7 @@ namespace Core
 
         private async Task TraverseParents(string parentArn, int level, AwsResourceNode node)
         {
+            Graph.GetOrCreateNode(parentArn).Children.Add(node.Arn);
             node.Parents.Add(parentArn);
             await TraverseAsync(parentArn, level + 1);
 
