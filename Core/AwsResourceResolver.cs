@@ -49,7 +49,7 @@ namespace Core
             //find the correct resolver
             var resolver = GetResolverByArn(arn);
             AwsResourceGraph result = new AwsResourceGraph();
-            var node = result.GetOrCreateNode(arn, "");
+            var node = result.GetOrCreateNode(arn, GeTypeByArn(arn));
 
             List<string> parentsArn = await resolver.GetUpstreamResourcesAsync();
             foreach (string parentArn in parentsArn)
@@ -85,6 +85,16 @@ namespace Core
                 (var arn2) when arn2.Contains(":sns:") => new AwsResourceSNSResolver(arn, s3Client, lambdaClient, iamClient),
                 (var arn2) when arn2.Contains(":::") => new AwsResourceS3Resolver(arn),
                 _ => throw new NotImplementedException(),
+            };
+
+        private string GeTypeByArn(string arn)
+            => arn.ToLower(System.Globalization.CultureInfo.CurrentCulture) switch
+            {
+                (var arn2) when arn2.Contains(":lambda:") => "lambda",
+                (var arn2) when arn2.Contains(":sqs:") => "sqs",
+                (var arn2) when arn2.Contains(":sns:") => "sns",
+                (var arn2) when arn2.Contains(":::") => "s3",
+                _ => "",
             };
     }
 }

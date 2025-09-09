@@ -1,4 +1,6 @@
-﻿namespace Models
+﻿using System.Text.RegularExpressions;
+
+namespace Models
 {
     public class AwsResourceGraph
     {
@@ -11,6 +13,7 @@
                 node = new AwsResourceNode
                 {
                     Arn = arn,
+                    Name = arn.Split(":").Last(),
                     Type = type
                 };
                 Nodes[arn] = node;
