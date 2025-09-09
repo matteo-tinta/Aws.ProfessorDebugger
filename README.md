@@ -1,6 +1,10 @@
 # Mastermind.ProfessorDebugger
 This repository includes all the tool to simplify my life when talking about AWS
 
+Please be aware this tool is very slow when cache is not being saved yet. Give it some time
+
+## Cli Help
+
 Core 1.0.0+e42df8780a21e00a2af8dfb56457773dd3f77ce5
 Copyright (C) 2025 Core
 

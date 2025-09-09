@@ -120,6 +120,7 @@ namespace Core.Cache
         {
             if (_buckets.Count == 0)
             {
+                Console.WriteLine(" == READING BUCKETS LIST FROM S3 == ");
                 var buckets = await s3Client.ListBucketsAsync();
                 _buckets.AddRange(buckets.Buckets);
             }
@@ -135,6 +136,7 @@ namespace Core.Cache
                 return cached;
             }
 
+            Console.WriteLine($" == READING BUCKETS {bucketName} NOTIFICATIONS == ");
             var result = await s3Client.GetBucketNotificationAsync(new GetBucketNotificationRequest
             {
                 BucketName = bucketName
