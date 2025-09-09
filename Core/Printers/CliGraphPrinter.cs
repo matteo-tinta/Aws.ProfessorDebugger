@@ -1,10 +1,11 @@
-﻿using Models;
+﻿using Amazon.Runtime.Internal.Util;
+using Models;
 
-namespace Core
+namespace Core.Printers
 {
-    internal static class GraphPrinter
+    internal class CliGraphPrinter: IGraphPrinter
     {
-        public static void Print(AwsResourceGraph graph)
+        public void Print(AwsResourceGraph graph)
         {
             Console.WriteLine("\r\n=========== CHILDREN ==========\r\n");
 

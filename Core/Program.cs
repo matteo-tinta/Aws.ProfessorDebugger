@@ -20,7 +20,9 @@ class Program
 
             await AwsResourceCache.SaveToDiskAsync();
 
-            GraphPrinter.Print(graph);
+            AwsClientFactory.CreateGraphPrinter(new CreateGraphPrinterOptions() {
+                Type = options.Value.OutputAs
+            }).Print(graph);
         }
         catch (Exception ex)
         {

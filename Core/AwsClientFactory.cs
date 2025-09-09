@@ -1,7 +1,19 @@
 ﻿using Amazon.Lambda;
+using Core.Printers;
 
 namespace Core
 {
+    internal enum GraphPrinterType
+    {
+        Cli,
+        Json
+    }
+
+    internal record CreateGraphPrinterOptions
+    {
+        public GraphPrinterType Type { get; set; } = GraphPrinterType.Cli;
+    }
+
     internal static class AwsClientFactory
     {
         public static AwsResourceResolver CreateResourceResolver()
@@ -14,5 +26,14 @@ namespace Core
 
             return new AwsResourceResolver(lambdaClient, sqsClient, snsClient, s3Client, iamClient);
         }
+
+        public static IGraphPrinter CreateGraphPrinter(CreateGraphPrinterOptions options) => options.Type switch
+        {
+            GraphPrinterType.Cli => new CliGraphPrinter(),
+            GraphPrinterType.Json => new JsonGraphPrinter(),
+            _ => throw new NotImplementedException(),
+        };
+
+        public static IGraphPrinter CreateGraphPrinter() => CreateGraphPrinter(new CreateGraphPrinterOptions());
     }
 }

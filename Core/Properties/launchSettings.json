@@ -2,7 +2,7 @@
   "profiles": {
     "Launch": {
       "commandName": "Project",
-      "commandLineArgs": "arn:aws:lambda:eu-west-1:297244223532:function:acl-pricelist-ingestor-int"
+      "commandLineArgs": "arn:aws:lambda:eu-west-1:297244223532:function:acl-pricelist-ingestor-int --output-as Json"
     }
   }
 }
