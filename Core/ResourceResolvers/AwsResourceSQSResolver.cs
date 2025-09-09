@@ -84,7 +84,9 @@ namespace Core.ResourceResolvers
                     {
                         foreach (var kvp in config.Environment.Variables)
                         {
-                            if (kvp.Value != null && kvp.Value.Contains(queueName, StringComparison.InvariantCultureIgnoreCase))
+                            if (kvp.Value != null 
+                                && kvp.Key.ToLower() != "queueurl" //ignores pcim queue url in env variables
+                                && kvp.Value.Contains(queueName, StringComparison.InvariantCultureIgnoreCase))
                             {
                                 sources.Add(function.FunctionArn);
                                 break; // Found match, no need to continue scanning vars

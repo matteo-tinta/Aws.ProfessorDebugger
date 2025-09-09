@@ -24,6 +24,8 @@ class Program
         Console.Write("Enter a valid resource ARN (e.g., arn:aws:lambda:us-east-1:123456789012:resource)\r\n");
         Console.Write("== STRIP AWAY THE RESOURCE IDENTIFIER! (eg. arn:aws:sns:eu-west-1:297244223532:price-info-changes-dev) ==: \r\n");
         var lambdaArn = Console.ReadLine();
+        //var lambdaArn = "arn:aws:lambda:eu-west-1:297244223532:function:visibility-upload-info-changed-dev";
+        //var lambdaArn = "arn:aws:sqs:eu-west-1:297244223532:mastermind-dataloader-price-variantinfochanged-queue-dev";
 
         if (string.IsNullOrEmpty(lambdaArn) || !IsValidArn(lambdaArn))
         {
