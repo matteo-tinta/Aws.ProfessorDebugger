@@ -21,6 +21,7 @@ namespace Core.ResourceResolvers
         }
 
         public async Task<List<string>> GetUpstreamResourcesAsync() {
+            Console.WriteLine($"PROCESSING LAMBDA [{arn}]...");
             var sources = new List<string>();
             var functionName = Regex.Match(arn, @"function:(.+)").Groups[1].Value;
 

@@ -28,6 +28,7 @@ namespace Core.ResourceResolvers
 
         public Task<List<string>> GetUpstreamResourcesAsync()
         {
+            Console.WriteLine($"PROCESSING S3 [{arn}]...");
             //Usually S3 is the root node so we can stop here... (for now :)
             return Task.FromResult(new List<string>());
         }

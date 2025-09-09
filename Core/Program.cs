@@ -2,22 +2,28 @@
 using System.Xml.Linq;
 using Amazon.Lambda;
 using Core;
-using Core.AwsEventGraphBuilder;
+using Core.Cache;
 
 class Program
 {
     static async Task Main(string[] args)
     {
+
         // Configure AWS clients
         var lambdaClient = new AmazonLambdaClient();
         var sqsClient = new Amazon.SQS.AmazonSQSClient();
         var snsClient = new Amazon.SimpleNotificationService.AmazonSimpleNotificationServiceClient();
         var s3Client = new Amazon.S3.AmazonS3Client();
+        var iamClient = new Amazon.IdentityManagement.AmazonIdentityManagementServiceClient();
 
-        var explorer = new AwsResourceResolver(lambdaClient, sqsClient, snsClient, s3Client);
+        //Init cache from json file
+        await AwsResourceCache.InitializeAsync();
+
+        var explorer = new AwsResourceResolver(lambdaClient, sqsClient, snsClient, s3Client, iamClient);
 
         Console.Write("Enter the Lambda Function ARN (e.g., arn:aws:lambda:us-east-1:123456789012:function): ");
-        var lambdaArn = "arn:aws:lambda:eu-west-1:297244223532:function:mastermind-searchindexer-searchinfochanged-dev";
+        //var lambdaArn = "arn:aws:lambda:eu-west-1:297244223532:function:mastermind-dataloader-worklist-variantinfochanged-dev";
+        var lambdaArn = "arn:aws:lambda:eu-west-1:297244223532:function:mastermind-dataloader-price-variantinfochanged-dev";
 
         if (string.IsNullOrEmpty(lambdaArn) || !IsValidArn(lambdaArn))
         {
@@ -27,15 +33,21 @@ class Program
 
         // Start the graph traversal from the Lambda function
         var graph = await explorer.TraverseAsync(lambdaArn);
-        Console.Clear();
-        Console.WriteLine("============ Printing the graph ===========\r\n");
-        Console.WriteLine("===========================================\r\n");
+
+        //Save cache to disk for future usage
+        await AwsResourceCache.SaveToDiskAsync();
+
+        Console.WriteLine("\r\n===========================================\r\n");
 
         //PRINTING THE GRAPH
+        foreach (var item in graph.GetAllNodes())
+        {
+            PrintChildrenGraph(item);
+        }
 
         foreach (var item in graph.GetAllNodes())
         {
-            PrintGraph(item);
+            PrintParentGraph(item);
         }
 
         //graph.PrintGraph();
@@ -44,12 +56,21 @@ class Program
         Console.ReadKey();
     }
 
-    private static void PrintGraph(Models.AwsResourceNode node, int level = 1)
+    private static void PrintParentGraph(Models.AwsResourceNode node, int level = 1)
     {
         Console.WriteLine($"{new string('-', level)}> [{node.Type}] {node.Arn}");
         foreach (var source in node.Parents)
         {
-            PrintGraph(source, level + 1);
+            PrintParentGraph(source, level + 1);
+        }
+    }
+
+    private static void PrintChildrenGraph(Models.AwsResourceNode node, int level = 1)
+    {
+        Console.WriteLine($"{new string('-', level)}> [{node.Type}] {node.Arn}");
+        foreach (var source in node.Children)
+        {
+            PrintChildrenGraph(source, level + 1);
         }
     }
 
