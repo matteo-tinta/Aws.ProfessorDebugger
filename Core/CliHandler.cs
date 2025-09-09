@@ -11,8 +11,12 @@ namespace Core
         [Option("ignore-cache", Default = false, HelpText = "Ignore stored cache. Actual present cache file will be overidden.")]
         public bool IgnoreCache { get; set; }
 
-        [Option("output-as", Default = GraphPrinterType.Cli, HelpText = "Cli or Json, default Cli (case sensitive)")]
+        [Option("output-as", Default = GraphPrinterType.Cli, HelpText = "Cli or Json (case sensitive)")]
         public GraphPrinterType OutputAs { get; set; }
+
+        ////TODO
+        [Option("cache-type", Default = CacheType.JsonFile, HelpText = "Only JsonFile is available for now (case sensitive)")]
+        public CacheType CacheType { get; set; }
     }
 
     internal class CliHandler

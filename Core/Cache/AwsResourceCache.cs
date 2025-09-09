@@ -6,6 +6,7 @@ using Amazon.Lambda;
 using Amazon.Lambda.Model;
 using Amazon.S3;
 using Amazon.S3.Model;
+using Core.Cache.Providers;
 using Core.Enumerators;
 
 namespace Core.Cache
@@ -34,7 +35,7 @@ namespace Core.Cache
 
         private static bool _initialized = false;
 
-        public static async Task InitializeAsync(AwsResourceCacheInitOptions options)
+        public static async Task InitializeAsync(ICacheProvider cacheProvider, AwsResourceCacheInitOptions options)
         {
             if (_initialized) return;
 
@@ -44,41 +45,37 @@ namespace Core.Cache
                 return; //ignore cache
             }
 
-            await InitializeAsync();
+            await InitializeAsync(cacheProvider);
         }
 
-        public static async Task InitializeAsync()
+        public static async Task InitializeAsync(ICacheProvider cacheProvider)
         {
             if (_initialized) return;
 
-            if (File.Exists(CacheFilePath))
+            try
             {
-                try
-                {
-                    var json = await File.ReadAllTextAsync(CacheFilePath);
-                    var cache = JsonSerializer.Deserialize<SerializableAwsCache>(json);
+                var cache = await cacheProvider.GetAsync();
 
-                    _lambdaFunctions.AddRange(cache.LambdaFunctions ?? []);
-                    _buckets.AddRange(cache.Buckets ?? []);
+                _lambdaFunctions.AddRange(cache.LambdaFunctions ?? []);
+                _buckets.AddRange(cache.Buckets ?? []);
 
-                    foreach (var kv in cache.BucketNotifications ?? []) _bucketNotifications[kv.Key] = kv.Value;
-                    foreach (var kv in cache.LambdaConfigs ?? []) _lambdaConfigs[kv.Key] = kv.Value;
-                    foreach (var kv in cache.InlinePolicyLists ?? []) _inlinePolicyLists[kv.Key] = kv.Value;
-                    foreach (var kv in cache.InlinePolicies ?? []) _inlinePolicies[(kv.Key.Split('|')[0], kv.Key.Split('|')[1])] = kv.Value;
-                    foreach (var kv in cache.AttachedPolicies ?? []) _attachedPolicyLists[kv.Key] = kv.Value;
-                    foreach (var kv in cache.PolicyMetadata ?? []) _policyMetadata[kv.Key] = kv.Value;
-                    foreach (var kv in cache.PolicyVersions ?? []) _policyVersions[(kv.Key.Split('|')[0], kv.Key.Split('|')[1])] = kv.Value;
-                }
-                catch
-                {
-                    Console.WriteLine("Warning: Failed to load AWS cache. Continuing with empty cache.");
-                }
+                foreach (var kv in cache.BucketNotifications ?? []) _bucketNotifications[kv.Key] = kv.Value;
+                foreach (var kv in cache.LambdaConfigs ?? []) _lambdaConfigs[kv.Key] = kv.Value;
+                foreach (var kv in cache.InlinePolicyLists ?? []) _inlinePolicyLists[kv.Key] = kv.Value;
+                foreach (var kv in cache.InlinePolicies ?? []) _inlinePolicies[(kv.Key.Split('|')[0], kv.Key.Split('|')[1])] = kv.Value;
+                foreach (var kv in cache.AttachedPolicies ?? []) _attachedPolicyLists[kv.Key] = kv.Value;
+                foreach (var kv in cache.PolicyMetadata ?? []) _policyMetadata[kv.Key] = kv.Value;
+                foreach (var kv in cache.PolicyVersions ?? []) _policyVersions[(kv.Key.Split('|')[0], kv.Key.Split('|')[1])] = kv.Value;
+            }
+            catch
+            {
+                Console.WriteLine("Warning: Failed to load AWS cache. Continuing with empty cache.");
             }
 
             _initialized = true;
         }
 
-        public static async Task SaveToDiskAsync()
+        public static async Task SaveToDiskAsync(ICacheProvider cacheProvider)
         {
             var cache = new SerializableAwsCache
             {
@@ -93,13 +90,7 @@ namespace Core.Cache
                 PolicyVersions = _policyVersions.ToDictionary(kvp => $"{kvp.Key.policyArn}|{kvp.Key.versionId}", kvp => kvp.Value)
             };
 
-            var json = JsonSerializer.Serialize(cache, new JsonSerializerOptions
-            {
-                WriteIndented = true,
-                IncludeFields = true
-            });
-
-            await File.WriteAllTextAsync(CacheFilePath, json);
+            await cacheProvider.SaveAsync(cache);
         }
 
 
