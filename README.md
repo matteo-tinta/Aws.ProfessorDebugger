@@ -14,8 +14,10 @@ core [aws_arn] [args]
   --ignore-cache    (Default: false) Ignore stored cache. Actual present cache file will be overidden.
   --output-as       (Default: Cli) Cli or Json (case sensitive)
   --cache-type      (Default: JsonFile) Only JsonFile is available for now (case sensitive)
+  --max-level       Set the max level to stop
   --help            Display this help screen.
   --version         Display version information.
+
 ```
 
 

@@ -26,9 +26,15 @@ namespace Core
         public GraphPrinterType Type { get; set; } = GraphPrinterType.Cli;
     }
 
+    internal record CreateResourceResolverOptions
+    {
+        public bool EnableParallelExecution { get; set; } = false;
+        public int? MaxLevel { get; set; }
+    }
+
     internal static class AwsClientFactory
     {
-        public static AwsResourceResolver CreateResourceResolver()
+        public static AwsResourceResolver CreateResourceResolver(CreateResourceResolverOptions options)
         {
             var lambdaClient = new AmazonLambdaClient();
             var sqsClient = new Amazon.SQS.AmazonSQSClient();
@@ -37,7 +43,7 @@ namespace Core
             var iamClient = new Amazon.IdentityManagement.AmazonIdentityManagementServiceClient();
             var ssmClient = new Amazon.SimpleSystemsManagement.AmazonSimpleSystemsManagementClient();
 
-            return new AwsResourceResolver(lambdaClient, sqsClient, snsClient, s3Client, iamClient, ssmClient);
+            return new AwsResourceResolver(lambdaClient, sqsClient, snsClient, s3Client, iamClient, ssmClient, options.MaxLevel, options.EnableParallelExecution);
         }
 
         public static ICacheProvider CreateCacheProvider(CreateCacheProviderOptions options) => options.CacheType switch

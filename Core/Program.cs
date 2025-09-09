@@ -9,7 +9,7 @@ class Program
         {
             var cli = new CliHandler();
             var options = cli.ParseArguments(args);
-            var explorer = AwsClientFactory.CreateResourceResolver();
+
             var cacheProvider = AwsClientFactory.CreateCacheProvider(new CreateCacheProviderOptions()
             {
                 CacheType = options.Value.CacheType
@@ -18,6 +18,12 @@ class Program
             await AwsResourceCache.InitializeAsync(cacheProvider, new AwsResourceCacheInitOptions()
             {
                 IgnoreCacheAndOverride = options.Value.IgnoreCache
+            });
+
+            var explorer = AwsClientFactory.CreateResourceResolver(new CreateResourceResolverOptions()
+            {
+                EnableParallelExecution = AwsResourceCache.CacheHasBeenInitialized,
+                MaxLevel = options.Value.MaxLevel
             });
 
             var graph = await explorer.TraverseAsync(options.Value.AwsArn);

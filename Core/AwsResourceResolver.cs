@@ -3,6 +3,7 @@ using Amazon.Lambda;
 using Amazon.S3;
 using Amazon.SimpleNotificationService;
 using Amazon.SimpleSystemsManagement;
+using Amazon.SimpleSystemsManagement.Model;
 using Amazon.SQS;
 using Core.ResourceResolvers;
 using Models;
@@ -17,16 +18,19 @@ namespace Core
         private readonly AmazonS3Client s3Client;
         private readonly IAmazonIdentityManagementService iamClient;
         private readonly IAmazonSimpleSystemsManagement ssmClient;
-
+        private readonly bool canUseParallelExecution;
+        private readonly int? maxLevel;
         private Dictionary<string, AwsResourceNode> visited = [];
-        
+
         public AwsResourceResolver(
             AmazonLambdaClient lambdaClient,
             AmazonSQSClient sqsClient,
             AmazonSimpleNotificationServiceClient snsClient,
             AmazonS3Client s3Client,
             IAmazonIdentityManagementService iamClient,
-            IAmazonSimpleSystemsManagement ssmClient)
+            IAmazonSimpleSystemsManagement ssmClient,
+            int? maxLevel = null,
+            bool canUseParallelExecution = false)
         {
             this.lambdaClient = lambdaClient;
             this.sqsClient = sqsClient;
@@ -34,47 +38,58 @@ namespace Core
             this.s3Client = s3Client;
             this.iamClient = iamClient;
             this.ssmClient = ssmClient;
+            this.canUseParallelExecution = canUseParallelExecution;
+            this.maxLevel = maxLevel;
+
+            if(canUseParallelExecution)
+            {
+                Console.WriteLine("[DEBUG]: Parallel execution is enabled!");
+            }
         }
 
-        public async Task<AwsResourceGraph> TraverseAsync(string arn)
+        public async Task<AwsResourceGraph> TraverseAsync(string arn, int currentLevel = 0)
         {
-            Console.WriteLine($"-> TRAVERSING {arn} ...");
+            if(maxLevel != null && currentLevel > maxLevel)
+            {
+                return new AwsResourceGraph(); //Exiting
+            }
             if (visited.TryGetValue(arn, out AwsResourceNode? value))
             {
-                Console.WriteLine($"-> Already done");
                 return new AwsResourceGraph(); //Temporary!
             }
-            
 
-            //find the correct resolver
+            Console.WriteLine($"-> TRAVERSING {arn} ...");
             var resolver = GetResolverByArn(arn);
             AwsResourceGraph result = new AwsResourceGraph();
             var node = result.GetOrCreateNode(arn, GeTypeByArn(arn));
 
             List<string> parentsArn = await resolver.GetUpstreamResourcesAsync();
-            foreach (string parentArn in parentsArn)
-            {
-                var traversed = await TraverseAsync(parentArn);
 
-                foreach (var foundNode in traversed.GetAllNodes())
+            if (canUseParallelExecution)
+            {
+                var tasks = parentsArn.Select(async parentArn => await TraverseParents(parentArn, currentLevel, node));
+                await Task.WhenAll(tasks);
+            }
+            else
+            {
+                foreach (var parentArn in parentsArn)
                 {
-                    node.Parents.Add(foundNode);
+                    await TraverseParents(parentArn, currentLevel, node);
                 }
             }
 
-            //List<string> childrenArn = await resolver.GetDownstreamResourcesAsync();
-            //foreach (string parentArn in parentsArn)
-            //{
-            //    var traversed = await TraverseAsync(parentArn);
-
-            //    foreach (var foundNode in traversed.GetAllNodes())
-            //    {
-            //        node.Children.Add(foundNode);
-            //    }
-            //}
-
             visited.Add(arn, node);
             return result;
+        }
+
+        private async Task TraverseParents(string parentArn, int level, AwsResourceNode node)
+        {
+            var traversed = await TraverseAsync(parentArn, level + 1);
+
+            foreach (var foundNode in traversed.GetAllNodes())
+            {
+                node.Parents.Add(foundNode);
+            }
         }
 
         private IAwsResourceResolver GetResolverByArn(string arn)

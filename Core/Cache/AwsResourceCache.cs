@@ -38,6 +38,8 @@ namespace Core.Cache
 
         private static bool _initialized = false;
 
+        public static bool CacheHasBeenInitialized { get; private set; } = false;
+
         public static async Task InitializeAsync(ICacheProvider cacheProvider, AwsResourceCacheInitOptions options)
         {
             if (_initialized) return;
@@ -70,6 +72,8 @@ namespace Core.Cache
                 foreach (var kv in cache.AttachedPolicies ?? []) _attachedPolicyLists[kv.Key] = kv.Value;
                 foreach (var kv in cache.PolicyMetadata ?? []) _policyMetadata[kv.Key] = kv.Value;
                 foreach (var kv in cache.PolicyVersions ?? []) _policyVersions[(kv.Key.Split('|')[0], kv.Key.Split('|')[1])] = kv.Value;
+
+                CacheHasBeenInitialized = true;
             }
             catch
             {

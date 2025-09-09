@@ -17,6 +17,9 @@ namespace Core
         ////TODO
         [Option("cache-type", Default = CacheType.JsonFile, HelpText = "Only JsonFile is available for now (case sensitive)")]
         public CacheType CacheType { get; set; }
+
+        [Option("max-level", Required = false, HelpText = "Set the max level to stop")]
+        public int? MaxLevel { get; set; }
     }
 
     internal class CliHandler

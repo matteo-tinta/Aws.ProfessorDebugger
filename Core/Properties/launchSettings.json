@@ -3,6 +3,10 @@
     "offer-min-reference-price-ingestor-dev": {
       "commandName": "Project",
       "commandLineArgs": "arn:aws:lambda:eu-west-1:297244223532:function:offer-min-reference-price-ingestor-dev"
+    },
+    "mastermind-searchindexer-searchinfochanged-dev": {
+      "commandName": "Project",
+      "commandLineArgs": "arn:aws:lambda:eu-west-1:297244223532:function:mastermind-searchindexer-searchinfochanged-dev --max-level 1"
     }
   }
 }
