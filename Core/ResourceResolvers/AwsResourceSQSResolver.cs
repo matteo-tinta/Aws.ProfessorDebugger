@@ -92,6 +92,7 @@ namespace Core.ResourceResolvers
                         {
                             if (kvp.Value != null
                                 && kvp.Key.ToLower() != "queueurl" //ignores pcim queue url in env variables
+                                && kvp.Key.ToLower() != "sqs__ingestionqueueurl" //ignores pcim queue url in env variables
                                 && kvp.Value.Contains(queueName, StringComparison.InvariantCultureIgnoreCase))
                             {
                                 sources.Add(function.FunctionArn);

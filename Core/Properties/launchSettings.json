@@ -1,8 +1,8 @@
 {
   "profiles": {
-    "arn:aws:lambda:eu-west-1:297244223532:function:visibility-item-restriction-changed-dev": {
+    "offer-min-reference-price-ingestor-dev": {
       "commandName": "Project",
-      "commandLineArgs": "arn:aws:lambda:eu-west-1:297244223532:function:visibility-item-restriction-changed-dev"
+      "commandLineArgs": "arn:aws:lambda:eu-west-1:297244223532:function:offer-min-reference-price-ingestor-dev"
     }
   }
 }
