@@ -21,9 +21,9 @@ class Program
 
         var explorer = new AwsResourceResolver(lambdaClient, sqsClient, snsClient, s3Client, iamClient);
 
-        Console.Write("Enter the Lambda Function ARN (e.g., arn:aws:lambda:us-east-1:123456789012:function): ");
-        //var lambdaArn = "arn:aws:lambda:eu-west-1:297244223532:function:mastermind-dataloader-worklist-variantinfochanged-dev";
-        var lambdaArn = "arn:aws:lambda:eu-west-1:297244223532:function:mastermind-dataloader-price-variantinfochanged-dev";
+        Console.Write("Enter a valid resource ARN (e.g., arn:aws:lambda:us-east-1:123456789012:resource)\r\n");
+        Console.Write("== STRIP AWAY THE RESOURCE IDENTIFIER! (eg. arn:aws:sns:eu-west-1:297244223532:price-info-changes-dev) ==: \r\n");
+        var lambdaArn = Console.ReadLine();
 
         if (string.IsNullOrEmpty(lambdaArn) || !IsValidArn(lambdaArn))
         {
@@ -76,7 +76,7 @@ class Program
 
     private static bool IsValidArn(string arn)
     {
-        var pattern = @"^arn:aws:lambda:[a-z0-9-]+:\d{12}:function:[a-zA-Z0-9-_]+$";
+        var pattern = @"^arn:(aws|aws-cn|aws-us-gov):[a-z0-9-]+:[a-z0-9-]*:\d{0,12}:[^:\s]+(:[^:\s]+)*$";
         return Regex.IsMatch(arn, pattern);
     }
 }
