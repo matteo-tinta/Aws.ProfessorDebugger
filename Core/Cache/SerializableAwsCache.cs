@@ -1,9 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using Amazon.IdentityManagement.Model;
+﻿using Amazon.IdentityManagement.Model;
 using Amazon.Lambda.Model;
 using Amazon.S3.Model;
 

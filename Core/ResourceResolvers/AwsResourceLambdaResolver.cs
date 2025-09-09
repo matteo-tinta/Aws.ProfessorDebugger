@@ -2,10 +2,6 @@
 using System.Text.RegularExpressions;
 using Amazon.Lambda;
 using Amazon.Lambda.Model;
-using Amazon.SQS;
-using Amazon.SQS.Model;
-using Amazon.S3;
-using Amazon.S3.Model;
 
 namespace Core.ResourceResolvers
 {

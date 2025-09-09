@@ -1,6 +1,15 @@
 # Mastermind.ProfessorDebugger
 This repository includes all the tool to simplify my life when talking about AWS
 
+Core 1.0.0+e42df8780a21e00a2af8dfb56457773dd3f77ce5
+Copyright (C) 2025 Core
+
+core [aws_arn] [args]
+
+  --ignore-cache    (Default: false) Ignore stored cache. Actual present cache file will be overidden.
+  --help            Display this help screen.
+  --version         Display version information.
+
 ## Lambda to nearest resource list
 1. Configure your ~/.aws/credentials with the api key provided by AWS Credentials login page
 2. Start the tool

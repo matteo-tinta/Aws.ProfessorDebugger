@@ -1,19 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Net.Sockets;
-using System.Text;
-using System.Text.Json;
+﻿using System.Text.Json;
 using System.Text.RegularExpressions;
-using System.Threading.Tasks;
 using Amazon.IdentityManagement;
-using Amazon.IdentityManagement.Model;
 using Amazon.Lambda;
-using Amazon.Lambda.Model;
 using Amazon.S3;
-using Amazon.S3.Model;
-using Amazon.SQS;
-using Amazon.SQS.Model;
 using Core.Cache;
 
 namespace Core.ResourceResolvers

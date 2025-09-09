@@ -1,17 +1,9 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Text.Json;
+﻿using System.Text.Json;
 using System.Text.RegularExpressions;
-using System.Threading.Tasks;
 using Amazon.Lambda;
-using Amazon.S3;
-using Amazon.S3.Model;
 using Amazon.SQS;
 using Amazon.SQS.Model;
 using Core.Cache;
-using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace Core.ResourceResolvers
 {

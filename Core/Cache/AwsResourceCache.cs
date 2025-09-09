@@ -1,10 +1,5 @@
-﻿using System;
-using System.Collections.Concurrent;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
+﻿using System.Collections.Concurrent;
 using System.Text.Json;
-using System.Threading.Tasks;
 using Amazon.IdentityManagement;
 using Amazon.IdentityManagement.Model;
 using Amazon.Lambda;
@@ -15,6 +10,11 @@ using Core.Enumerators;
 
 namespace Core.Cache
 {
+    internal record AwsResourceCacheInitOptions
+    {
+        public bool IgnoreCacheAndOverride { get; set; }
+    }
+
     /// <summary>
     /// This class is used for resource caching
     /// </summary>
@@ -33,6 +33,19 @@ namespace Core.Cache
         private static readonly ConcurrentDictionary<(string policyArn, string versionId), GetPolicyVersionResponse> _policyVersions = new();
 
         private static bool _initialized = false;
+
+        public static async Task InitializeAsync(AwsResourceCacheInitOptions options)
+        {
+            if (_initialized) return;
+
+            if (options?.IgnoreCacheAndOverride == true)
+            {
+                Console.WriteLine("Ignoring cache...");
+                return; //ignore cache
+            }
+
+            await InitializeAsync();
+        }
 
         public static async Task InitializeAsync()
         {
