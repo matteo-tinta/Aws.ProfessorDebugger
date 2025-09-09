@@ -1,6 +1,7 @@
 ﻿using Amazon.IdentityManagement.Model;
 using Amazon.Lambda.Model;
 using Amazon.S3.Model;
+using Amazon.SimpleSystemsManagement.Model;
 
 namespace Core.Cache
 {
@@ -8,6 +9,7 @@ namespace Core.Cache
     {
         public List<FunctionConfiguration> LambdaFunctions { get; set; } = [];
         public List<S3Bucket> Buckets { get; set; } = [];
+        public Dictionary<string, Parameter> SsmParameters { get; set; } = [];
         public Dictionary<string, GetBucketNotificationResponse> BucketNotifications { get; set; } = [];
         public Dictionary<string, GetFunctionConfigurationResponse> LambdaConfigs { get; set; } = [];
         public Dictionary<string, ListRolePoliciesResponse> InlinePolicyLists { get; set; } = [];

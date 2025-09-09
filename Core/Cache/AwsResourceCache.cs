@@ -1,11 +1,15 @@
 ﻿using System.Collections.Concurrent;
 using System.Text.Json;
+using System.Text.RegularExpressions;
 using Amazon.IdentityManagement;
 using Amazon.IdentityManagement.Model;
 using Amazon.Lambda;
 using Amazon.Lambda.Model;
 using Amazon.S3;
 using Amazon.S3.Model;
+using Amazon.SimpleNotificationService;
+using Amazon.SimpleSystemsManagement;
+using Amazon.SimpleSystemsManagement.Model;
 using Core.Cache.Providers;
 using Core.Enumerators;
 
@@ -21,10 +25,9 @@ namespace Core.Cache
     /// </summary>
     internal static class AwsResourceCache
     {
-        private const string CacheFilePath = ".aws-cache.json";
-
         private static readonly List<FunctionConfiguration> _lambdaFunctions = new();
         private static readonly List<S3Bucket> _buckets = new();
+        private static readonly ConcurrentDictionary<string, Parameter> _ssmParameters = new();
         private static readonly ConcurrentDictionary<string, GetBucketNotificationResponse> _bucketNotifications = new();
         private static readonly ConcurrentDictionary<string, GetFunctionConfigurationResponse> _lambdaConfigs = new();
         private static readonly ConcurrentDictionary<string, ListRolePoliciesResponse> _inlinePolicyLists = new();
@@ -59,6 +62,7 @@ namespace Core.Cache
                 _lambdaFunctions.AddRange(cache.LambdaFunctions ?? []);
                 _buckets.AddRange(cache.Buckets ?? []);
 
+                foreach (var kv in cache.SsmParameters ?? []) _ssmParameters[kv.Key] = kv.Value;
                 foreach (var kv in cache.BucketNotifications ?? []) _bucketNotifications[kv.Key] = kv.Value;
                 foreach (var kv in cache.LambdaConfigs ?? []) _lambdaConfigs[kv.Key] = kv.Value;
                 foreach (var kv in cache.InlinePolicyLists ?? []) _inlinePolicyLists[kv.Key] = kv.Value;
@@ -87,7 +91,8 @@ namespace Core.Cache
                 InlinePolicies = _inlinePolicies.ToDictionary(kvp => $"{kvp.Key.roleName}|{kvp.Key.policyName}", kvp => kvp.Value),
                 AttachedPolicies = _attachedPolicyLists.ToDictionary(kvp => kvp.Key, kvp => kvp.Value),
                 PolicyMetadata = _policyMetadata.ToDictionary(kvp => kvp.Key, kvp => kvp.Value),
-                PolicyVersions = _policyVersions.ToDictionary(kvp => $"{kvp.Key.policyArn}|{kvp.Key.versionId}", kvp => kvp.Value)
+                PolicyVersions = _policyVersions.ToDictionary(kvp => $"{kvp.Key.policyArn}|{kvp.Key.versionId}", kvp => kvp.Value),
+                SsmParameters = _ssmParameters.ToDictionary(kvp => kvp.Key, kvp => kvp.Value),
             };
 
             await cacheProvider.SaveAsync(cache);
@@ -119,8 +124,7 @@ namespace Core.Cache
             return _buckets ?? [];
         }
 
-        public static async Task<GetBucketNotificationResponse> GetBucketNotificationAsync(
-    IAmazonS3 s3Client, string bucketName)
+        public static async Task<GetBucketNotificationResponse> GetBucketNotificationAsync(IAmazonS3 s3Client, string bucketName)
         {
             if (_bucketNotifications.TryGetValue(bucketName, out var cached))
             {
@@ -137,8 +141,39 @@ namespace Core.Cache
             return result;
         }
 
-        public static async Task<GetFunctionConfigurationResponse> GetLambdaConfigAsync(
-    IAmazonLambda lambdaClient, string functionName)
+        public static async Task<Parameter> GetSsmParameter(IAmazonSimpleSystemsManagement ssmClient, string parameterPath)
+        {
+            if (_ssmParameters.TryGetValue(parameterPath, out var cached))
+            {
+                return cached;
+            }
+
+            var realParameterName = parameterPath.Replace("*", "");
+
+            try
+            {
+                var config = await ssmClient.GetParametersByPathAsync(new GetParametersByPathRequest
+                {
+                    Path = realParameterName,
+                    Recursive = parameterPath.EndsWith("*"),
+                    WithDecryption = true
+                });
+
+                _ssmParameters[parameterPath] = config.Parameters[0];
+                return config.Parameters[0];
+            }
+            catch (Exception ex)
+            {
+                //Console.Error.WriteLine($"== PARAMETER PATH {realParameterName} THROW ERROR {ex.Message}");
+                return new Parameter()
+                {
+                    Value = "{}"
+                };
+            }
+
+        }
+
+        public static async Task<GetFunctionConfigurationResponse> GetLambdaConfigAsync(IAmazonLambda lambdaClient, string functionName)
         {
             if (_lambdaConfigs.TryGetValue(functionName, out var cached))
             {

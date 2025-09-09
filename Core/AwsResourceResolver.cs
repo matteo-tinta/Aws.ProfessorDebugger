@@ -2,6 +2,7 @@
 using Amazon.Lambda;
 using Amazon.S3;
 using Amazon.SimpleNotificationService;
+using Amazon.SimpleSystemsManagement;
 using Amazon.SQS;
 using Core.ResourceResolvers;
 using Models;
@@ -15,6 +16,7 @@ namespace Core
         private readonly AmazonSimpleNotificationServiceClient snsClient;
         private readonly AmazonS3Client s3Client;
         private readonly IAmazonIdentityManagementService iamClient;
+        private readonly IAmazonSimpleSystemsManagement ssmClient;
 
         private Dictionary<string, AwsResourceNode> visited = [];
         
@@ -23,13 +25,15 @@ namespace Core
             AmazonSQSClient sqsClient,
             AmazonSimpleNotificationServiceClient snsClient,
             AmazonS3Client s3Client,
-            IAmazonIdentityManagementService iamClient)
+            IAmazonIdentityManagementService iamClient,
+            IAmazonSimpleSystemsManagement ssmClient)
         {
             this.lambdaClient = lambdaClient;
             this.sqsClient = sqsClient;
             this.snsClient = snsClient;
             this.s3Client = s3Client;
             this.iamClient = iamClient;
+            this.ssmClient = ssmClient;
         }
 
         public async Task<AwsResourceGraph> TraverseAsync(string arn)
@@ -77,7 +81,7 @@ namespace Core
             => arn.ToLower(System.Globalization.CultureInfo.CurrentCulture) switch
             {
                 (var arn2) when arn2.Contains(":lambda:") => new AwsResourceLambdaResolver(arn, lambdaClient),
-                (var arn2) when arn2.Contains(":sqs:") => new AwsResourceSQSResolver(arn, sqsClient, lambdaClient),
+                (var arn2) when arn2.Contains(":sqs:") => new AwsResourceSQSResolver(arn, sqsClient, lambdaClient, ssmClient, iamClient),
                 (var arn2) when arn2.Contains(":sns:") => new AwsResourceSNSResolver(arn, s3Client, lambdaClient, iamClient),
                 (var arn2) when arn2.Contains(":::") => new AwsResourceS3Resolver(arn),
                 _ => throw new NotImplementedException(),

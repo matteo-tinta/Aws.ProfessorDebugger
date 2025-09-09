@@ -35,8 +35,9 @@ namespace Core
             var snsClient = new Amazon.SimpleNotificationService.AmazonSimpleNotificationServiceClient();
             var s3Client = new Amazon.S3.AmazonS3Client();
             var iamClient = new Amazon.IdentityManagement.AmazonIdentityManagementServiceClient();
+            var ssmClient = new Amazon.SimpleSystemsManagement.AmazonSimpleSystemsManagementClient();
 
-            return new AwsResourceResolver(lambdaClient, sqsClient, snsClient, s3Client, iamClient);
+            return new AwsResourceResolver(lambdaClient, sqsClient, snsClient, s3Client, iamClient, ssmClient);
         }
 
         public static ICacheProvider CreateCacheProvider(CreateCacheProviderOptions options) => options.CacheType switch

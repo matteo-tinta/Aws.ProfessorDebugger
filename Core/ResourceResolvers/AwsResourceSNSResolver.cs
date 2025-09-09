@@ -95,6 +95,7 @@ namespace Core.ResourceResolvers
                     var policyMetadata = await AwsResourceCache.GetPolicyMetadataAsync(_iamClient, attached.PolicyArn);
 
                     var versionId = policyMetadata.Policy.DefaultVersionId;
+
                     var policyVersion = await AwsResourceCache.GetPolicyVersionAsync(_iamClient, attached.PolicyArn, versionId);
 
                     if (PolicyGrantsSnsPublish(policyVersion.PolicyVersion.Document, arn))
