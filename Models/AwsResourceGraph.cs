@@ -6,7 +6,7 @@ namespace Models
     {
         public Dictionary<string, AwsResourceNode> Nodes = new();
 
-        public AwsResourceNode GetOrCreateNode(string arn, string type)
+        public AwsResourceNode GetOrCreateNode(string arn)
         {
             if (!Nodes.TryGetValue(arn, out var node))
             {
@@ -14,7 +14,7 @@ namespace Models
                 {
                     Arn = arn,
                     Name = arn.Split(":").Last(),
-                    Type = type
+                    Type = arn.Split(":").ElementAt(2)
                 };
                 Nodes[arn] = node;
             }

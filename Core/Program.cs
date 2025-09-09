@@ -26,13 +26,13 @@ class Program
                 MaxLevel = options.Value.MaxLevel
             });
 
-            var graph = await explorer.TraverseAsync(options.Value.AwsArn);
+            await explorer.TraverseAsync(options.Value.AwsArn);
 
             await AwsResourceCache.SaveToDiskAsync(cacheProvider);
 
             AwsClientFactory.CreateGraphPrinter(new CreateGraphPrinterOptions() {
                 Type = options.Value.OutputAs
-            }).Print(graph);
+            }).Print(explorer.Graph, explorer.Graph.GetOrCreateNode(options.Value.AwsArn));
         }
         catch (Exception ex)
         {

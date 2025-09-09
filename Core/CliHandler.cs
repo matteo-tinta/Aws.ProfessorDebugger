@@ -11,7 +11,7 @@ namespace Core
         [Option("ignore-cache", Default = false, HelpText = "Ignore stored cache. Actual present cache file will be overidden.")]
         public bool IgnoreCache { get; set; }
 
-        [Option("output-as", Default = GraphPrinterType.Cli, HelpText = "Cli or Json (case sensitive)")]
+        [Option("output-as", Default = GraphPrinterType.Cli, HelpText = "Cli, Json or Graph (case sensitive)")]
         public GraphPrinterType OutputAs { get; set; }
 
         ////TODO

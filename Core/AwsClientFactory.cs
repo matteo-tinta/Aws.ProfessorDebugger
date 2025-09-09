@@ -13,7 +13,8 @@ namespace Core
     internal enum GraphPrinterType
     {
         Cli,
-        Json
+        Json,
+        Graph
     }
 
     internal record CreateCacheProviderOptions
@@ -57,6 +58,7 @@ namespace Core
         {
             GraphPrinterType.Cli => new CliGraphPrinter(),
             GraphPrinterType.Json => new JsonGraphPrinter(),
+            GraphPrinterType.Graph => new GraphGraphPrinter(),
             _ => throw new NotImplementedException(),
         };
 
