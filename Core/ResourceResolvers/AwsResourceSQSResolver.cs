@@ -35,9 +35,17 @@ namespace Core.ResourceResolvers
             this._iamClient = iamClient;
         }
 
-        public Task<List<string>> GetDownstreamResourcesAsync()
+        public async Task<List<string>> GetDownstreamResourcesAsync()
         {
-            throw new NotImplementedException();
+            var sources = new HashSet<string>();
+            var mappingResponse = await AwsResourceCache.GetSqsLambdaTriggersAsync(_lambdaClient, arn);
+
+            foreach (var mapping in mappingResponse.EventSourceMappings)
+            {
+                sources.Add(mapping.EventSourceArn);
+            }
+
+            return sources.ToList();
         }
 
         public async Task<List<string>> GetUpstreamResourcesAsync()

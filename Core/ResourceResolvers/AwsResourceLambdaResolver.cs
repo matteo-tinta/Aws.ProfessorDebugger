@@ -1,19 +1,29 @@
 ﻿using System.Text.Json;
 using System.Text.RegularExpressions;
+using Amazon.Auth.AccessControlPolicy;
+using Amazon.IdentityManagement;
 using Amazon.Lambda;
 using Amazon.Lambda.Model;
+using Core.Cache;
+using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace Core.ResourceResolvers
 {
     internal class AwsResourceLambdaResolver: IAwsResourceResolver
     {
         private readonly string arn;
-        private readonly AmazonLambdaClient _lambdaClient;
+        private readonly string functionName;
+        private readonly IAmazonLambda _lambdaClient;
+        private readonly IAmazonIdentityManagementService _iamClient;
 
-        public AwsResourceLambdaResolver(string arn, AmazonLambdaClient lambdaClient)
+        public AwsResourceLambdaResolver(string arn, 
+            IAmazonLambda lambdaClient,
+            IAmazonIdentityManagementService iamClient)
         {
             this.arn = arn;
+            this.functionName = Regex.Match(arn, @":([^:]+)$").Groups[1].Value;
             this._lambdaClient = lambdaClient;
+            this._iamClient = iamClient;
         }
 
         public async Task<List<string>> GetUpstreamResourcesAsync() {
@@ -25,10 +35,7 @@ namespace Core.ResourceResolvers
             // This is for services like SQS, Kinesis, DynamoDB where Lambda polls for messages.
             try
             {
-                var mappingResponse = await _lambdaClient.ListEventSourceMappingsAsync(
-                    new ListEventSourceMappingsRequest {
-                    FunctionName = functionName
-                });
+                var mappingResponse = await AwsResourceCache.GetLambdaEventSourceMappingAsync(_lambdaClient, functionName);
 
                 foreach (var mapping in mappingResponse.EventSourceMappings)
                 {
@@ -76,6 +83,116 @@ namespace Core.ResourceResolvers
             return sources;
 
         }
-        public async Task<List<string>> GetDownstreamResourcesAsync() { return []; }
+        public async Task<List<string>> GetDownstreamResourcesAsync() 
+        {
+            var sources = new HashSet<string>();
+
+            var config = await AwsResourceCache.GetLambdaConfigAsync(_lambdaClient, functionName);
+
+            var roleArn = config.Role;
+            if (!string.IsNullOrEmpty(roleArn))
+            {
+                var roleName = roleArn.Split('/').Last();
+
+                // --- INLINE POLICIES ---
+                var inlinePolicyList = await AwsResourceCache.GetInlinePolicyListAsync(_iamClient, roleName);
+
+                foreach (var policyName in inlinePolicyList.PolicyNames ?? Enumerable.Empty<string>())
+                {
+                    var policy = await AwsResourceCache.GetInlinePolicyAsync(_iamClient, roleName, policyName);
+
+                    //HERE!
+                    var decoded = System.Net.WebUtility.UrlDecode(policy.PolicyDocument);
+                    var results = GetSnsAndSqsPublishInPolicies(decoded);
+                    foreach (var arn in results)
+                    {
+                        sources.Add(arn);
+                    }
+                }
+
+                // --- MANAGED POLICIES ---
+                var attachedPolicies = await AwsResourceCache.GetAttachedPoliciesAsync(_iamClient, roleName);
+
+                foreach (var attached in attachedPolicies.AttachedPolicies ?? [])
+                {
+                    var policyMetadata = await AwsResourceCache.GetPolicyMetadataAsync(_iamClient, attached.PolicyArn);
+                    var versionId = policyMetadata.Policy.DefaultVersionId;
+
+                    var policyVersion = await AwsResourceCache.GetPolicyVersionAsync(_iamClient, attached.PolicyArn, versionId);
+
+                    var decoded = System.Net.WebUtility.UrlDecode(policyVersion.PolicyVersion.Document);
+                    var results = GetSnsAndSqsPublishInPolicies(decoded);
+                    foreach (var arn in results)
+                    {
+                        sources.Add(arn);
+                    }
+                }
+            }
+
+            return sources.ToList();
+        }
+
+        private HashSet<string> GetSnsAndSqsPublishInPolicies(string policyDocument)
+        {
+            var sources = new HashSet<string>();
+
+            using var document = JsonDocument.Parse(policyDocument);
+            var root = document.RootElement;
+
+            if (!root.TryGetProperty("Statement", out var statements)
+                || statements.ValueKind != JsonValueKind.Array)
+            {
+                return sources;
+            }
+
+            foreach (var statement in statements.EnumerateArray())
+            {
+                if (!statement.TryGetProperty("Effect", out var effect) || effect.GetString() != "Allow")
+                    continue;
+
+                List<string> actions = new();
+                if (statement.TryGetProperty("Action", out var actionElement))
+                {
+                    if (actionElement.ValueKind == JsonValueKind.String)
+                    {
+                        actions.Add(actionElement.GetString());
+                    }
+                    else if (actionElement.ValueKind == JsonValueKind.Array)
+                    {
+                        actions.AddRange(actionElement.EnumerateArray().Select(a => a.GetString()));
+                    }
+                }
+
+                // Check for sns:Publish or sqs:SendMessage
+                var matchedActions = actions
+                    .Where(a => string.Equals(a, "sns:Publish", StringComparison.OrdinalIgnoreCase) ||
+                                string.Equals(a, "sqs:SendMessage", StringComparison.OrdinalIgnoreCase))
+                    .ToList();
+
+                if (matchedActions.Any())
+                {
+                    // Handle 'Resource' as string or array
+                    string resourcesOutput = "";
+                    if (statement.TryGetProperty("Resource", out var resourceElement))
+                    {
+                        if (resourceElement.ValueKind == JsonValueKind.String)
+                        {
+                            resourcesOutput = resourceElement.GetString();
+                        }
+                        else if (resourceElement.ValueKind == JsonValueKind.Array)
+                        {
+                            resourcesOutput = string.Join(", ", resourceElement.EnumerateArray().Select(r => r.GetString()));
+                        }
+                    }
+
+                    if (!string.IsNullOrWhiteSpace(resourcesOutput))
+                    {
+                        sources.Add(resourcesOutput);
+                    }
+                }
+            }
+
+            return sources;
+        }
     }
 }

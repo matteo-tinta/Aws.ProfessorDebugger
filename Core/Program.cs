@@ -22,7 +22,7 @@ class Program
 
             var explorer = AwsClientFactory.CreateResourceResolver(new CreateResourceResolverOptions()
             {
-                EnableParallelExecution = AwsResourceCache.CacheHasBeenInitialized,
+                EnableParallelExecution = false /*AwsResourceCache.CacheHasBeenInitialized*/,
                 MaxLevel = options.Value.MaxLevel
             });
 

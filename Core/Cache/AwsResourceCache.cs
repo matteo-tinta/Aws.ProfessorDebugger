@@ -8,6 +8,7 @@ using Amazon.Lambda.Model;
 using Amazon.S3;
 using Amazon.S3.Model;
 using Amazon.SimpleNotificationService;
+using Amazon.SimpleNotificationService.Model;
 using Amazon.SimpleSystemsManagement;
 using Amazon.SimpleSystemsManagement.Model;
 using Core.Cache.Providers;
@@ -27,6 +28,9 @@ namespace Core.Cache
     {
         private static readonly List<FunctionConfiguration> _lambdaFunctions = new();
         private static readonly List<S3Bucket> _buckets = new();
+        private static readonly ConcurrentDictionary<string, ListEventSourceMappingsResponse> _lambdaEventSourceEvents = new();
+        private static readonly ConcurrentDictionary<string, Amazon.SimpleNotificationService.Model.ListSubscriptionsByTopicResponse> _snsSubscriptions = new();
+        private static readonly ConcurrentDictionary<string, ListEventSourceMappingsResponse> _sqsLambdaTriggersEvents = new();
         private static readonly ConcurrentDictionary<string, Parameter> _ssmParameters = new();
         private static readonly ConcurrentDictionary<string, GetBucketNotificationResponse> _bucketNotifications = new();
         private static readonly ConcurrentDictionary<string, GetFunctionConfigurationResponse> _lambdaConfigs = new();
@@ -64,6 +68,9 @@ namespace Core.Cache
                 _lambdaFunctions.AddRange(cache.LambdaFunctions ?? []);
                 _buckets.AddRange(cache.Buckets ?? []);
 
+                foreach (var kv in cache.SnsSubscriptions ?? []) _snsSubscriptions[kv.Key] = kv.Value;
+                foreach (var kv in cache.SqsLambdaTriggerEvents ?? []) _sqsLambdaTriggersEvents[kv.Key] = kv.Value;
+                foreach (var kv in cache.LambdaEventSourceEvents ?? []) _lambdaEventSourceEvents[kv.Key] = kv.Value;
                 foreach (var kv in cache.SsmParameters ?? []) _ssmParameters[kv.Key] = kv.Value;
                 foreach (var kv in cache.BucketNotifications ?? []) _bucketNotifications[kv.Key] = kv.Value;
                 foreach (var kv in cache.LambdaConfigs ?? []) _lambdaConfigs[kv.Key] = kv.Value;
@@ -97,6 +104,9 @@ namespace Core.Cache
                 PolicyMetadata = _policyMetadata.ToDictionary(kvp => kvp.Key, kvp => kvp.Value),
                 PolicyVersions = _policyVersions.ToDictionary(kvp => $"{kvp.Key.policyArn}|{kvp.Key.versionId}", kvp => kvp.Value),
                 SsmParameters = _ssmParameters.ToDictionary(kvp => kvp.Key, kvp => kvp.Value),
+                LambdaEventSourceEvents = _lambdaEventSourceEvents.ToDictionary(kvp => kvp.Key, kvp => kvp.Value),
+                SqsLambdaTriggerEvents = _sqsLambdaTriggersEvents.ToDictionary(kvp => kvp.Key, kvp => kvp.Value),
+                SnsSubscriptions = _snsSubscriptions.ToDictionary(kvp => kvp.Key, kvp => kvp.Value),
             };
 
             await cacheProvider.SaveAsync(cache);
@@ -105,9 +115,9 @@ namespace Core.Cache
 
         public static async Task<List<FunctionConfiguration>> GetLambdaFunctions(IAmazonLambda lambdaClient)
         {
-            if(_lambdaFunctions.Count == 0)
+            if (_lambdaFunctions.Count == 0)
             {
-                await foreach(var function in LambdaEnumerators.ListAllLambdaFunctions(lambdaClient))
+                await foreach (var function in LambdaEnumerators.ListAllLambdaFunctions(lambdaClient))
                 {
                     _lambdaFunctions.Add(function);
                 }
@@ -126,6 +136,49 @@ namespace Core.Cache
             }
 
             return _buckets ?? [];
+        }
+
+        public static async Task<ListSubscriptionsByTopicResponse> GetSnsSubscriptionsByTopicArnAsync(IAmazonSimpleNotificationService snsClient, string snsArn)
+        {
+            if (_snsSubscriptions.TryGetValue(snsArn, out var cached))
+            {
+                return cached;
+            }
+
+            ListSubscriptionsByTopicResponse value = await snsClient.ListSubscriptionsByTopicAsync(snsArn);
+
+            _snsSubscriptions[snsArn] = value;
+            return value;
+        }
+
+        public static async Task<ListEventSourceMappingsResponse> GetSqsLambdaTriggersAsync(IAmazonLambda lambdaClient, string sqsArn)
+        {
+            if (_sqsLambdaTriggersEvents.TryGetValue(sqsArn, out var cached))
+            {
+                return cached;
+            }
+
+            var value = await lambdaClient.ListEventSourceMappingsAsync(new ListEventSourceMappingsRequest()
+            {
+                EventSourceArn = sqsArn
+            });
+            _sqsLambdaTriggersEvents[sqsArn] = value;
+            return value;
+        }
+
+        public static async Task<ListEventSourceMappingsResponse> GetLambdaEventSourceMappingAsync(IAmazonLambda lambdaClient, string functionName)
+        {
+            if (_lambdaEventSourceEvents.TryGetValue(functionName, out var cached))
+            {
+                return cached;
+            }
+
+            var value = await lambdaClient.ListEventSourceMappingsAsync(new ListEventSourceMappingsRequest
+            {
+                FunctionName = functionName
+            });
+            _lambdaEventSourceEvents[functionName] = value;
+            return value;
         }
 
         public static async Task<GetBucketNotificationResponse> GetBucketNotificationAsync(IAmazonS3 s3Client, string bucketName)

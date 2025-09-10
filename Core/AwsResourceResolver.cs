@@ -51,25 +51,26 @@ namespace Core
 
         public async Task TraverseAsync(string arn, int currentLevel = 0)
         {
-            if(maxLevel != null && currentLevel > maxLevel)
-            {
-                return; //Exiting
-            }
-            if (visited.TryGetValue(arn, out AwsResourceNode? value))
-            {
-                return; //Temporary!
-            }
+            if (maxLevel != null && currentLevel > maxLevel)
+                return;
+
+            if (visited.ContainsKey(arn))
+                return;
 
             Console.WriteLine($"-> TRAVERSING {arn} ...");
             var resolver = GetResolverByArn(arn);
             var node = Graph.GetOrCreateNode(arn);
+            visited.Add(arn, node);
 
             List<string> parentsArn = await resolver.GetUpstreamResourcesAsync();
+            List<string> childrenArn = await resolver.GetDownstreamResourcesAsync();
 
             if (canUseParallelExecution)
             {
-                var tasks = parentsArn.Select(async parentArn => await TraverseParents(parentArn, currentLevel, node));
-                await Task.WhenAll(tasks);
+                var parentTasks = parentsArn.Select(async parentArn => await TraverseParents(parentArn, currentLevel, node));
+                var childrenTasks = childrenArn.Select(async parentArn => await TraverseParents(parentArn, currentLevel, node));
+
+                await Task.WhenAll(parentTasks.Concat(childrenTasks));
             }
             else
             {
@@ -77,42 +78,40 @@ namespace Core
                 {
                     await TraverseParents(parentArn, currentLevel, node);
                 }
-            }
 
-            visited.Add(arn, node);
-            //return result;
+                foreach (var childArn in childrenArn)
+                {
+                    await TraverseChildren(childArn, currentLevel, node);
+                }
+            }
         }
 
         private async Task TraverseParents(string parentArn, int level, AwsResourceNode node)
         {
-            Graph.GetOrCreateNode(parentArn).Children.Add(node.Arn);
+            var parentNode = Graph.GetOrCreateNode(parentArn);
+
+            //parentNode.Children.Add(node.Arn);
             node.Parents.Add(parentArn);
             await TraverseAsync(parentArn, level + 1);
+        }
 
-            //foreach (var foundNode in traversed.GetAllNodes())
-            //{
-            //    node.Parents.Add(foundNode.Arn);
-            //}
+        private async Task TraverseChildren(string childArn, int level, AwsResourceNode node)
+        {
+            var childNode = Graph.GetOrCreateNode(childArn);
+
+            //childNode.Parents.Add(node.Arn);
+            node.Children.Add(childArn);
+            await TraverseAsync(childArn, level + 1);
         }
 
         private IAwsResourceResolver GetResolverByArn(string arn)
             => arn.ToLower(System.Globalization.CultureInfo.CurrentCulture) switch
             {
-                (var arn2) when arn2.Contains(":lambda:") => new AwsResourceLambdaResolver(arn, lambdaClient),
+                (var arn2) when arn2.Contains(":lambda:") => new AwsResourceLambdaResolver(arn, lambdaClient, iamClient),
                 (var arn2) when arn2.Contains(":sqs:") => new AwsResourceSQSResolver(arn, sqsClient, lambdaClient, ssmClient, iamClient),
-                (var arn2) when arn2.Contains(":sns:") => new AwsResourceSNSResolver(arn, s3Client, lambdaClient, iamClient),
-                (var arn2) when arn2.Contains(":::") => new AwsResourceS3Resolver(arn),
+                (var arn2) when arn2.Contains(":sns:") => new AwsResourceSNSResolver(arn, s3Client, lambdaClient, iamClient, snsClient),
+                (var arn2) when arn2.Contains(":::") => new AwsResourceS3Resolver(arn, s3Client),
                 _ => throw new NotImplementedException(),
-            };
-
-        private string GeTypeByArn(string arn)
-            => arn.ToLower(System.Globalization.CultureInfo.CurrentCulture) switch
-            {
-                (var arn2) when arn2.Contains(":lambda:") => "lambda",
-                (var arn2) when arn2.Contains(":sqs:") => "sqs",
-                (var arn2) when arn2.Contains(":sns:") => "sns",
-                (var arn2) when arn2.Contains(":::") => "s3",
-                _ => "",
             };
     }
 }

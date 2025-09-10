@@ -6,6 +6,8 @@ namespace Core.Printers
 {
     internal class CliGraphPrinter: IGraphPrinter
     {
+        private HashSet<string> visited = new HashSet<string>();
+
         public void Print(AwsResourceGraph graph, AwsResourceNode node)
         {
             Console.WriteLine("\r\n=========== CHILDREN ==========\r\n");
@@ -15,8 +17,11 @@ namespace Core.Printers
             PrintParentGraph(graph, node);
         }
 
-        private static void PrintChildrenGraph(AwsResourceGraph graph, AwsResourceNode node, int level = 1)
+        private void PrintChildrenGraph(AwsResourceGraph graph, AwsResourceNode node, int level = 1)
         {
+            if (!visited.Add(node.Arn))
+                return; // already visited
+
             WriteNodeWithColors(node, level);
             foreach (var child in node.Children)
             {
@@ -25,8 +30,11 @@ namespace Core.Printers
             }
         }
 
-        private static void PrintParentGraph(AwsResourceGraph graph, AwsResourceNode node, int level = 1)
+        private void PrintParentGraph(AwsResourceGraph graph, AwsResourceNode node, int level = 1)
         {
+            if (!visited.Add(node.Arn))
+                return; // already visited
+
             WriteNodeWithColors(node, level);
             foreach (var parent in node.Parents)
             {
@@ -35,7 +43,7 @@ namespace Core.Printers
             }
         }
 
-        private static void WriteNodeWithColors(AwsResourceNode node, int level)
+        private void WriteNodeWithColors(AwsResourceNode node, int level)
         {
             var type = node.Type.ToLower().Trim();
             Console.Write($"{new string('-', level)}> [");

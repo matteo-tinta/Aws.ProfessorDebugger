@@ -7,6 +7,10 @@
     "mastermind-searchindexer-searchinfochanged-dev": {
       "commandName": "Project",
       "commandLineArgs": "arn:aws:lambda:eu-west-1:297244223532:function:mastermind-searchindexer-searchinfochanged-dev --output-as Json"
+    },
+    "mastermind-ingestion-worklist-worklistreadytobeworked-dev": {
+      "commandName": "Project",
+      "commandLineArgs": "arn:aws:lambda:eu-west-1:297244223532:function:mastermind-ingestion-worklist-worklistreadytobeworked-dev --output-as Graph"
     }
   }
 }

@@ -4,6 +4,6 @@
     <DebuggerFlavor>ProjectDebugger</DebuggerFlavor>
   </PropertyGroup>
   <PropertyGroup>
-    <ActiveDebugProfile>mastermind-searchindexer-searchinfochanged-dev</ActiveDebugProfile>
+    <ActiveDebugProfile>mastermind-ingestion-worklist-worklistreadytobeworked-dev</ActiveDebugProfile>
   </PropertyGroup>
 </Project>

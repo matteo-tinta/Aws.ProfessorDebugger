@@ -3,6 +3,7 @@ using System.Text.RegularExpressions;
 using Amazon.IdentityManagement;
 using Amazon.Lambda;
 using Amazon.S3;
+using Amazon.SimpleNotificationService;
 using Core.Cache;
 
 namespace Core.ResourceResolvers
@@ -13,21 +14,40 @@ namespace Core.ResourceResolvers
         private readonly AmazonS3Client _s3Client;
         private readonly AmazonLambdaClient _lambdaClient;
         private readonly IAmazonIdentityManagementService _iamClient;
+        private readonly IAmazonSimpleNotificationService _snsClient;
 
         public AwsResourceSNSResolver(string arn, 
             AmazonS3Client s3Client,
             AmazonLambdaClient lambdaClient,
-            IAmazonIdentityManagementService iamClient)
+            IAmazonIdentityManagementService iamClient,
+            IAmazonSimpleNotificationService snsClient)
         {
             this.arn = arn;
             this._s3Client = s3Client;
             this._lambdaClient = lambdaClient;
             this._iamClient = iamClient;
+            this._snsClient = snsClient;
         }
 
-        public Task<List<string>> GetDownstreamResourcesAsync()
+        public async Task<List<string>> GetDownstreamResourcesAsync()
         {
-            throw new NotImplementedException();
+            var source = new HashSet<string>();
+
+            var response = await AwsResourceCache.GetSnsSubscriptionsByTopicArnAsync(_snsClient, arn);
+            foreach (var subscription in response.Subscriptions)
+            {
+                switch (subscription.Protocol)
+                {
+                    case "sqs":
+                        source.Add(subscription.Endpoint);
+                        break;
+                    default:
+                        Console.WriteLine($"== PROTOCOL {subscription.Protocol} IN SUBSCRIPTION IGNORED ==");
+                        break;
+                }
+            }
+
+            return source.ToList();
         }
 
         public async Task<List<string>> GetUpstreamResourcesAsync()
