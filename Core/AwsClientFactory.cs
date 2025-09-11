@@ -34,6 +34,7 @@ namespace Core
         public bool EnableParallelExecution { get; set; } = false;
         public int? MaxLevel { get; set; }
         public required ICacheProvider<AwsResourceGraph> CacheProvider { get; set; }
+        public bool IgnoreCacheAndOverride { get; internal set; }
     }
 
     internal static class AwsClientFactory
@@ -49,13 +50,16 @@ namespace Core
 
             //Get Cache or build new cache
             AwsResourceGraph graph = null;
-            try
+            if (!options.IgnoreCacheAndOverride)
             {
-                graph = await options.CacheProvider.GetAsync();
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"== GRAPH CACHE WAS NOT LOADED SUCCESSFULLY: ${ex.Message}");
+                try
+                {
+                    graph = await options.CacheProvider.GetAsync();
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"== GRAPH CACHE WAS NOT LOADED SUCCESSFULLY: ${ex.Message}");
+                }
             }
 
             return new AwsResourceResolver(lambdaClient, sqsClient, snsClient, s3Client, iamClient, ssmClient, graph ?? new AwsResourceGraph(),
