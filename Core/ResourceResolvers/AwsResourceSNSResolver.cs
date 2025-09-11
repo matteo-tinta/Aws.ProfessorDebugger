@@ -33,18 +33,25 @@ namespace Core.ResourceResolvers
         {
             var source = new HashSet<string>();
 
-            var response = await AwsResourceCache.GetSnsSubscriptionsByTopicArnAsync(_snsClient, arn);
-            foreach (var subscription in response.Subscriptions)
+            try
             {
-                switch (subscription.Protocol)
+                var response = await AwsResourceCache.GetSnsSubscriptionsByTopicArnAsync(_snsClient, arn);
+                foreach (var subscription in response.Subscriptions)
                 {
-                    case "sqs":
-                        source.Add(subscription.Endpoint);
-                        break;
-                    default:
-                        Console.WriteLine($"== PROTOCOL {subscription.Protocol} IN SUBSCRIPTION IGNORED ==");
-                        break;
+                    switch (subscription.Protocol)
+                    {
+                        case "sqs":
+                            source.Add(subscription.Endpoint);
+                            break;
+                        default:
+                            Console.WriteLine($"== PROTOCOL {subscription.Protocol} IN SUBSCRIPTION IGNORED ==");
+                            break;
+                    }
                 }
+            }
+            catch (Exception e)
+            {
+                Console.Error.WriteLine($"== TOPIC {arn}: {e.Message}");
             }
 
             return source.ToList();

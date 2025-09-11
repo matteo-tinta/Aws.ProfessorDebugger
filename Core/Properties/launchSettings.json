@@ -6,11 +6,19 @@
     },
     "mastermind-searchindexer-searchinfochanged-dev": {
       "commandName": "Project",
-      "commandLineArgs": "arn:aws:lambda:eu-west-1:297244223532:function:mastermind-searchindexer-searchinfochanged-dev --output-as Json"
+      "commandLineArgs": "arn:aws:lambda:eu-west-1:297244223532:function:mastermind-searchindexer-searchinfochanged-dev"
     },
     "mastermind-ingestion-worklist-worklistreadytobeworked-dev": {
       "commandName": "Project",
-      "commandLineArgs": "arn:aws:lambda:eu-west-1:297244223532:function:mastermind-ingestion-worklist-worklistreadytobeworked-dev --output-as Graph"
+      "commandLineArgs": "arn:aws:lambda:eu-west-1:297244223532:function:mastermind-ingestion-worklist-worklistreadytobeworked-dev"
+    },
+    "mastermind-dataloader-product-essentialinfochanged-dev": {
+      "commandName": "Project",
+      "commandLineArgs": "arn:aws:lambda:eu-west-1:297244223532:function:mastermind-dataloader-product-essentialinfochanged-dev"
+    },
+    "arn:aws:s3:::mastermind-ingestion-worklistreadytobeworked-dev-297244223532": {
+      "commandName": "Project",
+      "commandLineArgs": "arn:aws:s3:::mastermind-ingestion-worklistreadytobeworked-dev-297244223532"
     }
   }
 }

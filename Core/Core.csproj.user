@@ -4,6 +4,6 @@
     <DebuggerFlavor>ProjectDebugger</DebuggerFlavor>
   </PropertyGroup>
   <PropertyGroup>
-    <ActiveDebugProfile>mastermind-ingestion-worklist-worklistreadytobeworked-dev</ActiveDebugProfile>
+    <ActiveDebugProfile>arn:aws:s3:::mastermind-ingestion-worklistreadytobeworked-dev-297244223532</ActiveDebugProfile>
   </PropertyGroup>
 </Project>

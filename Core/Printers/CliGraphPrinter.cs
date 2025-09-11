@@ -19,8 +19,8 @@ namespace Core.Printers
 
         private void PrintChildrenGraph(AwsResourceGraph graph, AwsResourceNode node, int level = 1)
         {
-            if (!visited.Add(node.Arn))
-                return; // already visited
+            if (!visited.Add(node.Arn) && level > 1)
+                return; // already visited but ignores first level because it's the node
 
             WriteNodeWithColors(node, level);
             foreach (var child in node.Children)
@@ -32,8 +32,8 @@ namespace Core.Printers
 
         private void PrintParentGraph(AwsResourceGraph graph, AwsResourceNode node, int level = 1)
         {
-            if (!visited.Add(node.Arn))
-                return; // already visited
+            if (!visited.Add(node.Arn) && level > 1)
+                return; // already visited but ignores first level because it's the node
 
             WriteNodeWithColors(node, level);
             foreach (var parent in node.Parents)
@@ -69,6 +69,7 @@ namespace Core.Printers
             Console.Write($"] {node.Name}");
             Console.ForegroundColor = ConsoleColor.DarkGray;
             Console.Write($" ({node.Arn})\r\n");
+            Console.ResetColor();
         }
     }
 

@@ -5,13 +5,14 @@ using Amazon.IdentityManagement;
 using Amazon.Lambda;
 using Amazon.Lambda.Model;
 using Core.Cache;
+using Models;
 using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace Core.ResourceResolvers
 {
     internal class AwsResourceLambdaResolver: IAwsResourceResolver
     {
-        private readonly string arn;
+        private readonly Arn arn;
         private readonly string functionName;
         private readonly IAmazonLambda _lambdaClient;
         private readonly IAmazonIdentityManagementService _iamClient;
@@ -20,16 +21,16 @@ namespace Core.ResourceResolvers
             IAmazonLambda lambdaClient,
             IAmazonIdentityManagementService iamClient)
         {
-            this.arn = arn;
-            this.functionName = Regex.Match(arn, @":([^:]+)$").Groups[1].Value;
+            this.arn = Arn.ParseArn(arn);
+            this.functionName = this.arn.ResourceName;
             this._lambdaClient = lambdaClient;
             this._iamClient = iamClient;
         }
 
         public async Task<List<string>> GetUpstreamResourcesAsync() {
-            Console.WriteLine($"PROCESSING LAMBDA [{arn}]...");
+            Console.WriteLine($"PROCESSING LAMBDA [{arn.ResourceArn}]...");
             var sources = new List<string>();
-            var functionName = Regex.Match(arn, @"function:(.+)").Groups[1].Value;
+            var functionName = Regex.Match(this.arn.ResourceArn, @"function:(.+)").Groups[1].Value;
 
             // 1. Find sources configured via Event Source Mappings (the "pull" model)
             // This is for services like SQS, Kinesis, DynamoDB where Lambda polls for messages.
@@ -187,7 +188,11 @@ namespace Core.ResourceResolvers
 
                     if (!string.IsNullOrWhiteSpace(resourcesOutput))
                     {
-                        sources.Add(resourcesOutput);
+                        var parsedArn = Arn.ParseArn(resourcesOutput);
+                        if(!parsedArn.ResourceName.Contains("*"))
+                        {
+                            sources.Add(resourcesOutput);
+                        }
                     }
                 }
             }

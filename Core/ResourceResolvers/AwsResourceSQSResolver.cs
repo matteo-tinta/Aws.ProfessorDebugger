@@ -42,7 +42,7 @@ namespace Core.ResourceResolvers
 
             foreach (var mapping in mappingResponse.EventSourceMappings)
             {
-                sources.Add(mapping.EventSourceArn);
+                sources.Add(mapping.FunctionArn);
             }
 
             return sources.ToList();

@@ -60,6 +60,7 @@ namespace Core
             Console.WriteLine($"-> TRAVERSING {arn} ...");
             var resolver = GetResolverByArn(arn);
             var node = Graph.GetOrCreateNode(arn);
+
             visited.Add(arn, node);
 
             List<string> parentsArn = await resolver.GetUpstreamResourcesAsync();
