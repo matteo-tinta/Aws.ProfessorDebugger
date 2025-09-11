@@ -12,6 +12,14 @@
       "commandName": "Project",
       "commandLineArgs": "arn:aws:lambda:eu-west-1:297244223532:function:mastermind-ingestion-worklist-worklistreadytobeworked-dev"
     },
+    "mastermind-dataloader-price-variantinfochanged-dev": {
+      "commandName": "Project",
+      "commandLineArgs": "arn:aws:lambda:eu-west-1:297244223532:function:mastermind-dataloader-price-variantinfochanged-dev"
+    },
+    "acl-pricelist-ingestor-dev": {
+      "commandName": "Project",
+      "commandLineArgs": "arn:aws:lambda:eu-west-1:297244223532:function:acl-pricelist-ingestor-dev"
+    },
     "mastermind-dataloader-product-essentialinfochanged-dev": {
       "commandName": "Project",
       "commandLineArgs": "arn:aws:lambda:eu-west-1:297244223532:function:mastermind-dataloader-product-essentialinfochanged-dev"

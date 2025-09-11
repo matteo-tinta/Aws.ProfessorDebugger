@@ -6,9 +6,9 @@ using System.Threading.Tasks;
 
 namespace Core.Cache.Providers
 {
-    internal interface ICacheProvider
+    internal interface ICacheProvider<T> where T: class
     {
-        public Task<SerializableAwsCache?> GetAsync();
-        public Task SaveAsync(SerializableAwsCache cache);
+        public Task<T?> GetAsync();
+        public Task SaveAsync(T cache);
     }
 }

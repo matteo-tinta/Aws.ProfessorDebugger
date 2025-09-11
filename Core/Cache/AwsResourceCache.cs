@@ -44,7 +44,7 @@ namespace Core.Cache
 
         public static bool CacheHasBeenInitialized { get; private set; } = false;
 
-        public static async Task InitializeAsync(ICacheProvider cacheProvider, AwsResourceCacheInitOptions options)
+        public static async Task InitializeAsync(ICacheProvider<SerializableAwsCache> cacheProvider, AwsResourceCacheInitOptions options)
         {
             if (_initialized) return;
 
@@ -57,7 +57,7 @@ namespace Core.Cache
             await InitializeAsync(cacheProvider);
         }
 
-        public static async Task InitializeAsync(ICacheProvider cacheProvider)
+        public static async Task InitializeAsync(ICacheProvider<SerializableAwsCache> cacheProvider)
         {
             if (_initialized) return;
 
@@ -90,7 +90,7 @@ namespace Core.Cache
             _initialized = true;
         }
 
-        public static async Task SaveToDiskAsync(ICacheProvider cacheProvider)
+        public static async Task SaveToDiskAsync(ICacheProvider<SerializableAwsCache> cacheProvider)
         {
             var cache = new SerializableAwsCache
             {

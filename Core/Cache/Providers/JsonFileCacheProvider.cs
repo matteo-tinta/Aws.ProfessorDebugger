@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace Core.Cache.Providers
 {
-    internal class JsonFileCacheProvider : ICacheProvider
+    internal class JsonFileCacheProvider<T> : ICacheProvider<T> where T : class
     {
         private readonly string cacheFilePath;
 
@@ -16,21 +16,21 @@ namespace Core.Cache.Providers
             this.cacheFilePath = cacheFilePath;
         }
 
-        public async Task<SerializableAwsCache> GetAsync()
+        public async Task<T> GetAsync()
         {
             try
             {
                 var json = await File.ReadAllTextAsync(cacheFilePath);
-                return JsonSerializer.Deserialize<SerializableAwsCache>(json);
+                return JsonSerializer.Deserialize<T>(json);
             }
             catch
             {
                 Console.WriteLine("Warning: Failed to load AWS cache. Continuing with empty cache.");
-                return null;
+                return default;
             }
         }
 
-        public async Task SaveAsync(SerializableAwsCache cache)
+        public async Task SaveAsync(T cache)
         {
             try
             {

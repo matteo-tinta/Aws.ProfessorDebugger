@@ -10,7 +10,12 @@ class Program
             var cli = new CliHandler();
             var options = cli.ParseArguments(args);
 
-            var cacheProvider = AwsClientFactory.CreateCacheProvider(new CreateCacheProviderOptions()
+            var cacheProvider = AwsClientFactory.CreateCacheProviderForAwsCache(new CreateCacheProviderOptions()
+            {
+                CacheType = options.Value.CacheType
+            });
+
+            var graphCacheProvider = AwsClientFactory.CreateCacheProviderForAwsGraph(new CreateCacheProviderOptions()
             {
                 CacheType = options.Value.CacheType
             });
@@ -20,15 +25,19 @@ class Program
                 IgnoreCacheAndOverride = options.Value.IgnoreCache
             });
 
-            var explorer = AwsClientFactory.CreateResourceResolver(new CreateResourceResolverOptions()
+            var explorer = await AwsClientFactory.CreateResourceResolverAsync(new CreateResourceResolverOptions()
             {
                 EnableParallelExecution = false /*AwsResourceCache.CacheHasBeenInitialized*/,
-                MaxLevel = options.Value.MaxLevel
+                MaxLevel = options.Value.MaxLevel,
+                CacheProvider = graphCacheProvider
             });
 
             await explorer.TraverseAsync(options.Value.AwsArn);
 
             await AwsResourceCache.SaveToDiskAsync(cacheProvider);
+
+            
+            await graphCacheProvider.SaveAsync(explorer.Graph);
 
             AwsClientFactory.CreateGraphPrinter(new CreateGraphPrinterOptions() {
                 Type = options.Value.OutputAs

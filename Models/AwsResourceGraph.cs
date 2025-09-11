@@ -4,7 +4,7 @@ namespace Models
 {
     public class AwsResourceGraph
     {
-        public Dictionary<string, AwsResourceNode> Nodes = new();
+        public Dictionary<string, AwsResourceNode> Nodes { get; set; } = [];
 
         public AwsResourceNode GetOrCreateNode(string arn)
         {

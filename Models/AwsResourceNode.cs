@@ -6,7 +6,7 @@
         public string Name { get; set; }
         public string Type { get; set; } // Lambda, SNS, etc.
 
-        public HashSet<string> Parents { get; } = new();
-        public HashSet<string> Children { get; } = new();
+        public HashSet<string> Parents { get; set; } = new();
+        public HashSet<string> Children { get; set; } = new();
     }
 }

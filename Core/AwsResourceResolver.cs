@@ -5,6 +5,8 @@ using Amazon.SimpleNotificationService;
 using Amazon.SimpleSystemsManagement;
 using Amazon.SimpleSystemsManagement.Model;
 using Amazon.SQS;
+using Core.Cache;
+using Core.Cache.Providers;
 using Core.ResourceResolvers;
 using Models;
 
@@ -20,7 +22,6 @@ namespace Core
         private readonly IAmazonSimpleSystemsManagement ssmClient;
         private readonly bool canUseParallelExecution;
         private readonly int? maxLevel;
-        private Dictionary<string, AwsResourceNode> visited = [];
         public AwsResourceGraph Graph { get; private set; }
 
         public AwsResourceResolver(
@@ -30,6 +31,7 @@ namespace Core
             AmazonS3Client s3Client,
             IAmazonIdentityManagementService iamClient,
             IAmazonSimpleSystemsManagement ssmClient,
+            AwsResourceGraph graph,
             int? maxLevel = null,
             bool canUseParallelExecution = false)
         {
@@ -41,7 +43,7 @@ namespace Core
             this.ssmClient = ssmClient;
             this.canUseParallelExecution = canUseParallelExecution;
             this.maxLevel = maxLevel;
-            this.Graph = new AwsResourceGraph();
+            this.Graph = graph;
 
             if (canUseParallelExecution)
             {
@@ -54,14 +56,12 @@ namespace Core
             if (maxLevel != null && currentLevel > maxLevel)
                 return;
 
-            if (visited.ContainsKey(arn))
+            if (Graph.Nodes.ContainsKey(arn))
                 return;
 
             Console.WriteLine($"-> TRAVERSING {arn} ...");
             var resolver = GetResolverByArn(arn);
             var node = Graph.GetOrCreateNode(arn);
-
-            visited.Add(arn, node);
 
             List<string> parentsArn = await resolver.GetUpstreamResourcesAsync();
             List<string> childrenArn = await resolver.GetDownstreamResourcesAsync();
@@ -89,8 +89,7 @@ namespace Core
 
         private async Task TraverseParents(string parentArn, int level, AwsResourceNode node)
         {
-            var parentNode = Graph.GetOrCreateNode(parentArn);
-
+            //var parentNode = Graph.GetOrCreateNode(parentArn);
             //parentNode.Children.Add(node.Arn);
             node.Parents.Add(parentArn);
             await TraverseAsync(parentArn, level + 1);
@@ -98,8 +97,7 @@ namespace Core
 
         private async Task TraverseChildren(string childArn, int level, AwsResourceNode node)
         {
-            var childNode = Graph.GetOrCreateNode(childArn);
-
+            //var childNode = Graph.GetOrCreateNode(childArn);
             //childNode.Parents.Add(node.Arn);
             node.Children.Add(childArn);
             await TraverseAsync(childArn, level + 1);

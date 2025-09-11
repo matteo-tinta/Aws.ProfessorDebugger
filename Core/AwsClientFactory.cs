@@ -1,6 +1,8 @@
 ﻿using Amazon.Lambda;
+using Core.Cache;
 using Core.Cache.Providers;
 using Core.Printers;
+using Models;
 
 namespace Core
 {
@@ -31,11 +33,12 @@ namespace Core
     {
         public bool EnableParallelExecution { get; set; } = false;
         public int? MaxLevel { get; set; }
+        public required ICacheProvider<AwsResourceGraph> CacheProvider { get; set; }
     }
 
     internal static class AwsClientFactory
     {
-        public static AwsResourceResolver CreateResourceResolver(CreateResourceResolverOptions options)
+        public async static Task<AwsResourceResolver> CreateResourceResolverAsync(CreateResourceResolverOptions options)
         {
             var lambdaClient = new AmazonLambdaClient();
             var sqsClient = new Amazon.SQS.AmazonSQSClient();
@@ -44,12 +47,32 @@ namespace Core
             var iamClient = new Amazon.IdentityManagement.AmazonIdentityManagementServiceClient();
             var ssmClient = new Amazon.SimpleSystemsManagement.AmazonSimpleSystemsManagementClient();
 
-            return new AwsResourceResolver(lambdaClient, sqsClient, snsClient, s3Client, iamClient, ssmClient, options.MaxLevel, options.EnableParallelExecution);
+            //Get Cache or build new cache
+            AwsResourceGraph graph = null;
+            try
+            {
+                graph = await options.CacheProvider.GetAsync();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"== GRAPH CACHE WAS NOT LOADED SUCCESSFULLY: ${ex.Message}");
+            }
+
+            return new AwsResourceResolver(lambdaClient, sqsClient, snsClient, s3Client, iamClient, ssmClient, graph ?? new AwsResourceGraph(),
+                options.MaxLevel, 
+                options.EnableParallelExecution);
         }
 
-        public static ICacheProvider CreateCacheProvider(CreateCacheProviderOptions options) => options.CacheType switch
+        public static ICacheProvider<SerializableAwsCache> CreateCacheProviderForAwsCache(CreateCacheProviderOptions options) => options.CacheType switch
         {
-            CacheType.JsonFile => new JsonFileCacheProvider(".aws-cache.json"),
+            CacheType.JsonFile => new JsonFileCacheProvider<SerializableAwsCache>(".aws-cache.json"),
+            //CacheType.Redis => TODO,
+            _ => throw new NotImplementedException(),
+        };
+
+        public static ICacheProvider<AwsResourceGraph> CreateCacheProviderForAwsGraph(CreateCacheProviderOptions options) => options.CacheType switch
+        {
+            CacheType.JsonFile => new JsonFileCacheProvider<AwsResourceGraph>(".aws-graph-cache.json"),
             //CacheType.Redis => TODO,
             _ => throw new NotImplementedException(),
         };
