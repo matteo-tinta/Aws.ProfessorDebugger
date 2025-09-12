@@ -1,5 +1,4 @@
 ﻿using System.Text.RegularExpressions;
-using Amazon.S3;
 using Core.Cache;
 
 namespace Core.ResourceResolvers
@@ -8,20 +7,20 @@ namespace Core.ResourceResolvers
     {
         private readonly string arn;
         private readonly string bucketName;
-        private readonly IAmazonS3 _s3Client;
+        private readonly AwsResourceSingleFlightCache _cache;
 
-        public AwsResourceS3Resolver(string arn, IAmazonS3 s3Client)
+        public AwsResourceS3Resolver(string arn, AwsResourceSingleFlightCache cache)
         {
             this.arn = arn;
             this.bucketName = Regex.Match(arn, @":([^:]+)$").Groups[1].Value;
-            this._s3Client = s3Client;
+            _cache = cache;
         }
 
         public async Task<List<string>> GetDownstreamResourcesAsync()
         {
             var source = new HashSet<string>();
 
-            var notifications = await AwsResourceCache.GetBucketNotificationAsync(_s3Client, bucketName);
+            var notifications = await _cache.GetBucketNotificationAsync(bucketName);
 
             foreach (var notification in notifications.QueueConfigurations ?? [])
             {

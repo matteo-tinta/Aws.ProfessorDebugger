@@ -1,6 +1,4 @@
-﻿using System.Reflection.Emit;
-using Amazon.Runtime.Internal.Util;
-using Models;
+﻿using Models;
 
 namespace Core.Printers
 {

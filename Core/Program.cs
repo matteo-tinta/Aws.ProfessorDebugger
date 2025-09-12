@@ -27,7 +27,6 @@ class Program
 
             var explorer = await AwsClientFactory.CreateResourceResolverAsync(new CreateResourceResolverOptions()
             {
-                EnableParallelExecution = false /*AwsResourceCache.CacheHasBeenInitialized*/,
                 MaxLevel = options.Value.MaxLevel,
                 CacheProvider = graphCacheProvider
             });

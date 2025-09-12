@@ -1,6 +1,4 @@
 ﻿using System.Collections.Concurrent;
-using System.Text.Json;
-using System.Text.RegularExpressions;
 using Amazon.IdentityManagement;
 using Amazon.IdentityManagement.Model;
 using Amazon.Lambda;
@@ -11,8 +9,11 @@ using Amazon.SimpleNotificationService;
 using Amazon.SimpleNotificationService.Model;
 using Amazon.SimpleSystemsManagement;
 using Amazon.SimpleSystemsManagement.Model;
+using Amazon.SQS;
+using Amazon.SQS.Model;
 using Core.Cache.Providers;
 using Core.Enumerators;
+using GetPolicyRequest = Amazon.Lambda.Model.GetPolicyRequest;
 
 namespace Core.Cache
 {
@@ -31,6 +32,8 @@ namespace Core.Cache
         private static readonly ConcurrentDictionary<string, ListEventSourceMappingsResponse> _lambdaEventSourceEvents = new();
         private static readonly ConcurrentDictionary<string, Amazon.SimpleNotificationService.Model.ListSubscriptionsByTopicResponse> _snsSubscriptions = new();
         private static readonly ConcurrentDictionary<string, ListEventSourceMappingsResponse> _sqsLambdaTriggersEvents = new();
+        private static readonly ConcurrentDictionary<string, GetQueueAttributesResponse> _sqsQueueAttributes = new();
+        private static readonly ConcurrentDictionary<string, GetQueueUrlResponse> _sqsQueueUrls = new();
         private static readonly ConcurrentDictionary<string, Parameter> _ssmParameters = new();
         private static readonly ConcurrentDictionary<string, GetBucketNotificationResponse> _bucketNotifications = new();
         private static readonly ConcurrentDictionary<string, GetFunctionConfigurationResponse> _lambdaConfigs = new();
@@ -39,6 +42,7 @@ namespace Core.Cache
         private static readonly ConcurrentDictionary<string, ListAttachedRolePoliciesResponse> _attachedPolicyLists = new();
         private static readonly ConcurrentDictionary<string, Amazon.IdentityManagement.Model.GetPolicyResponse> _policyMetadata = new();
         private static readonly ConcurrentDictionary<(string policyArn, string versionId), GetPolicyVersionResponse> _policyVersions = new();
+        private static readonly ConcurrentDictionary<string, Amazon.Lambda.Model.GetPolicyResponse> _lambdaPolicies = new();
 
         private static bool _initialized = false;
 
@@ -79,6 +83,7 @@ namespace Core.Cache
                 foreach (var kv in cache.AttachedPolicies ?? []) _attachedPolicyLists[kv.Key] = kv.Value;
                 foreach (var kv in cache.PolicyMetadata ?? []) _policyMetadata[kv.Key] = kv.Value;
                 foreach (var kv in cache.PolicyVersions ?? []) _policyVersions[(kv.Key.Split('|')[0], kv.Key.Split('|')[1])] = kv.Value;
+                foreach (var kv in cache.SqsQueueAttributes ?? []) _sqsQueueAttributes[kv.Key] = kv.Value;
 
                 CacheHasBeenInitialized = true;
             }
@@ -106,6 +111,7 @@ namespace Core.Cache
                 SsmParameters = _ssmParameters.ToDictionary(kvp => kvp.Key, kvp => kvp.Value),
                 LambdaEventSourceEvents = _lambdaEventSourceEvents.ToDictionary(kvp => kvp.Key, kvp => kvp.Value),
                 SqsLambdaTriggerEvents = _sqsLambdaTriggersEvents.ToDictionary(kvp => kvp.Key, kvp => kvp.Value),
+                SqsQueueAttributes = _sqsQueueAttributes.ToDictionary(kvp => kvp.Key, kvp => kvp.Value),
                 SnsSubscriptions = _snsSubscriptions.ToDictionary(kvp => kvp.Key, kvp => kvp.Value),
             };
 
@@ -148,6 +154,36 @@ namespace Core.Cache
             ListSubscriptionsByTopicResponse value = await snsClient.ListSubscriptionsByTopicAsync(snsArn);
 
             _snsSubscriptions[snsArn] = value;
+            return value;
+        }
+        
+        public static async Task<GetQueueUrlResponse> GetSqsQueueUrl(AmazonSQSClient sqsClient, string queueName)
+        {
+            if (_sqsQueueUrls.TryGetValue(queueName, out var cached))
+            {
+                return cached;
+            }
+
+            GetQueueUrlResponse? value = await sqsClient.GetQueueUrlAsync(new GetQueueUrlRequest { QueueName = queueName });
+
+            _sqsQueueUrls[queueName] = value;
+            return value;
+        }
+        
+        public static async Task<GetQueueAttributesResponse> GetSqsQueueAttributes(AmazonSQSClient sqsClient, string sqsUrl)
+        {
+            if (_sqsQueueAttributes.TryGetValue(sqsUrl, out var cached))
+            {
+                return cached;
+            }
+
+            GetQueueAttributesResponse? value = await sqsClient.GetQueueAttributesAsync(new GetQueueAttributesRequest
+            {
+                QueueUrl = sqsUrl,
+                AttributeNames = new List<string> { "Policy" }
+            });
+
+            _sqsQueueAttributes[sqsUrl] = value;
             return value;
         }
 
@@ -335,6 +371,19 @@ namespace Core.Cache
 
             _policyVersions[key] = version;
             return version;
+        }
+        
+        public static async Task<Amazon.Lambda.Model.GetPolicyResponse> GetLambdaPolicyAsync(IAmazonLambda lambdaClient, string functionName)
+        {
+            if (_lambdaPolicies.TryGetValue(functionName, out var cached))
+            {
+                return cached;
+            }
+
+            var policy = await lambdaClient.GetPolicyAsync(new GetPolicyRequest { FunctionName = functionName });
+
+            _lambdaPolicies[functionName] = policy;
+            return policy;
         }
 
         // Optional: expose clearing method for testing or resets

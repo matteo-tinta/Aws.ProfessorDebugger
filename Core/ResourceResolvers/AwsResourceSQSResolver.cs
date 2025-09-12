@@ -1,14 +1,7 @@
-﻿using System.Collections.Generic;
-using System.Text.Json;
+﻿using System.Text.Json;
 using System.Text.RegularExpressions;
-using Amazon.IdentityManagement;
-using Amazon.Lambda;
-using Amazon.SimpleSystemsManagement;
 using Amazon.SimpleSystemsManagement.Model;
-using Amazon.SQS;
-using Amazon.SQS.Model;
 using Core.Cache;
-using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace Core.ResourceResolvers
 {
@@ -16,29 +9,20 @@ namespace Core.ResourceResolvers
     {
         private readonly string arn;
         private readonly string queueName;
-        private readonly AmazonSQSClient _sqsClient;
-        private readonly IAmazonLambda _lambdaClient;
-        private readonly IAmazonSimpleSystemsManagement _ssmClient;
-        private readonly IAmazonIdentityManagementService _iamClient;
+        private readonly AwsResourceSingleFlightCache _cache;
 
-        public AwsResourceSQSResolver(string arn, 
-            AmazonSQSClient sqsClient,
-            IAmazonLambda lambdaClient,
-            IAmazonSimpleSystemsManagement ssmClient,
-            IAmazonIdentityManagementService iamClient)
+        public AwsResourceSQSResolver(string arn,
+            AwsResourceSingleFlightCache cache)
         {
             this.arn = arn;
             this.queueName = Regex.Match(arn, @":([^:]+)$").Groups[1].Value;
-            this._sqsClient = sqsClient;
-            this._lambdaClient = lambdaClient;
-            this._ssmClient = ssmClient;
-            this._iamClient = iamClient;
+            _cache = cache;
         }
 
         public async Task<List<string>> GetDownstreamResourcesAsync()
         {
             var sources = new HashSet<string>();
-            var mappingResponse = await AwsResourceCache.GetSqsLambdaTriggersAsync(_lambdaClient, arn);
+            var mappingResponse = await _cache.GetSqsLambdaTriggersAsync(arn);
 
             foreach (var mapping in mappingResponse.EventSourceMappings)
             {
@@ -54,15 +38,10 @@ namespace Core.ResourceResolvers
             try
             {
                 Console.WriteLine($"PROCESSING SQS [{arn}]...");
-                var queueUrlResponse = await _sqsClient.GetQueueUrlAsync(new GetQueueUrlRequest { QueueName = queueName });
-
-
+                var queueUrlResponse = await _cache.GetSqsQueueUrl(this.queueName);
+                
                 // Get the queue policy to find allowed senders (e.g., SNS topics)
-                var attributes = await _sqsClient.GetQueueAttributesAsync(new GetQueueAttributesRequest
-                {
-                    QueueUrl = queueUrlResponse.QueueUrl,
-                    AttributeNames = new List<string> { "Policy" }
-                });
+                var attributes = await _cache.GetSqsQueueAttributes(queueUrlResponse.QueueUrl);
 
                 if (attributes.Attributes != null && attributes.Attributes.TryGetValue("Policy", out var policyJson))
                 {
@@ -88,42 +67,61 @@ namespace Core.ResourceResolvers
                 }
 
                 //Ceck inside lambda vars
-                var functions = await AwsResourceCache.GetLambdaFunctions(_lambdaClient);
-                foreach (var function in functions)
+                var functions = await _cache.GetLambdaFunctionsAsync();
+                
+                var semaphore = new SemaphoreSlim(5); // Limit to 5 concurrent operations
+                var tasks = functions.Select(async function =>
                 {
-                    var config = await AwsResourceCache.GetLambdaConfigAsync(_lambdaClient, function.FunctionName);
-
-                    //Reading the variables
-                    if (config.Environment?.Variables != null)
+                    await semaphore.WaitAsync();
+                    try
                     {
-                        foreach (var kvp in config.Environment.Variables)
+                        Console.WriteLine($"== READING POLICIES FOR {function.FunctionName} ({semaphore.CurrentCount}) ==");
+                        var config = await _cache.GetLambdaConfigAsync(function.FunctionName);
+
+                        // Check env variables
+                        bool isMatchInEnv = false;
+                        if (config.Environment?.Variables != null)
                         {
-                            if (kvp.Value != null
-                                && kvp.Key.ToLower() != "queueurl" //ignores pcim queue url in env variables
-                                && kvp.Key.ToLower() != "sqs__ingestionqueueurl" //ignores pcim queue url in env variables
-                                && kvp.Value.Contains(queueName, StringComparison.InvariantCultureIgnoreCase))
+                            foreach (var kvp in config.Environment.Variables)
                             {
-                                sources.Add(function.FunctionArn);
-                                break; // Found match, no need to continue scanning vars
+                                if (kvp.Value != null
+                                    && kvp.Key.ToLower() != "queueurl"
+                                    && kvp.Key.ToLower() != "sqs__ingestionqueueurl"
+                                    && kvp.Value.Contains(queueName, StringComparison.InvariantCultureIgnoreCase))
+                                {
+                                    isMatchInEnv = true;
+                                    break;
+                                }
                             }
                         }
+
+                        var matchingSources = new List<string>();
+
+                        if (isMatchInEnv)
+                        {
+                            matchingSources.Add(function.FunctionArn);
+                        }
+
+                        // Check policies and SSM
+                        var roleArn = config.Role;
+                        if (!string.IsNullOrEmpty(roleArn))
+                        {
+                            var roleName = roleArn.Split('/').Last();
+                            var policyMatches = await GetSqsPoliciesForSsmAsync(function.FunctionArn, roleName);
+                            matchingSources.AddRange(policyMatches);
+                        }
+
+                        return matchingSources;
                     }
-
-                    //Reading the policies and SSM
-                    var roleArn = config.Role;
-                    if (string.IsNullOrEmpty(roleArn)) continue;
-
-                    var roleName = roleArn.Split('/').Last();
-
-                    // --- INLINE/ATTACHED POLICIES FOR FINDING SQS IN SSM ---
-                    foreach (var item in await GetSqsPoliciesForSsmAsync(function.FunctionArn, roleName))
+                    finally
                     {
-                        sources.Add(item);
+                        semaphore.Release();
                     }
-                }
-
-
-                return sources.ToList();
+                    
+                });
+                
+                var results = await Task.WhenAll(tasks);
+                return sources.Concat(results.SelectMany(r => r).ToHashSet()).ToList();
             }
             catch (Exception e)
             {
@@ -186,23 +184,23 @@ namespace Core.ResourceResolvers
         {
             List<string> policies = new List<string>();
 
-            var inlinePolicyList = await AwsResourceCache.GetInlinePolicyListAsync(_iamClient, roleName);
+            var inlinePolicyList = await _cache.GetInlinePolicyListAsync(roleName);
             foreach (var policyName in inlinePolicyList.PolicyNames ?? Enumerable.Empty<string>())
             {
-                var policy = await AwsResourceCache.GetInlinePolicyAsync(_iamClient, roleName, policyName);
+                var policy = await _cache.GetInlinePolicyAsync(roleName, policyName);
 
                 var document = Uri.UnescapeDataString(policy.PolicyDocument);
                 var paramPaths = ExtractSsmParameterPathsFromPolicyDocument(document);
                 policies.AddRange(paramPaths);
             }
 
-            var attachedPolicies = await AwsResourceCache.GetAttachedPoliciesAsync(_iamClient, roleName);
+            var attachedPolicies = await _cache.GetAttachedPoliciesAsync(roleName);
             foreach (var attached in attachedPolicies.AttachedPolicies ?? [])
             {
-                var policyMetadata = await AwsResourceCache.GetPolicyMetadataAsync(_iamClient, attached.PolicyArn);
+                var policyMetadata = await _cache.GetPolicyMetadataAsync(attached.PolicyArn);
                 var versionId = policyMetadata.Policy.DefaultVersionId;
 
-                var policyVersion = await AwsResourceCache.GetPolicyVersionAsync(_iamClient, attached.PolicyArn, versionId);
+                var policyVersion = await _cache.GetPolicyVersionAsync(attached.PolicyArn, versionId);
                 var document = Uri.UnescapeDataString(policyVersion.PolicyVersion.Document);
                 var paramPaths = ExtractSsmParameterPathsFromPolicyDocument(document);
                 policies.AddRange(paramPaths);
@@ -227,7 +225,7 @@ namespace Core.ResourceResolvers
                 var parameterPath = match.Groups[1].Value;
                 try
                 {
-                    var parameterResponse = await AwsResourceCache.GetSsmParameter(_ssmClient, parameterPath);
+                    var parameterResponse = await _cache.GetSsmParameterAsync(parameterPath);
                     var jsonString = parameterResponse.Value;
 
                     using var docJson = JsonDocument.Parse(jsonString);

@@ -1,0 +1,485 @@
+{
+  "Nodes": {
+    "arn:aws:lambda:eu-west-1:297244223532:function:mastermind-searchindexer-searchinfochanged-dev": {
+      "Arn": "arn:aws:lambda:eu-west-1:297244223532:function:mastermind-searchindexer-searchinfochanged-dev",
+      "Name": "mastermind-searchindexer-searchinfochanged-dev",
+      "Type": "lambda",
+      "Parents": [
+        "arn:aws:sqs:eu-west-1:297244223532:mastermind-searchindexer-searchinfochanged-queue-dev"
+      ],
+      "Children": []
+    },
+    "arn:aws:sqs:eu-west-1:297244223532:mastermind-searchindexer-searchinfochanged-queue-dev": {
+      "Arn": "arn:aws:sqs:eu-west-1:297244223532:mastermind-searchindexer-searchinfochanged-queue-dev",
+      "Name": "mastermind-searchindexer-searchinfochanged-queue-dev",
+      "Type": "sqs",
+      "Parents": [
+        "arn:aws:sns:eu-west-1:297244223532:mastermind-dataloader-price-searchinfochanged-dev",
+        "arn:aws:sns:eu-west-1:297244223532:mastermind-dataloader-product-searchinfochanged-dev",
+        "arn:aws:sns:eu-west-1:297244223532:mastermind-dataloader-purchaseorder-searchinfochanged-dev",
+        "arn:aws:sns:eu-west-1:297244223532:mastermind-dataloader-worklist-searchinfochanged-dev"
+      ],
+      "Children": [
+        "arn:aws:lambda:eu-west-1:297244223532:function:mastermind-searchindexer-searchinfochanged-dev"
+      ]
+    },
+    "arn:aws:sns:eu-west-1:297244223532:mastermind-dataloader-price-searchinfochanged-dev": {
+      "Arn": "arn:aws:sns:eu-west-1:297244223532:mastermind-dataloader-price-searchinfochanged-dev",
+      "Name": "mastermind-dataloader-price-searchinfochanged-dev",
+      "Type": "sns",
+      "Parents": [
+        "arn:aws:lambda:eu-west-1:297244223532:function:mastermind-dataloader-price-variantinfochanged-dev"
+      ],
+      "Children": [
+        "arn:aws:sqs:eu-west-1:297244223532:mastermind-searchindexer-searchinfochanged-queue-dev"
+      ]
+    },
+    "arn:aws:sns:eu-west-1:297244223532:mastermind-dataloader-product-searchinfochanged-dev": {
+      "Arn": "arn:aws:sns:eu-west-1:297244223532:mastermind-dataloader-product-searchinfochanged-dev",
+      "Name": "mastermind-dataloader-product-searchinfochanged-dev",
+      "Type": "sns",
+      "Parents": [
+        "arn:aws:lambda:eu-west-1:297244223532:function:mastermind-dataloader-product-essentialinfochanged-dev"
+      ],
+      "Children": [
+        "arn:aws:sqs:eu-west-1:297244223532:mastermind-searchindexer-searchinfochanged-queue-dev"
+      ]
+    },
+    "arn:aws:sns:eu-west-1:297244223532:mastermind-dataloader-purchaseorder-searchinfochanged-dev": {
+      "Arn": "arn:aws:sns:eu-west-1:297244223532:mastermind-dataloader-purchaseorder-searchinfochanged-dev",
+      "Name": "mastermind-dataloader-purchaseorder-searchinfochanged-dev",
+      "Type": "sns",
+      "Parents": [
+        "arn:aws:lambda:eu-west-1:297244223532:function:mastermind-dataloader-purchaseorder-variantinfochanged-dev"
+      ],
+      "Children": [
+        "arn:aws:sqs:eu-west-1:297244223532:mastermind-searchindexer-searchinfochanged-queue-dev"
+      ]
+    },
+    "arn:aws:sns:eu-west-1:297244223532:mastermind-dataloader-worklist-searchinfochanged-dev": {
+      "Arn": "arn:aws:sns:eu-west-1:297244223532:mastermind-dataloader-worklist-searchinfochanged-dev",
+      "Name": "mastermind-dataloader-worklist-searchinfochanged-dev",
+      "Type": "sns",
+      "Parents": [
+        "arn:aws:lambda:eu-west-1:297244223532:function:mastermind-dataloader-worklist-variantinfochanged-dev"
+      ],
+      "Children": [
+        "arn:aws:sqs:eu-west-1:297244223532:mastermind-searchindexer-searchinfochanged-queue-dev"
+      ]
+    },
+    "arn:aws:lambda:eu-west-1:297244223532:function:mastermind-dataloader-product-essentialinfochanged-dev": {
+      "Arn": "arn:aws:lambda:eu-west-1:297244223532:function:mastermind-dataloader-product-essentialinfochanged-dev",
+      "Name": "mastermind-dataloader-product-essentialinfochanged-dev",
+      "Type": "lambda",
+      "Parents": [
+        "arn:aws:sqs:eu-west-1:297244223532:mastermind-dataloader-product-essentialinfochanged-queue-dev"
+      ],
+      "Children": [
+        "arn:aws:sns:eu-west-1:297244223532:mastermind-dataloader-product-searchinfochanged-dev"
+      ]
+    },
+    "arn:aws:lambda:eu-west-1:297244223532:function:mastermind-dataloader-purchaseorder-variantinfochanged-dev": {
+      "Arn": "arn:aws:lambda:eu-west-1:297244223532:function:mastermind-dataloader-purchaseorder-variantinfochanged-dev",
+      "Name": "mastermind-dataloader-purchaseorder-variantinfochanged-dev",
+      "Type": "lambda",
+      "Parents": [
+        "arn:aws:sqs:eu-west-1:297244223532:mastermind-dataloader-purchaseorder-variantinfochanged-queue-dev"
+      ],
+      "Children": [
+        "arn:aws:sns:eu-west-1:297244223532:mastermind-dataloader-purchaseorder-searchinfochanged-dev"
+      ]
+    },
+    "arn:aws:lambda:eu-west-1:297244223532:function:mastermind-dataloader-worklist-variantinfochanged-dev": {
+      "Arn": "arn:aws:lambda:eu-west-1:297244223532:function:mastermind-dataloader-worklist-variantinfochanged-dev",
+      "Name": "mastermind-dataloader-worklist-variantinfochanged-dev",
+      "Type": "lambda",
+      "Parents": [
+        "arn:aws:sqs:eu-west-1:297244223532:mastermind-dataloader-worklist-variantinfochanged-queue-dev"
+      ],
+      "Children": [
+        "arn:aws:sns:eu-west-1:297244223532:mastermind-dataloader-worklist-searchinfochanged-dev"
+      ]
+    },
+    "arn:aws:lambda:eu-west-1:297244223532:function:mastermind-dataloader-price-variantinfochanged-dev": {
+      "Arn": "arn:aws:lambda:eu-west-1:297244223532:function:mastermind-dataloader-price-variantinfochanged-dev",
+      "Name": "mastermind-dataloader-price-variantinfochanged-dev",
+      "Type": "lambda",
+      "Parents": [
+        "arn:aws:sqs:eu-west-1:297244223532:mastermind-dataloader-price-variantinfochanged-queue-dev"
+      ],
+      "Children": [
+        "arn:aws:sns:eu-west-1:297244223532:mastermind-dataloader-price-searchinfochanged-dev"
+      ]
+    },
+    "arn:aws:sqs:eu-west-1:297244223532:mastermind-dataloader-worklist-variantinfochanged-queue-dev": {
+      "Arn": "arn:aws:sqs:eu-west-1:297244223532:mastermind-dataloader-worklist-variantinfochanged-queue-dev",
+      "Name": "mastermind-dataloader-worklist-variantinfochanged-queue-dev",
+      "Type": "sqs",
+      "Parents": [
+        "arn:aws:sns:eu-west-1:297244223532:mastermind-ingestion-worklist-variantworklistinfochanged-dev"
+      ],
+      "Children": [
+        "arn:aws:lambda:eu-west-1:297244223532:function:mastermind-dataloader-worklist-variantinfochanged-dev"
+      ]
+    },
+    "arn:aws:sqs:eu-west-1:297244223532:mastermind-dataloader-purchaseorder-variantinfochanged-queue-dev": {
+      "Arn": "arn:aws:sqs:eu-west-1:297244223532:mastermind-dataloader-purchaseorder-variantinfochanged-queue-dev",
+      "Name": "mastermind-dataloader-purchaseorder-variantinfochanged-queue-dev",
+      "Type": "sqs",
+      "Parents": [
+        "arn:aws:sns:eu-west-1:297244223532:mastermind-ingestion-purchaseorder-variantpurchaseorderinfochanged-dev"
+      ],
+      "Children": [
+        "arn:aws:lambda:eu-west-1:297244223532:function:mastermind-dataloader-purchaseorder-variantinfochanged-dev"
+      ]
+    },
+    "arn:aws:sqs:eu-west-1:297244223532:mastermind-dataloader-product-essentialinfochanged-queue-dev": {
+      "Arn": "arn:aws:sqs:eu-west-1:297244223532:mastermind-dataloader-product-essentialinfochanged-queue-dev",
+      "Name": "mastermind-dataloader-product-essentialinfochanged-queue-dev",
+      "Type": "sqs",
+      "Parents": [
+        "arn:aws:sns:eu-west-1:297244223532:product-essentialproductinfo-changes-dev"
+      ],
+      "Children": [
+        "arn:aws:lambda:eu-west-1:297244223532:function:mastermind-dataloader-product-essentialinfochanged-dev"
+      ]
+    },
+    "arn:aws:sqs:eu-west-1:297244223532:mastermind-dataloader-price-variantinfochanged-queue-dev": {
+      "Arn": "arn:aws:sqs:eu-west-1:297244223532:mastermind-dataloader-price-variantinfochanged-queue-dev",
+      "Name": "mastermind-dataloader-price-variantinfochanged-queue-dev",
+      "Type": "sqs",
+      "Parents": [
+        "arn:aws:sns:eu-west-1:297244223532:price-info-changes-dev"
+      ],
+      "Children": [
+        "arn:aws:lambda:eu-west-1:297244223532:function:mastermind-dataloader-price-variantinfochanged-dev"
+      ]
+    },
+    "arn:aws:sns:eu-west-1:297244223532:price-info-changes-dev": {
+      "Arn": "arn:aws:sns:eu-west-1:297244223532:price-info-changes-dev",
+      "Name": "price-info-changes-dev",
+      "Type": "sns",
+      "Parents": [
+        "arn:aws:lambda:eu-west-1:297244223532:function:price-outdated-prices-lambda-consumer-dev",
+        "arn:aws:lambda:eu-west-1:297244223532:function:price-pricelist-lambda-consumer-dev"
+      ],
+      "Children": [
+        "arn:aws:sqs:eu-west-1:297244223532:offer-priceinfochanged-ingestor-dev",
+        "arn:aws:sqs:eu-west-1:297244223532:mastermind-dataloader-price-variantinfochanged-queue-dev"
+      ]
+    },
+    "arn:aws:sns:eu-west-1:297244223532:mastermind-ingestion-purchaseorder-variantpurchaseorderinfochanged-dev": {
+      "Arn": "arn:aws:sns:eu-west-1:297244223532:mastermind-ingestion-purchaseorder-variantpurchaseorderinfochanged-dev",
+      "Name": "mastermind-ingestion-purchaseorder-variantpurchaseorderinfochanged-dev",
+      "Type": "sns",
+      "Parents": [
+        "arn:aws:lambda:eu-west-1:297244223532:function:mastermind-ingestion-purchaseorder-purchaseorderchanged-dev"
+      ],
+      "Children": [
+        "arn:aws:sqs:eu-west-1:297244223532:mastermind-dataloader-purchaseorder-variantinfochanged-queue-dev"
+      ]
+    },
+    "arn:aws:sns:eu-west-1:297244223532:mastermind-ingestion-worklist-variantworklistinfochanged-dev": {
+      "Arn": "arn:aws:sns:eu-west-1:297244223532:mastermind-ingestion-worklist-variantworklistinfochanged-dev",
+      "Name": "mastermind-ingestion-worklist-variantworklistinfochanged-dev",
+      "Type": "sns",
+      "Parents": [
+        "arn:aws:lambda:eu-west-1:297244223532:function:mastermind-ingestion-worklist-worklistreadytobeworked-dev"
+      ],
+      "Children": [
+        "arn:aws:sqs:eu-west-1:297244223532:mastermind-dataloader-worklist-variantinfochanged-queue-dev"
+      ]
+    },
+    "arn:aws:sns:eu-west-1:297244223532:product-essentialproductinfo-changes-dev": {
+      "Arn": "arn:aws:sns:eu-west-1:297244223532:product-essentialproductinfo-changes-dev",
+      "Name": "product-essentialproductinfo-changes-dev",
+      "Type": "sns",
+      "Parents": [
+        "arn:aws:lambda:eu-west-1:297244223532:function:product-phtc-dev",
+        "arn:aws:lambda:eu-west-1:297244223532:function:product-phc-dev",
+        "arn:aws:lambda:eu-west-1:297244223532:function:product-media-dev"
+      ],
+      "Children": [
+        "arn:aws:sqs:eu-west-1:297244223532:mastermind-dataloader-product-essentialinfochanged-queue-dev"
+      ]
+    },
+    "arn:aws:lambda:eu-west-1:297244223532:function:mastermind-ingestion-purchaseorder-purchaseorderchanged-dev": {
+      "Arn": "arn:aws:lambda:eu-west-1:297244223532:function:mastermind-ingestion-purchaseorder-purchaseorderchanged-dev",
+      "Name": "mastermind-ingestion-purchaseorder-purchaseorderchanged-dev",
+      "Type": "lambda",
+      "Parents": [
+        "arn:aws:sqs:eu-west-1:297244223532:mastermind-ingestion-purchaseorder-purchaseorderchanged-queue-dev"
+      ],
+      "Children": [
+        "arn:aws:sns:eu-west-1:297244223532:mastermind-ingestion-purchaseorder-variantpurchaseorderinfochanged-dev"
+      ]
+    },
+    "arn:aws:lambda:eu-west-1:297244223532:function:product-phtc-dev": {
+      "Arn": "arn:aws:lambda:eu-west-1:297244223532:function:product-phtc-dev",
+      "Name": "product-phtc-dev",
+      "Type": "lambda",
+      "Parents": [
+        "arn:aws:sqs:eu-west-1:297244223532:phtc-event-notification-queue-dev"
+      ],
+      "Children": []
+    },
+    "arn:aws:lambda:eu-west-1:297244223532:function:product-phc-dev": {
+      "Arn": "arn:aws:lambda:eu-west-1:297244223532:function:product-phc-dev",
+      "Name": "product-phc-dev",
+      "Type": "lambda",
+      "Parents": [
+        "arn:aws:sqs:eu-west-1:297244223532:phc-event-notification-queue-dev"
+      ],
+      "Children": []
+    },
+    "arn:aws:lambda:eu-west-1:297244223532:function:mastermind-ingestion-worklist-worklistreadytobeworked-dev": {
+      "Arn": "arn:aws:lambda:eu-west-1:297244223532:function:mastermind-ingestion-worklist-worklistreadytobeworked-dev",
+      "Name": "mastermind-ingestion-worklist-worklistreadytobeworked-dev",
+      "Type": "lambda",
+      "Parents": [
+        "arn:aws:sqs:eu-west-1:297244223532:mastermind-ingestion-worklist-worklistreadytobeworked-queue-dev"
+      ],
+      "Children": [
+        "arn:aws:sns:eu-west-1:297244223532:mastermind-ingestion-worklist-variantworklistinfochanged-dev"
+      ]
+    },
+    "arn:aws:lambda:eu-west-1:297244223532:function:product-media-dev": {
+      "Arn": "arn:aws:lambda:eu-west-1:297244223532:function:product-media-dev",
+      "Name": "product-media-dev",
+      "Type": "lambda",
+      "Parents": [
+        "arn:aws:sqs:eu-west-1:297244223532:media-event-notification-queue-dev"
+      ],
+      "Children": []
+    },
+    "arn:aws:lambda:eu-west-1:297244223532:function:price-outdated-prices-lambda-consumer-dev": {
+      "Arn": "arn:aws:lambda:eu-west-1:297244223532:function:price-outdated-prices-lambda-consumer-dev",
+      "Name": "price-outdated-prices-lambda-consumer-dev",
+      "Type": "lambda",
+      "Parents": [
+        "arn:aws:sqs:eu-west-1:297244223532:price-outdated-prices-dev"
+      ],
+      "Children": []
+    },
+    "arn:aws:lambda:eu-west-1:297244223532:function:price-pricelist-lambda-consumer-dev": {
+      "Arn": "arn:aws:lambda:eu-west-1:297244223532:function:price-pricelist-lambda-consumer-dev",
+      "Name": "price-pricelist-lambda-consumer-dev",
+      "Type": "lambda",
+      "Parents": [
+        "arn:aws:sqs:eu-west-1:297244223532:price-pricelist-ingestor-dev"
+      ],
+      "Children": []
+    },
+    "arn:aws:sqs:eu-west-1:297244223532:offer-priceinfochanged-ingestor-dev": {
+      "Arn": "arn:aws:sqs:eu-west-1:297244223532:offer-priceinfochanged-ingestor-dev",
+      "Name": "offer-priceinfochanged-ingestor-dev",
+      "Type": "sqs",
+      "Parents": [
+        "arn:aws:sns:eu-west-1:297244223532:price-info-changes-dev"
+      ],
+      "Children": [
+        "arn:aws:lambda:eu-west-1:297244223532:function:offer-priceinfochanged-ingestor-dev"
+      ]
+    },
+    "arn:aws:sqs:eu-west-1:297244223532:mastermind-ingestion-purchaseorder-purchaseorderchanged-queue-dev": {
+      "Arn": "arn:aws:sqs:eu-west-1:297244223532:mastermind-ingestion-purchaseorder-purchaseorderchanged-queue-dev",
+      "Name": "mastermind-ingestion-purchaseorder-purchaseorderchanged-queue-dev",
+      "Type": "sqs",
+      "Parents": [
+        "arn:aws:s3:::mastermind-ingestion-purchaseorderchanged-dev-297244223532"
+      ],
+      "Children": [
+        "arn:aws:lambda:eu-west-1:297244223532:function:mastermind-ingestion-purchaseorder-purchaseorderchanged-dev"
+      ]
+    },
+    "arn:aws:sqs:eu-west-1:297244223532:phtc-event-notification-queue-dev": {
+      "Arn": "arn:aws:sqs:eu-west-1:297244223532:phtc-event-notification-queue-dev",
+      "Name": "phtc-event-notification-queue-dev",
+      "Type": "sqs",
+      "Parents": [
+        "arn:aws:s3:::product-input-hierarchy-changed-dev-eu-west-1-297244223532"
+      ],
+      "Children": [
+        "arn:aws:lambda:eu-west-1:297244223532:function:product-phtc-dev"
+      ]
+    },
+    "arn:aws:sqs:eu-west-1:297244223532:phc-event-notification-queue-dev": {
+      "Arn": "arn:aws:sqs:eu-west-1:297244223532:phc-event-notification-queue-dev",
+      "Name": "phc-event-notification-queue-dev",
+      "Type": "sqs",
+      "Parents": [
+        "arn:aws:s3:::product-input-hierarchy-changed-dev-eu-west-1-297244223532"
+      ],
+      "Children": [
+        "arn:aws:lambda:eu-west-1:297244223532:function:product-phc-dev"
+      ]
+    },
+    "arn:aws:sqs:eu-west-1:297244223532:mastermind-ingestion-worklist-worklistreadytobeworked-queue-dev": {
+      "Arn": "arn:aws:sqs:eu-west-1:297244223532:mastermind-ingestion-worklist-worklistreadytobeworked-queue-dev",
+      "Name": "mastermind-ingestion-worklist-worklistreadytobeworked-queue-dev",
+      "Type": "sqs",
+      "Parents": [
+        "arn:aws:s3:::mastermind-ingestion-worklistreadytobeworked-dev-297244223532"
+      ],
+      "Children": [
+        "arn:aws:lambda:eu-west-1:297244223532:function:mastermind-ingestion-worklist-worklistreadytobeworked-dev"
+      ]
+    },
+    "arn:aws:sqs:eu-west-1:297244223532:media-event-notification-queue-dev": {
+      "Arn": "arn:aws:sqs:eu-west-1:297244223532:media-event-notification-queue-dev",
+      "Name": "media-event-notification-queue-dev",
+      "Type": "sqs",
+      "Parents": [
+        "arn:aws:sns:eu-west-1:754602177308:variantMediaChanged-topic-dev"
+      ],
+      "Children": [
+        "arn:aws:lambda:eu-west-1:297244223532:function:product-media-dev"
+      ]
+    },
+    "arn:aws:sqs:eu-west-1:297244223532:price-pricelist-ingestor-dev": {
+      "Arn": "arn:aws:sqs:eu-west-1:297244223532:price-pricelist-ingestor-dev",
+      "Name": "price-pricelist-ingestor-dev",
+      "Type": "sqs",
+      "Parents": [
+        "arn:aws:sns:eu-west-1:297244223532:pricelist-s3-event-notification-dev"
+      ],
+      "Children": [
+        "arn:aws:lambda:eu-west-1:297244223532:function:price-pricelist-lambda-consumer-dev"
+      ]
+    },
+    "arn:aws:sqs:eu-west-1:297244223532:price-outdated-prices-dev": {
+      "Arn": "arn:aws:sqs:eu-west-1:297244223532:price-outdated-prices-dev",
+      "Name": "price-outdated-prices-dev",
+      "Type": "sqs",
+      "Parents": [
+        "arn:aws:lambda:eu-west-1:297244223532:function:price-outdated-prices-poller-dev"
+      ],
+      "Children": [
+        "arn:aws:lambda:eu-west-1:297244223532:function:price-outdated-prices-lambda-consumer-dev"
+      ]
+    },
+    "arn:aws:lambda:eu-west-1:297244223532:function:offer-priceinfochanged-ingestor-dev": {
+      "Arn": "arn:aws:lambda:eu-west-1:297244223532:function:offer-priceinfochanged-ingestor-dev",
+      "Name": "offer-priceinfochanged-ingestor-dev",
+      "Type": "lambda",
+      "Parents": [
+        "arn:aws:sqs:eu-west-1:297244223532:offer-priceinfochanged-ingestor-dev"
+      ],
+      "Children": []
+    },
+    "arn:aws:s3:::product-input-hierarchy-changed-dev-eu-west-1-297244223532": {
+      "Arn": "arn:aws:s3:::product-input-hierarchy-changed-dev-eu-west-1-297244223532",
+      "Name": "product-input-hierarchy-changed-dev-eu-west-1-297244223532",
+      "Type": "s3",
+      "Parents": [],
+      "Children": [
+        "arn:aws:sqs:eu-west-1:297244223532:phc-event-notification-queue-dev",
+        "arn:aws:sqs:eu-west-1:297244223532:phtc-event-notification-queue-dev"
+      ]
+    },
+    "arn:aws:s3:::mastermind-ingestion-purchaseorderchanged-dev-297244223532": {
+      "Arn": "arn:aws:s3:::mastermind-ingestion-purchaseorderchanged-dev-297244223532",
+      "Name": "mastermind-ingestion-purchaseorderchanged-dev-297244223532",
+      "Type": "s3",
+      "Parents": [],
+      "Children": [
+        "arn:aws:sqs:eu-west-1:297244223532:mastermind-ingestion-purchaseorder-purchaseorderchanged-queue-dev"
+      ]
+    },
+    "arn:aws:s3:::mastermind-ingestion-worklistreadytobeworked-dev-297244223532": {
+      "Arn": "arn:aws:s3:::mastermind-ingestion-worklistreadytobeworked-dev-297244223532",
+      "Name": "mastermind-ingestion-worklistreadytobeworked-dev-297244223532",
+      "Type": "s3",
+      "Parents": [],
+      "Children": [
+        "arn:aws:sqs:eu-west-1:297244223532:mastermind-ingestion-worklist-worklistreadytobeworked-queue-dev"
+      ]
+    },
+    "arn:aws:sns:eu-west-1:754602177308:variantMediaChanged-topic-dev": {
+      "Arn": "arn:aws:sns:eu-west-1:754602177308:variantMediaChanged-topic-dev",
+      "Name": "variantMediaChanged-topic-dev",
+      "Type": "sns",
+      "Parents": [],
+      "Children": []
+    },
+    "arn:aws:lambda:eu-west-1:297244223532:function:price-outdated-prices-poller-dev": {
+      "Arn": "arn:aws:lambda:eu-west-1:297244223532:function:price-outdated-prices-poller-dev",
+      "Name": "price-outdated-prices-poller-dev",
+      "Type": "lambda",
+      "Parents": [],
+      "Children": [
+        "arn:aws:sqs:eu-west-1:297244223532:price-outdated-prices-dev"
+      ]
+    },
+    "arn:aws:sns:eu-west-1:297244223532:pricelist-s3-event-notification-dev": {
+      "Arn": "arn:aws:sns:eu-west-1:297244223532:pricelist-s3-event-notification-dev",
+      "Name": "pricelist-s3-event-notification-dev",
+      "Type": "sns",
+      "Parents": [
+        "arn:aws:s3:::offer-input-pricelists-dev-eu-west-1-297244223532"
+      ],
+      "Children": [
+        "arn:aws:sqs:eu-west-1:297244223532:price-pricelist-ingestor-dev",
+        "arn:aws:sqs:eu-west-1:297244223532:offer-pricelist-ingestor-dev"
+      ]
+    },
+    "arn:aws:s3:::offer-input-pricelists-dev-eu-west-1-297244223532": {
+      "Arn": "arn:aws:s3:::offer-input-pricelists-dev-eu-west-1-297244223532",
+      "Name": "offer-input-pricelists-dev-eu-west-1-297244223532",
+      "Type": "s3",
+      "Parents": [],
+      "Children": [
+        "arn:aws:sns:eu-west-1:297244223532:pricelist-s3-event-notification-dev"
+      ]
+    },
+    "arn:aws:sqs:eu-west-1:297244223532:offer-pricelist-ingestor-dev": {
+      "Arn": "arn:aws:sqs:eu-west-1:297244223532:offer-pricelist-ingestor-dev",
+      "Name": "offer-pricelist-ingestor-dev",
+      "Type": "sqs",
+      "Parents": [
+        "arn:aws:sns:eu-west-1:297244223532:pricelist-s3-event-notification-dev"
+      ],
+      "Children": [
+        "arn:aws:lambda:eu-west-1:297244223532:function:offer-pricelist-ingestor-dev"
+      ]
+    },
+    "arn:aws:lambda:eu-west-1:297244223532:function:offer-pricelist-ingestor-dev": {
+      "Arn": "arn:aws:lambda:eu-west-1:297244223532:function:offer-pricelist-ingestor-dev",
+      "Name": "offer-pricelist-ingestor-dev",
+      "Type": "lambda",
+      "Parents": [
+        "arn:aws:sqs:eu-west-1:297244223532:offer-pricelist-ingestor-dev"
+      ],
+      "Children": []
+    },
+    "arn:aws:lambda:eu-west-1:297244223532:function:acl-pricelist-ingestor-dev": {
+      "Arn": "arn:aws:lambda:eu-west-1:297244223532:function:acl-pricelist-ingestor-dev",
+      "Name": "acl-pricelist-ingestor-dev",
+      "Type": "lambda",
+      "Parents": [
+        "arn:aws:sqs:eu-west-1:297244223532:acl-pricelist-ingestor-dev"
+      ],
+      "Children": []
+    },
+    "arn:aws:sqs:eu-west-1:297244223532:acl-pricelist-ingestor-dev": {
+      "Arn": "arn:aws:sqs:eu-west-1:297244223532:acl-pricelist-ingestor-dev",
+      "Name": "acl-pricelist-ingestor-dev",
+      "Type": "sqs",
+      "Parents": [
+        "arn:aws:s3:::acl-input-pricelist-dev-eu-west-1-297244223532"
+      ],
+      "Children": [
+        "arn:aws:lambda:eu-west-1:297244223532:function:acl-pricelist-ingestor-dev"
+      ]
+    },
+    "arn:aws:s3:::acl-input-pricelist-dev-eu-west-1-297244223532": {
+      "Arn": "arn:aws:s3:::acl-input-pricelist-dev-eu-west-1-297244223532",
+      "Name": "acl-input-pricelist-dev-eu-west-1-297244223532",
+      "Type": "s3",
+      "Parents": [],
+      "Children": [
+        "arn:aws:sqs:eu-west-1:297244223532:acl-pricelist-ingestor-dev"
+      ]
+    }
+  }
+}

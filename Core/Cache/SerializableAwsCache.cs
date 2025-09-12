@@ -1,9 +1,9 @@
-﻿using System.Collections.Concurrent;
-using Amazon.IdentityManagement.Model;
+﻿using Amazon.IdentityManagement.Model;
 using Amazon.Lambda.Model;
 using Amazon.S3.Model;
 using Amazon.SimpleNotificationService.Model;
 using Amazon.SimpleSystemsManagement.Model;
+using Amazon.SQS.Model;
 
 namespace Core.Cache
 {
@@ -22,5 +22,6 @@ namespace Core.Cache
         public Dictionary<string, GetPolicyVersionResponse> PolicyVersions { get; set; } = [];
         public Dictionary<string, ListEventSourceMappingsResponse> SqsLambdaTriggerEvents { get; set; } = [];
         public Dictionary<string, ListSubscriptionsByTopicResponse> SnsSubscriptions { get; set; } = [];
+        public Dictionary<string, GetQueueAttributesResponse> SqsQueueAttributes { get; set; }
     }
 }

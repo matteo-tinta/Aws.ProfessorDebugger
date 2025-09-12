@@ -1,6 +1,4 @@
-﻿using System.Text.RegularExpressions;
-
-namespace Models
+﻿namespace Models
 {
     public class AwsResourceGraph
     {

@@ -31,7 +31,6 @@ namespace Core
 
     internal record CreateResourceResolverOptions
     {
-        public bool EnableParallelExecution { get; set; } = false;
         public int? MaxLevel { get; set; }
         public required ICacheProvider<AwsResourceGraph> CacheProvider { get; set; }
         public bool IgnoreCacheAndOverride { get; internal set; }
@@ -39,7 +38,7 @@ namespace Core
 
     internal static class AwsClientFactory
     {
-        public async static Task<AwsResourceResolver> CreateResourceResolverAsync(CreateResourceResolverOptions options)
+        public static async Task<AwsResourceResolver> CreateResourceResolverAsync(CreateResourceResolverOptions options)
         {
             var lambdaClient = new AmazonLambdaClient();
             var sqsClient = new Amazon.SQS.AmazonSQSClient();
@@ -48,6 +47,14 @@ namespace Core
             var iamClient = new Amazon.IdentityManagement.AmazonIdentityManagementServiceClient();
             var ssmClient = new Amazon.SimpleSystemsManagement.AmazonSimpleSystemsManagementClient();
 
+            var cache = new AwsResourceSingleFlightCache(
+                s3Client,
+                lambdaClient,
+                ssmClient,
+                snsClient,
+                iamClient,
+                sqsClient);
+            
             //Get Cache or build new cache
             AwsResourceGraph graph = null;
             if (!options.IgnoreCacheAndOverride)
@@ -62,9 +69,7 @@ namespace Core
                 }
             }
 
-            return new AwsResourceResolver(lambdaClient, sqsClient, snsClient, s3Client, iamClient, ssmClient, graph ?? new AwsResourceGraph(),
-                options.MaxLevel, 
-                options.EnableParallelExecution);
+            return new AwsResourceResolver(graph ?? new AwsResourceGraph(), cache, options.MaxLevel);
         }
 
         public static ICacheProvider<SerializableAwsCache> CreateCacheProviderForAwsCache(CreateCacheProviderOptions options) => options.CacheType switch

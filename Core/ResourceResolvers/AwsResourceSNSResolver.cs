@@ -1,9 +1,5 @@
 ﻿using System.Text.Json;
 using System.Text.RegularExpressions;
-using Amazon.IdentityManagement;
-using Amazon.Lambda;
-using Amazon.S3;
-using Amazon.SimpleNotificationService;
 using Core.Cache;
 
 namespace Core.ResourceResolvers
@@ -11,22 +7,13 @@ namespace Core.ResourceResolvers
     internal class AwsResourceSNSResolver: IAwsResourceResolver
     {
         private readonly string arn;
-        private readonly AmazonS3Client _s3Client;
-        private readonly AmazonLambdaClient _lambdaClient;
-        private readonly IAmazonIdentityManagementService _iamClient;
-        private readonly IAmazonSimpleNotificationService _snsClient;
+        private readonly AwsResourceSingleFlightCache _cache;
 
         public AwsResourceSNSResolver(string arn, 
-            AmazonS3Client s3Client,
-            AmazonLambdaClient lambdaClient,
-            IAmazonIdentityManagementService iamClient,
-            IAmazonSimpleNotificationService snsClient)
+            AwsResourceSingleFlightCache cache)
         {
             this.arn = arn;
-            this._s3Client = s3Client;
-            this._lambdaClient = lambdaClient;
-            this._iamClient = iamClient;
-            this._snsClient = snsClient;
+            _cache = cache;
         }
 
         public async Task<List<string>> GetDownstreamResourcesAsync()
@@ -35,7 +22,7 @@ namespace Core.ResourceResolvers
 
             try
             {
-                var response = await AwsResourceCache.GetSnsSubscriptionsByTopicArnAsync(_snsClient, arn);
+                var response = await _cache.GetSnsSubscriptionsByTopicArnAsync(arn);
                 foreach (var subscription in response.Subscriptions)
                 {
                     switch (subscription.Protocol)
@@ -64,12 +51,12 @@ namespace Core.ResourceResolvers
             var snsName = Regex.Match(arn, @":([^:]+)$").Groups[1].Value;
 
             // 1. Check S3 Buckets → SNS
-            var buckets = await AwsResourceCache.GetBuckets(_s3Client);
-            foreach (var bucket in buckets)
+            var buckets = await _cache.GetBucketsAsync();
+            var tasks = buckets.Select(async bucket =>
             {
                 try
                 {
-                    var notificationConfig = await AwsResourceCache.GetBucketNotificationAsync(_s3Client, bucket.BucketName);
+                    var notificationConfig = await _cache.GetBucketNotificationAsync(bucket.BucketName);
 
                     if (notificationConfig.TopicConfigurations != null)
                     {
@@ -77,23 +64,28 @@ namespace Core.ResourceResolvers
                         {
                             if (!string.IsNullOrEmpty(topicConfig.Topic) && topicConfig.Topic == arn)
                             {
-                                sources.Add($"arn:aws:s3:::{bucket.BucketName}");
+                                return $"arn:aws:s3:::{bucket.BucketName}";
                             }
                         }
                     }
                 }
                 catch
                 {
-                    continue; // Skip buckets with access issues
+                    // Skip buckets with access issues
                 }
-            }
+
+                return null; // No matching topic
+            });
+
+            var results = await Task.WhenAll(tasks);
+            sources.AddRange(results.Where(r => r != null).ToList());
 
             // 2. Check Lambda → SNS (via IAM role policies) AND environment variables
-            var functions = await AwsResourceCache.GetLambdaFunctions(_lambdaClient);
+            var functions = await _cache.GetLambdaFunctionsAsync();
 
             foreach (var function in functions)
             {
-                var config = await AwsResourceCache.GetLambdaConfigAsync(_lambdaClient, function.FunctionName);
+                var config = await _cache.GetLambdaConfigAsync(function.FunctionName);
 
                 var roleArn = config.Role;
                 if (string.IsNullOrEmpty(roleArn)) continue;
@@ -101,11 +93,11 @@ namespace Core.ResourceResolvers
                 var roleName = roleArn.Split('/').Last();
 
                 // --- INLINE POLICIES ---
-                var inlinePolicyList = await AwsResourceCache.GetInlinePolicyListAsync(_iamClient, roleName);
+                var inlinePolicyList = await _cache.GetInlinePolicyListAsync(roleName);
 
                 foreach (var policyName in inlinePolicyList.PolicyNames ?? Enumerable.Empty<string>())
                 {
-                    var policy = await AwsResourceCache.GetInlinePolicyAsync(_iamClient, roleName, policyName);
+                    var policy = await _cache.GetInlinePolicyAsync(roleName, policyName);
 
                     if (PolicyGrantsSnsPublish(policy.PolicyDocument, arn))
                     {
@@ -115,15 +107,15 @@ namespace Core.ResourceResolvers
                 }
 
                 // --- MANAGED POLICIES ---
-                var attachedPolicies = await AwsResourceCache.GetAttachedPoliciesAsync(_iamClient, roleName);
+                var attachedPolicies = await _cache.GetAttachedPoliciesAsync(roleName);
 
                 foreach (var attached in attachedPolicies.AttachedPolicies ?? [])
                 {
-                    var policyMetadata = await AwsResourceCache.GetPolicyMetadataAsync(_iamClient, attached.PolicyArn);
+                    var policyMetadata = await _cache.GetPolicyMetadataAsync(attached.PolicyArn);
 
                     var versionId = policyMetadata.Policy.DefaultVersionId;
 
-                    var policyVersion = await AwsResourceCache.GetPolicyVersionAsync(_iamClient, attached.PolicyArn, versionId);
+                    var policyVersion = await _cache.GetPolicyVersionAsync(attached.PolicyArn, versionId);
 
                     if (PolicyGrantsSnsPublish(policyVersion.PolicyVersion.Document, arn))
                     {
