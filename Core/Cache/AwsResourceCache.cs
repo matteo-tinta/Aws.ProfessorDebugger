@@ -11,9 +11,9 @@ using Amazon.SimpleSystemsManagement;
 using Amazon.SimpleSystemsManagement.Model;
 using Amazon.SQS;
 using Amazon.SQS.Model;
+using Core.Cache.Enumerators;
 using Core.Cache.Models;
 using Core.Cache.Providers;
-using Core.Enumerators;
 using GetPolicyRequest = Amazon.Lambda.Model.GetPolicyRequest;
 
 namespace Core.Cache

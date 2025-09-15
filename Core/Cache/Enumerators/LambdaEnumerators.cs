@@ -1,7 +1,7 @@
 ﻿using Amazon.Lambda;
 using Amazon.Lambda.Model;
 
-namespace Core.Enumerators
+namespace Core.Cache.Enumerators
 {
     internal static class LambdaEnumerators
     {

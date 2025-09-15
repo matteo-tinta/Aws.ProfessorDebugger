@@ -1,7 +1,7 @@
 ﻿using System.Text.Json;
 using Models;
 
-namespace Core.Printers
+namespace Cli.Printers
 {
     internal class GraphGraphPrinter : IGraphPrinter
     {

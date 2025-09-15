@@ -4,13 +4,21 @@ using Models;
 
 namespace Core
 {
-    internal class AwsResourceResolver
+    public interface IAwsClientResourceResolver
     {
+        public AwsResourceGraph Graph { get; }
+
+        Task TraverseAsync(string arn);
+    }
+
+    internal class AwsClientResourceResolver
+    {
+        
         private readonly AwsResourceSingleFlightCache cache;
         private readonly int? maxLevel;
         public AwsResourceGraph Graph { get; private set; }
 
-        public AwsResourceResolver(AwsResourceGraph graph,
+        public AwsClientResourceResolver(AwsResourceGraph graph,
             AwsResourceSingleFlightCache cache,
             int? maxLevel = null)
         {

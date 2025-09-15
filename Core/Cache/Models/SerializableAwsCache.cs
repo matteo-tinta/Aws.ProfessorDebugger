@@ -7,7 +7,7 @@ using Amazon.SQS.Model;
 
 namespace Core.Cache.Models
 {
-    internal class SerializableAwsCache
+    public class SerializableAwsCache
     {
         public List<FunctionConfiguration> LambdaFunctions { get; set; } = [];
         public List<S3Bucket> Buckets { get; set; } = [];

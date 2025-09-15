@@ -1,7 +1,8 @@
 ﻿using System.Text.RegularExpressions;
 using CommandLine;
+using Core.Cache.Providers;
 
-namespace Core
+namespace Cli
 {
     internal class CliOptions
     {

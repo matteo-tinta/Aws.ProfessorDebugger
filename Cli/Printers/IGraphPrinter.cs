@@ -1,6 +1,6 @@
 ﻿using Models;
 
-namespace Core.Printers
+namespace Cli.Printers
 {
     internal interface IGraphPrinter
     {

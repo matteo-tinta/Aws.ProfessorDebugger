@@ -2,44 +2,31 @@
 using Core.Cache;
 using Core.Cache.Models;
 using Core.Cache.Providers;
-using Core.Printers;
+using Core.Facade;
 using Models;
 
 namespace Core
 {
-    internal enum CacheType
-    {
-        JsonFile,
-        //TODO: Redis?
-    }
-
-    internal enum GraphPrinterType
-    {
-        Cli,
-        Json,
-        Graph
-    }
-
-    internal record CreateCacheProviderOptions
-    {
-        public CacheType CacheType { get; set; } = CacheType.JsonFile;
-    }
-
-    internal record CreateGraphPrinterOptions
-    {
-        public GraphPrinterType Type { get; set; } = GraphPrinterType.Cli;
-    }
-
-    internal record CreateResourceResolverOptions
+    public record CreateResourceResolverOptions
     {
         public int? MaxLevel { get; set; }
-        public required ICacheProvider<AwsResourceGraph> CacheProvider { get; set; }
+        public required ICacheProvider<AwsResourceGraph> GraphCacheProvider { get; set; }
+        public required ICacheProvider<SerializableAwsCache> CacheProvider { get; set; }
         public bool IgnoreCacheAndOverride { get; internal set; }
     }
 
-    internal static class AwsClientFactory
+    public static class AwsClientFactory
     {
-        public static async Task<AwsResourceResolver> CreateResourceResolverAsync(CreateResourceResolverOptions options)
+        public static async Task<IAwsClientResourceResolver> Create(CreateResourceResolverOptions options)
+        {
+            //Facaded to hide internal implementation
+            var resolver = await CreateResourceResolverAsync(options);
+            return new AwsClientResourceResolverFacade(
+                resolver,
+                options.CacheProvider);
+        }
+        
+        private static async Task<AwsClientResourceResolver> CreateResourceResolverAsync(CreateResourceResolverOptions options)
         {
             var lambdaClient = new AmazonLambdaClient();
             var sqsClient = new Amazon.SQS.AmazonSQSClient();
@@ -56,45 +43,29 @@ namespace Core
                 iamClient,
                 sqsClient);
             
+            // var graphCacheProvider = CreateCacheProviderForAwsGraph(options.CacheType);
+            // var cacheProvider = CreateCacheProviderForAwsCache(options.CacheType);
+            
             //Get Cache or build new cache
             AwsResourceGraph graph = null;
             if (!options.IgnoreCacheAndOverride)
             {
                 try
                 {
-                    graph = await options.CacheProvider.GetAsync();
+                    graph = await options.GraphCacheProvider.GetAsync();
                 }
                 catch (Exception ex)
                 {
                     Console.WriteLine($"== GRAPH CACHE WAS NOT LOADED SUCCESSFULLY: ${ex.Message}");
                 }
             }
+            
+            await AwsResourceCache.InitializeAsync(options.CacheProvider, new AwsResourceCacheInitOptions()
+            {
+                IgnoreCacheAndOverride = options.IgnoreCacheAndOverride
+            });
 
-            return new AwsResourceResolver(graph ?? new AwsResourceGraph(), cache, options.MaxLevel);
+            return new AwsClientResourceResolver(graph ?? new AwsResourceGraph(), cache, options.MaxLevel);
         }
-
-        public static ICacheProvider<SerializableAwsCache> CreateCacheProviderForAwsCache(CreateCacheProviderOptions options) => options.CacheType switch
-        {
-            CacheType.JsonFile => new JsonFileCacheProvider<SerializableAwsCache>(".aws-cache.json"),
-            //CacheType.Redis => TODO,
-            _ => throw new NotImplementedException(),
-        };
-
-        public static ICacheProvider<AwsResourceGraph> CreateCacheProviderForAwsGraph(CreateCacheProviderOptions options) => options.CacheType switch
-        {
-            CacheType.JsonFile => new JsonFileCacheProvider<AwsResourceGraph>(".aws-graph-cache.json"),
-            //CacheType.Redis => TODO,
-            _ => throw new NotImplementedException(),
-        };
-
-        public static IGraphPrinter CreateGraphPrinter(CreateGraphPrinterOptions options) => options.Type switch
-        {
-            GraphPrinterType.Cli => new CliGraphPrinter(),
-            GraphPrinterType.Json => new JsonGraphPrinter(),
-            GraphPrinterType.Graph => new GraphGraphPrinter(),
-            _ => throw new NotImplementedException(),
-        };
-
-        public static IGraphPrinter CreateGraphPrinter() => CreateGraphPrinter(new CreateGraphPrinterOptions());
     }
 }

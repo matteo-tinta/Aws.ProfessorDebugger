@@ -1,4 +1,5 @@
 **/bin/*
 **/obj/*
 .vs
-.aws-cache.json
+**/.aws-cache.json
+**/.aws-graph-cache.json
