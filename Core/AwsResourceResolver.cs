@@ -1,6 +1,6 @@
 ﻿using Core.Cache;
+using Core.Models;
 using Core.ResourceResolvers;
-using Models;
 
 namespace Core
 {
@@ -11,21 +11,12 @@ namespace Core
         Task TraverseAsync(string arn);
     }
 
-    internal class AwsClientResourceResolver
+    internal class AwsClientResourceResolver(
+        AwsResourceGraph graph,
+        AwsResourceSingleFlightCache cache,
+        int? maxLevel = null)
     {
-        
-        private readonly AwsResourceSingleFlightCache cache;
-        private readonly int? maxLevel;
-        public AwsResourceGraph Graph { get; }
-
-        public AwsClientResourceResolver(AwsResourceGraph graph,
-            AwsResourceSingleFlightCache cache,
-            int? maxLevel = null)
-        {
-            this.cache = cache;
-            this.maxLevel = maxLevel;
-            this.Graph = graph;
-        }
+        public AwsResourceGraph Graph { get; } = graph;
 
         public async Task TraverseAsync(string arn, int currentLevel = 0)
         {
@@ -63,8 +54,8 @@ namespace Core
             => arn.ToLower(System.Globalization.CultureInfo.CurrentCulture) switch
             {
                 (var arn2) when arn2.Contains(":lambda:") => new AwsResourceLambdaResolver(arn, cache),
-                (var arn2) when arn2.Contains(":sqs:") => new AwsResourceSQSResolver(arn, cache),
-                (var arn2) when arn2.Contains(":sns:") => new AwsResourceSNSResolver(arn, cache),
+                (var arn2) when arn2.Contains(":sqs:") => new AwsResourceSqsResolver(arn, cache),
+                (var arn2) when arn2.Contains(":sns:") => new AwsResourceSnsResolver(arn, cache),
                 (var arn2) when arn2.Contains(":::") => new AwsResourceS3Resolver(arn, cache),
                 _ => throw new NotImplementedException(),
             };

@@ -1,4 +1,4 @@
-﻿using Models;
+﻿using Core.Models;
 
 namespace Cli.Printers
 {

@@ -2,27 +2,28 @@
 using System.Text.RegularExpressions;
 using Amazon.SimpleSystemsManagement.Model;
 using Core.Cache;
+using Core.Models;
 
 namespace Core.ResourceResolvers
 {
-    internal class AwsResourceSQSResolver: IAwsResourceResolver
+    internal class AwsResourceSqsResolver: IAwsResourceResolver
     {
-        private readonly string arn;
-        private readonly string queueName;
+        private readonly Arn _arn;
+        private readonly string _queueName;
         private readonly AwsResourceSingleFlightCache _cache;
 
-        public AwsResourceSQSResolver(string arn,
+        public AwsResourceSqsResolver(string arn,
             AwsResourceSingleFlightCache cache)
         {
-            this.arn = arn;
-            this.queueName = Regex.Match(arn, @":([^:]+)$").Groups[1].Value;
+            _arn = Arn.ParseArn(arn);
+            _queueName = _arn.ResourceName;
             _cache = cache;
         }
 
         public async Task<List<string>> GetDownstreamResourcesAsync()
         {
             var sources = new HashSet<string>();
-            var mappingResponse = await _cache.GetSqsLambdaTriggersAsync(arn);
+            var mappingResponse = await _cache.GetSqsLambdaTriggersAsync(_arn.ResourceArn);
 
             foreach (var mapping in mappingResponse.EventSourceMappings)
             {
@@ -37,7 +38,7 @@ namespace Core.ResourceResolvers
             var sources = new HashSet<string>();
             try
             {
-                var queueUrlResponse = await _cache.GetSqsQueueUrl(this.queueName);
+                var queueUrlResponse = await _cache.GetSqsQueueUrl(_queueName);
                 
                 // Get the queue policy to find allowed senders (e.g., SNS topics)
                 var attributes = await _cache.GetSqsQueueAttributes(queueUrlResponse.QueueUrl);
@@ -85,7 +86,7 @@ namespace Core.ResourceResolvers
                                 if (kvp.Value != null
                                     && kvp.Key.ToLower() != "queueurl"
                                     && kvp.Key.ToLower() != "sqs__ingestionqueueurl"
-                                    && kvp.Value.Contains(queueName, StringComparison.InvariantCultureIgnoreCase))
+                                    && kvp.Value.Contains(_queueName, StringComparison.InvariantCultureIgnoreCase))
                                 {
                                     isMatchInEnv = true;
                                     break;
@@ -228,7 +229,7 @@ namespace Core.ResourceResolvers
 
                     using var docJson = JsonDocument.Parse(jsonString);
 
-                    if (jsonString.Contains(queueName, StringComparison.InvariantCultureIgnoreCase))
+                    if (jsonString.Contains(_queueName, StringComparison.InvariantCultureIgnoreCase))
                     {
                         sources.Add(functionArn);
                         break;

@@ -1,5 +1,5 @@
 ﻿using Core.Cache.Models;
-using Models;
+using Core.Models;
 
 namespace Core.Cache.Providers;
 

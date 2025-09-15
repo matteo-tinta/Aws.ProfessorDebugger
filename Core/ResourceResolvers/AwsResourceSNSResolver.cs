@@ -1,18 +1,21 @@
 ﻿using System.Text.Json;
 using System.Text.RegularExpressions;
 using Core.Cache;
+using Core.Models;
 
 namespace Core.ResourceResolvers
 {
-    internal class AwsResourceSNSResolver: IAwsResourceResolver
+    internal class AwsResourceSnsResolver: IAwsResourceResolver
     {
-        private readonly string arn;
+        private readonly Arn _arn;
         private readonly AwsResourceSingleFlightCache _cache;
+        private readonly string _snsName;
 
-        public AwsResourceSNSResolver(string arn, 
+        public AwsResourceSnsResolver(string arn, 
             AwsResourceSingleFlightCache cache)
         {
-            this.arn = arn;
+            _arn = Arn.ParseArn(arn);
+            _snsName = _arn.ResourceName;
             _cache = cache;
         }
 
@@ -22,7 +25,7 @@ namespace Core.ResourceResolvers
 
             try
             {
-                var response = await _cache.GetSnsSubscriptionsByTopicArnAsync(arn);
+                var response = await _cache.GetSnsSubscriptionsByTopicArnAsync(_arn.ResourceArn);
                 foreach (var subscription in response.Subscriptions)
                 {
                     switch (subscription.Protocol)
@@ -46,7 +49,6 @@ namespace Core.ResourceResolvers
         public async Task<List<string>> GetUpstreamResourcesAsync()
         {
             var sources = new List<string>();
-            var snsName = Regex.Match(arn, @":([^:]+)$").Groups[1].Value;
 
             // 1. Check S3 Buckets → SNS
             var buckets = await _cache.GetBucketsAsync();
@@ -60,7 +62,7 @@ namespace Core.ResourceResolvers
                     {
                         foreach (var topicConfig in notificationConfig.TopicConfigurations)
                         {
-                            if (!string.IsNullOrEmpty(topicConfig.Topic) && topicConfig.Topic == arn)
+                            if (!string.IsNullOrEmpty(topicConfig.Topic) && topicConfig.Topic == _arn.ResourceArn)
                             {
                                 return $"arn:aws:s3:::{bucket.BucketName}";
                             }
@@ -97,7 +99,7 @@ namespace Core.ResourceResolvers
                 {
                     var policy = await _cache.GetInlinePolicyAsync(roleName, policyName);
 
-                    if (PolicyGrantsSnsPublish(policy.PolicyDocument, arn))
+                    if (PolicyGrantsSnsPublish(policy.PolicyDocument, _arn.ResourceArn))
                     {
                         sources.Add(function.FunctionArn);
                         break;
@@ -115,7 +117,7 @@ namespace Core.ResourceResolvers
 
                     var policyVersion = await _cache.GetPolicyVersionAsync(attached.PolicyArn, versionId);
 
-                    if (PolicyGrantsSnsPublish(policyVersion.PolicyVersion.Document, arn))
+                    if (PolicyGrantsSnsPublish(policyVersion.PolicyVersion.Document, _arn.ResourceArn))
                     {
                         sources.Add(function.FunctionArn);
                         break;
@@ -127,7 +129,7 @@ namespace Core.ResourceResolvers
                 {
                     foreach (var kvp in config.Environment.Variables)
                     {
-                        if (kvp.Value != null && kvp.Value.Contains(snsName, StringComparison.InvariantCultureIgnoreCase))
+                        if (kvp.Value != null && kvp.Value.Contains(_snsName, StringComparison.InvariantCultureIgnoreCase))
                         {
                             sources.Add(function.FunctionArn);
                             break; // Found match, no need to continue scanning vars

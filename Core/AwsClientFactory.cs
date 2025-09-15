@@ -3,7 +3,7 @@ using Core.Cache;
 using Core.Cache.Models;
 using Core.Cache.Providers;
 using Core.Facade;
-using Models;
+using Core.Models;
 
 namespace Core
 {

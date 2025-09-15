@@ -1,6 +1,6 @@
 ﻿using System.Text.RegularExpressions;
 
-namespace Models
+namespace Core.Models
 {
     /// <summary>
     /// Reppresent a resource ARN
@@ -48,8 +48,16 @@ namespace Models
 
         private static string ExtractResourceName(string resource)
         {
-            var match = Regex.Match(resource, @"^(?:function:)?([^:/]+)");
-            return match.Success ? match.Groups[1].Value : resource;
+            var parts = resource.Split(new[] { ':' }, 2);
+            var name = parts.Length == 2 ? parts[1] : resource;
+
+            var index = name.IndexOf(':');
+            if (index >= 0)
+            {
+                name = name.Substring(0, index);
+            }
+
+            return name;
         }
     }
 }

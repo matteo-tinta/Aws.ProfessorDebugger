@@ -3,7 +3,7 @@ using Core.Cache.Models;
 
 namespace Core.Cache;
 
-public class SingleFlightCache
+internal class SingleFlightCache
 {
     private readonly ConcurrentDictionary<string, IInflight> _inflight = new();
 

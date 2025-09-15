@@ -1,26 +1,18 @@
 ﻿using System.Text.RegularExpressions;
 using Core.Cache;
+using Core.Models;
 
 namespace Core.ResourceResolvers
 {
-    internal class AwsResourceS3Resolver: IAwsResourceResolver
+    internal class AwsResourceS3Resolver(string arn, AwsResourceSingleFlightCache cache) : IAwsResourceResolver
     {
-        private readonly string arn;
-        private readonly string bucketName;
-        private readonly AwsResourceSingleFlightCache _cache;
-
-        public AwsResourceS3Resolver(string arn, AwsResourceSingleFlightCache cache)
-        {
-            this.arn = arn;
-            this.bucketName = Regex.Match(arn, @":([^:]+)$").Groups[1].Value;
-            _cache = cache;
-        }
+        private readonly string _bucketName = Arn.ParseArn(arn).ResourceName;
 
         public async Task<List<string>> GetDownstreamResourcesAsync()
         {
             var source = new HashSet<string>();
 
-            var notifications = await _cache.GetBucketNotificationAsync(bucketName);
+            var notifications = await cache.GetBucketNotificationAsync(_bucketName);
 
             foreach (var notification in notifications.QueueConfigurations ?? [])
             {

@@ -28,22 +28,22 @@ namespace Core.Cache
     /// </summary>
     internal static class AwsResourceCache
     {
-        private static readonly List<FunctionConfiguration> _lambdaFunctions = new();
-        private static readonly List<S3Bucket> _buckets = new();
-        private static readonly ConcurrentDictionary<string, ListEventSourceMappingsResponse> _lambdaEventSourceEvents = new();
-        private static readonly ConcurrentDictionary<string, Amazon.SimpleNotificationService.Model.ListSubscriptionsByTopicResponse> _snsSubscriptions = new();
-        private static readonly ConcurrentDictionary<string, ListEventSourceMappingsResponse> _sqsLambdaTriggersEvents = new();
-        private static readonly ConcurrentDictionary<string, GetQueueAttributesResponse> _sqsQueueAttributes = new();
-        private static readonly ConcurrentDictionary<string, GetQueueUrlResponse> _sqsQueueUrls = new();
-        private static readonly ConcurrentDictionary<string, Parameter> _ssmParameters = new();
-        private static readonly ConcurrentDictionary<string, GetBucketNotificationResponse> _bucketNotifications = new();
-        private static readonly ConcurrentDictionary<string, GetFunctionConfigurationResponse> _lambdaConfigs = new();
-        private static readonly ConcurrentDictionary<string, ListRolePoliciesResponse> _inlinePolicyLists = new();
-        private static readonly ConcurrentDictionary<(string roleName, string policyName), GetRolePolicyResponse> _inlinePolicies = new();
-        private static readonly ConcurrentDictionary<string, ListAttachedRolePoliciesResponse> _attachedPolicyLists = new();
-        private static readonly ConcurrentDictionary<string, Amazon.IdentityManagement.Model.GetPolicyResponse> _policyMetadata = new();
-        private static readonly ConcurrentDictionary<(string policyArn, string versionId), GetPolicyVersionResponse> _policyVersions = new();
-        private static readonly ConcurrentDictionary<string, Amazon.Lambda.Model.GetPolicyResponse> _lambdaPolicies = new();
+        private static readonly List<FunctionConfiguration> LambdaFunctions = new();
+        private static readonly List<S3Bucket> Buckets = new();
+        private static readonly ConcurrentDictionary<string, ListEventSourceMappingsResponse> LambdaEventSourceEvents = new();
+        private static readonly ConcurrentDictionary<string, ListSubscriptionsByTopicResponse> SnsSubscriptions = new();
+        private static readonly ConcurrentDictionary<string, ListEventSourceMappingsResponse> SqsLambdaTriggersEvents = new();
+        private static readonly ConcurrentDictionary<string, GetQueueAttributesResponse> SqsQueueAttributes = new();
+        private static readonly ConcurrentDictionary<string, GetQueueUrlResponse> SqsQueueUrls = new();
+        private static readonly ConcurrentDictionary<string, Parameter> SsmParameters = new();
+        private static readonly ConcurrentDictionary<string, GetBucketNotificationResponse> BucketNotifications = new();
+        private static readonly ConcurrentDictionary<string, GetFunctionConfigurationResponse> LambdaConfigs = new();
+        private static readonly ConcurrentDictionary<string, ListRolePoliciesResponse> InlinePolicyLists = new();
+        private static readonly ConcurrentDictionary<(string roleName, string policyName), GetRolePolicyResponse> InlinePolicies = new();
+        private static readonly ConcurrentDictionary<string, ListAttachedRolePoliciesResponse> AttachedPolicyLists = new();
+        private static readonly ConcurrentDictionary<string, Amazon.IdentityManagement.Model.GetPolicyResponse> PolicyMetadata = new();
+        private static readonly ConcurrentDictionary<(string policyArn, string versionId), GetPolicyVersionResponse> PolicyVersions = new();
+        private static readonly ConcurrentDictionary<string, Amazon.Lambda.Model.GetPolicyResponse> LambdaPolicies = new();
 
         private static bool _initialized = false;
 
@@ -69,21 +69,21 @@ namespace Core.Cache
             {
                 var cache = await cacheProvider.GetAsync();
 
-                _lambdaFunctions.AddRange(cache.LambdaFunctions ?? []);
-                _buckets.AddRange(cache.Buckets ?? []);
+                LambdaFunctions.AddRange(cache.LambdaFunctions ?? []);
+                Buckets.AddRange(cache.Buckets ?? []);
 
-                foreach (var kv in cache.SnsSubscriptions ?? []) _snsSubscriptions[kv.Key] = kv.Value;
-                foreach (var kv in cache.SqsLambdaTriggerEvents ?? []) _sqsLambdaTriggersEvents[kv.Key] = kv.Value;
-                foreach (var kv in cache.LambdaEventSourceEvents ?? []) _lambdaEventSourceEvents[kv.Key] = kv.Value;
-                foreach (var kv in cache.SsmParameters ?? []) _ssmParameters[kv.Key] = kv.Value;
-                foreach (var kv in cache.BucketNotifications ?? []) _bucketNotifications[kv.Key] = kv.Value;
-                foreach (var kv in cache.LambdaConfigs ?? []) _lambdaConfigs[kv.Key] = kv.Value;
-                foreach (var kv in cache.InlinePolicyLists ?? []) _inlinePolicyLists[kv.Key] = kv.Value;
-                foreach (var kv in cache.InlinePolicies ?? []) _inlinePolicies[(kv.Key.Split('|')[0], kv.Key.Split('|')[1])] = kv.Value;
-                foreach (var kv in cache.AttachedPolicies ?? []) _attachedPolicyLists[kv.Key] = kv.Value;
-                foreach (var kv in cache.PolicyMetadata ?? []) _policyMetadata[kv.Key] = kv.Value;
-                foreach (var kv in cache.PolicyVersions ?? []) _policyVersions[(kv.Key.Split('|')[0], kv.Key.Split('|')[1])] = kv.Value;
-                foreach (var kv in cache.SqsQueueAttributes ?? []) _sqsQueueAttributes[kv.Key] = kv.Value;
+                foreach (var kv in cache.SnsSubscriptions ?? []) SnsSubscriptions[kv.Key] = kv.Value;
+                foreach (var kv in cache.SqsLambdaTriggerEvents ?? []) SqsLambdaTriggersEvents[kv.Key] = kv.Value;
+                foreach (var kv in cache.LambdaEventSourceEvents ?? []) LambdaEventSourceEvents[kv.Key] = kv.Value;
+                foreach (var kv in cache.SsmParameters ?? []) SsmParameters[kv.Key] = kv.Value;
+                foreach (var kv in cache.BucketNotifications ?? []) BucketNotifications[kv.Key] = kv.Value;
+                foreach (var kv in cache.LambdaConfigs ?? []) LambdaConfigs[kv.Key] = kv.Value;
+                foreach (var kv in cache.InlinePolicyLists ?? []) InlinePolicyLists[kv.Key] = kv.Value;
+                foreach (var kv in cache.InlinePolicies ?? []) InlinePolicies[(kv.Key.Split('|')[0], kv.Key.Split('|')[1])] = kv.Value;
+                foreach (var kv in cache.AttachedPolicies ?? []) AttachedPolicyLists[kv.Key] = kv.Value;
+                foreach (var kv in cache.PolicyMetadata ?? []) PolicyMetadata[kv.Key] = kv.Value;
+                foreach (var kv in cache.PolicyVersions ?? []) PolicyVersions[(kv.Key.Split('|')[0], kv.Key.Split('|')[1])] = kv.Value;
+                foreach (var kv in cache.SqsQueueAttributes ?? []) SqsQueueAttributes[kv.Key] = kv.Value;
 
                 CacheHasBeenInitialized = true;
             }
@@ -99,20 +99,20 @@ namespace Core.Cache
         {
             var cache = new SerializableAwsCache
             {
-                LambdaFunctions = _lambdaFunctions.ToList(),
-                Buckets = _buckets.ToList(),
-                BucketNotifications = _bucketNotifications.ToDictionary(kvp => kvp.Key, kvp => kvp.Value),
-                LambdaConfigs = _lambdaConfigs.ToDictionary(kvp => kvp.Key, kvp => kvp.Value),
-                InlinePolicyLists = _inlinePolicyLists.ToDictionary(kvp => kvp.Key, kvp => kvp.Value),
-                InlinePolicies = _inlinePolicies.ToDictionary(kvp => $"{kvp.Key.roleName}|{kvp.Key.policyName}", kvp => kvp.Value),
-                AttachedPolicies = _attachedPolicyLists.ToDictionary(kvp => kvp.Key, kvp => kvp.Value),
-                PolicyMetadata = _policyMetadata.ToDictionary(kvp => kvp.Key, kvp => kvp.Value),
-                PolicyVersions = _policyVersions.ToDictionary(kvp => $"{kvp.Key.policyArn}|{kvp.Key.versionId}", kvp => kvp.Value),
-                SsmParameters = _ssmParameters.ToDictionary(kvp => kvp.Key, kvp => kvp.Value),
-                LambdaEventSourceEvents = _lambdaEventSourceEvents.ToDictionary(kvp => kvp.Key, kvp => kvp.Value),
-                SqsLambdaTriggerEvents = _sqsLambdaTriggersEvents.ToDictionary(kvp => kvp.Key, kvp => kvp.Value),
-                SqsQueueAttributes = _sqsQueueAttributes.ToDictionary(kvp => kvp.Key, kvp => kvp.Value),
-                SnsSubscriptions = _snsSubscriptions.ToDictionary(kvp => kvp.Key, kvp => kvp.Value),
+                LambdaFunctions = LambdaFunctions.ToList(),
+                Buckets = Buckets.ToList(),
+                BucketNotifications = BucketNotifications.ToDictionary(kvp => kvp.Key, kvp => kvp.Value),
+                LambdaConfigs = LambdaConfigs.ToDictionary(kvp => kvp.Key, kvp => kvp.Value),
+                InlinePolicyLists = InlinePolicyLists.ToDictionary(kvp => kvp.Key, kvp => kvp.Value),
+                InlinePolicies = InlinePolicies.ToDictionary(kvp => $"{kvp.Key.roleName}|{kvp.Key.policyName}", kvp => kvp.Value),
+                AttachedPolicies = AttachedPolicyLists.ToDictionary(kvp => kvp.Key, kvp => kvp.Value),
+                PolicyMetadata = PolicyMetadata.ToDictionary(kvp => kvp.Key, kvp => kvp.Value),
+                PolicyVersions = PolicyVersions.ToDictionary(kvp => $"{kvp.Key.policyArn}|{kvp.Key.versionId}", kvp => kvp.Value),
+                SsmParameters = SsmParameters.ToDictionary(kvp => kvp.Key, kvp => kvp.Value),
+                LambdaEventSourceEvents = LambdaEventSourceEvents.ToDictionary(kvp => kvp.Key, kvp => kvp.Value),
+                SqsLambdaTriggerEvents = SqsLambdaTriggersEvents.ToDictionary(kvp => kvp.Key, kvp => kvp.Value),
+                SqsQueueAttributes = SqsQueueAttributes.ToDictionary(kvp => kvp.Key, kvp => kvp.Value),
+                SnsSubscriptions = SnsSubscriptions.ToDictionary(kvp => kvp.Key, kvp => kvp.Value),
             };
 
             await cacheProvider.SaveAsync(cache);
@@ -121,57 +121,57 @@ namespace Core.Cache
 
         public static async Task<List<FunctionConfiguration>> GetLambdaFunctions(IAmazonLambda lambdaClient)
         {
-            if (_lambdaFunctions.Count == 0)
+            if (LambdaFunctions.Count == 0)
             {
                 await foreach (var function in LambdaEnumerators.ListAllLambdaFunctions(lambdaClient))
                 {
-                    _lambdaFunctions.Add(function);
+                    LambdaFunctions.Add(function);
                 }
             }
 
-            return _lambdaFunctions ?? [];
+            return LambdaFunctions ?? [];
         }
 
         public static async Task<List<S3Bucket>> GetBuckets(IAmazonS3 s3Client)
         {
-            if (_buckets.Count == 0)
+            if (Buckets.Count == 0)
             {
                 var buckets = await s3Client.ListBucketsAsync();
-                _buckets.AddRange(buckets.Buckets);
+                Buckets.AddRange(buckets.Buckets);
             }
 
-            return _buckets ?? [];
+            return Buckets ?? [];
         }
 
         public static async Task<ListSubscriptionsByTopicResponse> GetSnsSubscriptionsByTopicArnAsync(IAmazonSimpleNotificationService snsClient, string snsArn)
         {
-            if (_snsSubscriptions.TryGetValue(snsArn, out var cached))
+            if (SnsSubscriptions.TryGetValue(snsArn, out var cached))
             {
                 return cached;
             }
 
             ListSubscriptionsByTopicResponse value = await snsClient.ListSubscriptionsByTopicAsync(snsArn);
 
-            _snsSubscriptions[snsArn] = value;
+            SnsSubscriptions[snsArn] = value;
             return value;
         }
         
         public static async Task<GetQueueUrlResponse> GetSqsQueueUrl(AmazonSQSClient sqsClient, string queueName)
         {
-            if (_sqsQueueUrls.TryGetValue(queueName, out var cached))
+            if (SqsQueueUrls.TryGetValue(queueName, out var cached))
             {
                 return cached;
             }
 
             GetQueueUrlResponse? value = await sqsClient.GetQueueUrlAsync(new GetQueueUrlRequest { QueueName = queueName });
 
-            _sqsQueueUrls[queueName] = value;
+            SqsQueueUrls[queueName] = value;
             return value;
         }
         
         public static async Task<GetQueueAttributesResponse> GetSqsQueueAttributes(AmazonSQSClient sqsClient, string sqsUrl)
         {
-            if (_sqsQueueAttributes.TryGetValue(sqsUrl, out var cached))
+            if (SqsQueueAttributes.TryGetValue(sqsUrl, out var cached))
             {
                 return cached;
             }
@@ -182,13 +182,13 @@ namespace Core.Cache
                 AttributeNames = new List<string> { "Policy" }
             });
 
-            _sqsQueueAttributes[sqsUrl] = value;
+            SqsQueueAttributes[sqsUrl] = value;
             return value;
         }
 
         public static async Task<ListEventSourceMappingsResponse> GetSqsLambdaTriggersAsync(IAmazonLambda lambdaClient, string sqsArn)
         {
-            if (_sqsLambdaTriggersEvents.TryGetValue(sqsArn, out var cached))
+            if (SqsLambdaTriggersEvents.TryGetValue(sqsArn, out var cached))
             {
                 return cached;
             }
@@ -197,13 +197,13 @@ namespace Core.Cache
             {
                 EventSourceArn = sqsArn
             });
-            _sqsLambdaTriggersEvents[sqsArn] = value;
+            SqsLambdaTriggersEvents[sqsArn] = value;
             return value;
         }
 
         public static async Task<ListEventSourceMappingsResponse> GetLambdaEventSourceMappingAsync(IAmazonLambda lambdaClient, string functionName)
         {
-            if (_lambdaEventSourceEvents.TryGetValue(functionName, out var cached))
+            if (LambdaEventSourceEvents.TryGetValue(functionName, out var cached))
             {
                 return cached;
             }
@@ -212,13 +212,13 @@ namespace Core.Cache
             {
                 FunctionName = functionName
             });
-            _lambdaEventSourceEvents[functionName] = value;
+            LambdaEventSourceEvents[functionName] = value;
             return value;
         }
 
         public static async Task<GetBucketNotificationResponse> GetBucketNotificationAsync(IAmazonS3 s3Client, string bucketName)
         {
-            if (_bucketNotifications.TryGetValue(bucketName, out var cached))
+            if (BucketNotifications.TryGetValue(bucketName, out var cached))
             {
                 return cached;
             }
@@ -228,13 +228,13 @@ namespace Core.Cache
                 BucketName = bucketName
             });
 
-            _bucketNotifications[bucketName] = result;
+            BucketNotifications[bucketName] = result;
             return result;
         }
 
         public static async Task<Parameter> GetSsmParameter(IAmazonSimpleSystemsManagement ssmClient, string parameterPath)
         {
-            if (_ssmParameters.TryGetValue(parameterPath, out var cached))
+            if (SsmParameters.TryGetValue(parameterPath, out var cached))
             {
                 return cached;
             }
@@ -250,7 +250,7 @@ namespace Core.Cache
                     WithDecryption = true
                 });
 
-                _ssmParameters[parameterPath] = config.Parameters[0];
+                SsmParameters[parameterPath] = config.Parameters[0];
                 return config.Parameters[0];
             }
             catch (Exception ex)
@@ -266,7 +266,7 @@ namespace Core.Cache
 
         public static async Task<GetFunctionConfigurationResponse> GetLambdaConfigAsync(IAmazonLambda lambdaClient, string functionName)
         {
-            if (_lambdaConfigs.TryGetValue(functionName, out var cached))
+            if (LambdaConfigs.TryGetValue(functionName, out var cached))
             {
                 return cached;
             }
@@ -276,7 +276,7 @@ namespace Core.Cache
                 FunctionName = functionName
             });
 
-            _lambdaConfigs[functionName] = config;
+            LambdaConfigs[functionName] = config;
             return config;
         }
 
@@ -285,7 +285,7 @@ namespace Core.Cache
         {
             var key = (roleName, policyName);
 
-            if (_inlinePolicies.TryGetValue(key, out var cached))
+            if (InlinePolicies.TryGetValue(key, out var cached))
             {
                 return cached;
             }
@@ -296,7 +296,7 @@ namespace Core.Cache
                 PolicyName = policyName
             });
 
-            _inlinePolicies[key] = policy;
+            InlinePolicies[key] = policy;
             return policy;
         }
 
@@ -304,7 +304,7 @@ namespace Core.Cache
         public static async Task<ListRolePoliciesResponse> GetInlinePolicyListAsync(
     IAmazonIdentityManagementService iamClient, string roleName)
         {
-            if (_inlinePolicyLists.TryGetValue(roleName, out var cached))
+            if (InlinePolicyLists.TryGetValue(roleName, out var cached))
             {
                 return cached;
             }
@@ -314,14 +314,14 @@ namespace Core.Cache
                 RoleName = roleName
             });
 
-            _inlinePolicyLists[roleName] = list;
+            InlinePolicyLists[roleName] = list;
             return list;
         }
 
         public static async Task<ListAttachedRolePoliciesResponse> GetAttachedPoliciesAsync(
     IAmazonIdentityManagementService iamClient, string roleName)
         {
-            if (_attachedPolicyLists.TryGetValue(roleName, out var cached))
+            if (AttachedPolicyLists.TryGetValue(roleName, out var cached))
             {
                 return cached;
             }
@@ -331,14 +331,14 @@ namespace Core.Cache
                 RoleName = roleName
             });
 
-            _attachedPolicyLists[roleName] = result;
+            AttachedPolicyLists[roleName] = result;
             return result;
         }
 
         public static async Task<Amazon.IdentityManagement.Model.GetPolicyResponse> GetPolicyMetadataAsync(
     IAmazonIdentityManagementService iamClient, string policyArn)
         {
-            if (_policyMetadata.TryGetValue(policyArn, out var cached))
+            if (PolicyMetadata.TryGetValue(policyArn, out var cached))
             {
                 return cached;
             }
@@ -348,7 +348,7 @@ namespace Core.Cache
                 PolicyArn = policyArn
             });
 
-            _policyMetadata[policyArn] = policy;
+            PolicyMetadata[policyArn] = policy;
             return policy;
         }
 
@@ -356,7 +356,7 @@ namespace Core.Cache
     IAmazonIdentityManagementService iamClient, string policyArn, string versionId)
         {
             var key = (policyArn, versionId);
-            if (_policyVersions.TryGetValue(key, out var cached))
+            if (PolicyVersions.TryGetValue(key, out var cached))
             {
                 return cached;
             }
@@ -367,35 +367,35 @@ namespace Core.Cache
                 VersionId = versionId
             });
 
-            _policyVersions[key] = version;
+            PolicyVersions[key] = version;
             return version;
         }
         
         public static async Task<Amazon.Lambda.Model.GetPolicyResponse> GetLambdaPolicyAsync(IAmazonLambda lambdaClient, string functionName)
         {
-            if (_lambdaPolicies.TryGetValue(functionName, out var cached))
+            if (LambdaPolicies.TryGetValue(functionName, out var cached))
             {
                 return cached;
             }
 
             var policy = await lambdaClient.GetPolicyAsync(new GetPolicyRequest { FunctionName = functionName });
 
-            _lambdaPolicies[functionName] = policy;
+            LambdaPolicies[functionName] = policy;
             return policy;
         }
 
         // Optional: expose clearing method for testing or resets
         public static void ClearAllCaches()
         {
-            _buckets.Clear();
-            _lambdaFunctions.Clear();
-            _bucketNotifications.Clear();
-            _lambdaConfigs.Clear();
-            _inlinePolicyLists.Clear();
-            _inlinePolicies.Clear();
-            _attachedPolicyLists.Clear();
-            _policyMetadata.Clear();
-            _policyVersions.Clear();
+            Buckets.Clear();
+            LambdaFunctions.Clear();
+            BucketNotifications.Clear();
+            LambdaConfigs.Clear();
+            InlinePolicyLists.Clear();
+            InlinePolicies.Clear();
+            AttachedPolicyLists.Clear();
+            PolicyMetadata.Clear();
+            PolicyVersions.Clear();
         }
     }
 }

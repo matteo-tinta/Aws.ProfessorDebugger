@@ -2,15 +2,9 @@
 
 namespace Core.Cache.Providers
 {
-    internal class JsonFileCacheProvider<T> : ICacheProvider<T> where T : class
+    internal class JsonFileCacheProvider<T>(string cacheFilePath) : ICacheProvider<T>
+        where T : class
     {
-        private readonly string cacheFilePath;
-
-        public JsonFileCacheProvider(string cacheFilePath)
-        {
-            this.cacheFilePath = cacheFilePath;
-        }
-
         public async Task<T> GetAsync()
         {
             try

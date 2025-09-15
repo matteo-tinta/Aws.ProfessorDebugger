@@ -3,5 +3,6 @@
 	<s:String x:Key="/Default/Environment/UnitTesting/UnitTestSessionStore/Sessions/=ff132f05_002Df804_002D42c7_002D9013_002Da892661a8f99/@EntryIndexedValue">&lt;SessionState ContinuousTestingMode="0" IsActive="True" Name="SingleFlightCache_Should_Deduplicate_Concurrent_Calls" xmlns="urn:schemas-jetbrains-com:jetbrains-ut-session"&gt;&#xD;
   &lt;TestAncestor&gt;&#xD;
     &lt;TestId&gt;xUnit::7D7B7374-8459-4D48-A861-B7357D29CBCC::net9.0::Core.Tests.Cache.SingleFlightCacheTests.SingleFlightCache_Should_Deduplicate_Concurrent_Calls&lt;/TestId&gt;&#xD;
+    &lt;TestId&gt;xUnit::7D7B7374-8459-4D48-A861-B7357D29CBCC::net9.0::Core.Tests.Models.ArnTests.ParseArn_Should_MapToCorrectFields&lt;/TestId&gt;&#xD;
   &lt;/TestAncestor&gt;&#xD;
 &lt;/SessionState&gt;</s:String></wpf:ResourceDictionary>

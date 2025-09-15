@@ -1,34 +1,34 @@
 ﻿using System.Text.Json;
 using System.Text.RegularExpressions;
 using Core.Cache;
-using Models;
+using Core.Models;
 
 namespace Core.ResourceResolvers
 {
     internal class AwsResourceLambdaResolver: IAwsResourceResolver
     {
-        private readonly Arn arn;
-        private readonly string functionName;
-        private readonly AwsResourceSingleFlightCache cache;
+        private readonly Arn _arn;
+        private readonly string _functionName;
+        private readonly AwsResourceSingleFlightCache _cache;
 
         public AwsResourceLambdaResolver(string arn,
             AwsResourceSingleFlightCache cache)
         {
-            this.arn = Arn.ParseArn(arn);
-            this.functionName = this.arn.ResourceName;
-            this.cache = cache;
+            _arn = Arn.ParseArn(arn);
+            _functionName = _arn.ResourceName;
+            _cache = cache;
         }
 
         public async Task<List<string>> GetUpstreamResourcesAsync() {
-            Console.WriteLine($"PROCESSING LAMBDA [{arn.ResourceArn}]...");
+            Console.WriteLine($"PROCESSING LAMBDA [{_arn.ResourceArn}]...");
             var sources = new List<string>();
-            var functionName = Regex.Match(this.arn.ResourceArn, @"function:(.+)").Groups[1].Value;
+            var functionName = Regex.Match(_arn.ResourceArn, @"function:(.+)").Groups[1].Value;
 
             // 1. Find sources configured via Event Source Mappings (the "pull" model)
             // This is for services like SQS, Kinesis, DynamoDB where Lambda polls for messages.
             try
             {
-                var mappingResponse = await cache.GetLambdaEventSourceMappingAsync(functionName);
+                var mappingResponse = await _cache.GetLambdaEventSourceMappingAsync(functionName);
 
                 foreach (var mapping in mappingResponse.EventSourceMappings)
                 {
@@ -45,7 +45,7 @@ namespace Core.ResourceResolvers
             // This is the most reliable way to find services that have permission to invoke the Lambda.
             try
             {
-                var policyResponse = await cache.GetLambdaPolicyAsync(functionName);
+                var policyResponse = await _cache.GetLambdaPolicyAsync(functionName);
 
                 using (var doc = JsonDocument.Parse(policyResponse.Policy))
                 {
@@ -80,7 +80,7 @@ namespace Core.ResourceResolvers
         {
             var sources = new HashSet<string>();
 
-            var config = await cache.GetLambdaConfigAsync(functionName);
+            var config = await _cache.GetLambdaConfigAsync(_functionName);
 
             var roleArn = config.Role;
             if (!string.IsNullOrEmpty(roleArn))
@@ -88,11 +88,11 @@ namespace Core.ResourceResolvers
                 var roleName = roleArn.Split('/').Last();
 
                 // --- INLINE POLICIES ---
-                var inlinePolicyList = await cache.GetInlinePolicyListAsync(roleName);
+                var inlinePolicyList = await _cache.GetInlinePolicyListAsync(roleName);
 
                 foreach (var policyName in inlinePolicyList.PolicyNames ?? Enumerable.Empty<string>())
                 {
-                    var policy = await cache.GetInlinePolicyAsync(roleName, policyName);
+                    var policy = await _cache.GetInlinePolicyAsync(roleName, policyName);
 
                     //HERE!
                     var decoded = System.Net.WebUtility.UrlDecode(policy.PolicyDocument);
@@ -104,14 +104,14 @@ namespace Core.ResourceResolvers
                 }
 
                 // --- MANAGED POLICIES ---
-                var attachedPolicies = await cache.GetAttachedPoliciesAsync(roleName);
+                var attachedPolicies = await _cache.GetAttachedPoliciesAsync(roleName);
 
                 foreach (var attached in attachedPolicies.AttachedPolicies ?? [])
                 {
-                    var policyMetadata = await cache.GetPolicyMetadataAsync(attached.PolicyArn);
+                    var policyMetadata = await _cache.GetPolicyMetadataAsync(attached.PolicyArn);
                     var versionId = policyMetadata.Policy.DefaultVersionId;
 
-                    var policyVersion = await cache.GetPolicyVersionAsync(attached.PolicyArn, versionId);
+                    var policyVersion = await _cache.GetPolicyVersionAsync(attached.PolicyArn, versionId);
 
                     var decoded = System.Net.WebUtility.UrlDecode(policyVersion.PolicyVersion.Document);
                     var results = GetSnsAndSqsPublishInPolicies(decoded);
