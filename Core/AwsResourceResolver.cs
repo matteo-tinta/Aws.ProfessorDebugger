@@ -16,7 +16,7 @@ namespace Core
         
         private readonly AwsResourceSingleFlightCache cache;
         private readonly int? maxLevel;
-        public AwsResourceGraph Graph { get; private set; }
+        public AwsResourceGraph Graph { get; }
 
         public AwsClientResourceResolver(AwsResourceGraph graph,
             AwsResourceSingleFlightCache cache,
