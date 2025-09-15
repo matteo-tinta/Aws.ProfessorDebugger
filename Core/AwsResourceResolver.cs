@@ -38,11 +38,9 @@ namespace Core
             var resolver = GetResolverByArn(arn);
             var node = Graph.GetOrCreateNode(arn);
 
-            Console.WriteLine($"-> TRAVERSING PARENTS OF {arn} ...");
             var parentsArn = await resolver.GetUpstreamResourcesAsync();
             var parentTasks = parentsArn.Select(parentArn => TraverseParents(parentArn, currentLevel, node));
 
-            Console.WriteLine($"-> TRAVERSING CHILDREN OF {arn} ...");
             var childrenArn = await resolver.GetDownstreamResourcesAsync();
             var childrenTasks = childrenArn.Select(childArn => TraverseChildren(childArn, currentLevel, node));
 

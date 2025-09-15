@@ -20,7 +20,7 @@ namespace Core.Cache.Providers
             }
             catch
             {
-                Console.WriteLine("Warning: Failed to load AWS cache. Continuing with empty cache.");
+                //TODO: add feedback
                 return default;
             }
         }

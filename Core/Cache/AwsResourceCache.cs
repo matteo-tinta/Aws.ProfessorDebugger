@@ -55,7 +55,6 @@ namespace Core.Cache
 
             if (options?.IgnoreCacheAndOverride == true)
             {
-                Console.WriteLine("Ignoring cache...");
                 return; //ignore cache
             }
 
@@ -90,7 +89,7 @@ namespace Core.Cache
             }
             catch
             {
-                Console.WriteLine("Warning: Failed to load AWS cache. Continuing with empty cache.");
+                //ignored/
             }
 
             _initialized = true;

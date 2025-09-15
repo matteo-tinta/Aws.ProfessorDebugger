@@ -31,14 +31,13 @@ namespace Core.ResourceResolvers
                             source.Add(subscription.Endpoint);
                             break;
                         default:
-                            Console.WriteLine($"== PROTOCOL {subscription.Protocol} IN SUBSCRIPTION IGNORED ==");
                             break;
                     }
                 }
             }
-            catch (Exception e)
+            catch
             {
-                Console.Error.WriteLine($"== TOPIC {arn}: {e.Message}");
+                // ignored
             }
 
             return source.ToList();
@@ -46,7 +45,6 @@ namespace Core.ResourceResolvers
 
         public async Task<List<string>> GetUpstreamResourcesAsync()
         {
-            Console.WriteLine($"PROCESSING SNS [{arn}]...");
             var sources = new List<string>();
             var snsName = Regex.Match(arn, @":([^:]+)$").Groups[1].Value;
 

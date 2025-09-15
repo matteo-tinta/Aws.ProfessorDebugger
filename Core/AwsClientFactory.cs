@@ -56,7 +56,8 @@ namespace Core
                 }
                 catch (Exception ex)
                 {
-                    Console.WriteLine($"== GRAPH CACHE WAS NOT LOADED SUCCESSFULLY: ${ex.Message}");
+                    //ignored
+                    //TODO: Add feedback
                 }
             }
             

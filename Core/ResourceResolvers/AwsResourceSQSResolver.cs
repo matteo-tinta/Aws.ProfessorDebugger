@@ -37,7 +37,6 @@ namespace Core.ResourceResolvers
             var sources = new HashSet<string>();
             try
             {
-                Console.WriteLine($"PROCESSING SQS [{arn}]...");
                 var queueUrlResponse = await _cache.GetSqsQueueUrl(this.queueName);
                 
                 // Get the queue policy to find allowed senders (e.g., SNS topics)
@@ -124,7 +123,7 @@ namespace Core.ResourceResolvers
             }
             catch (Exception e)
             {
-                Console.WriteLine($"ERROR: {e.Message} - {e.StackTrace}");
+                //TODO: Add feedback
                 return [];
             }
 
@@ -237,7 +236,7 @@ namespace Core.ResourceResolvers
                 }
                 catch (ParameterNotFoundException)
                 {
-                    Console.WriteLine($" == SSM {parameterArn} NOT FOUND == ");
+                    //TODO: add feedback
                 }
             }
 
