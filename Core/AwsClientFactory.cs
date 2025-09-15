@@ -1,5 +1,6 @@
 ﻿using Amazon.Lambda;
 using Core.Cache;
+using Core.Cache.Models;
 using Core.Cache.Providers;
 using Core.Printers;
 using Models;

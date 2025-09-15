@@ -1,4 +1,5 @@
 ﻿using System.Collections.Concurrent;
+using Core.Cache.Models;
 
 namespace Core.Cache;
 
@@ -8,11 +9,11 @@ public class SingleFlightCache
 
     public Task<T> GetAsync<T>(string key, Func<Task<T>> factory)
     {
-        // Deduplicate using key
-        var inflight = (Inflight<T>)_inflight.GetOrAdd(key, _ =>
+        string invariantCacheKey = key.ToLowerInvariant();
+        var inflight = (Inflight<T>)_inflight.GetOrAdd(invariantCacheKey, _ =>
         {
-            var task = FetchAndCleanup(key, factory);
-            return new Inflight<T>(task);
+            var lazyTask = new Lazy<Task<T>>(() => FetchAndCleanup(invariantCacheKey, factory), LazyThreadSafetyMode.ExecutionAndPublication);
+            return new Inflight<T>(lazyTask);
         });
 
         return inflight.TypedTask;

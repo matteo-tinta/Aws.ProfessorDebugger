@@ -75,7 +75,6 @@ namespace Core.ResourceResolvers
                     await semaphore.WaitAsync();
                     try
                     {
-                        Console.WriteLine($"== READING POLICIES FOR {function.FunctionName} ({semaphore.CurrentCount}) ==");
                         var config = await _cache.GetLambdaConfigAsync(function.FunctionName);
 
                         // Check env variables

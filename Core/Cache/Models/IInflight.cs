@@ -1,4 +1,4 @@
-﻿namespace Core.Cache;
+﻿namespace Core.Cache.Models;
 
 public interface IInflight
 {

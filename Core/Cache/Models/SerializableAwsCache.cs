@@ -5,7 +5,7 @@ using Amazon.SimpleNotificationService.Model;
 using Amazon.SimpleSystemsManagement.Model;
 using Amazon.SQS.Model;
 
-namespace Core.Cache
+namespace Core.Cache.Models
 {
     internal class SerializableAwsCache
     {
