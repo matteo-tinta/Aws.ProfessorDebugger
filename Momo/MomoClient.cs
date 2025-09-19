@@ -1,4 +1,5 @@
-﻿using Amazon.SimpleNotificationService;
+﻿using Amazon.S3;
+using Amazon.SimpleNotificationService;
 using Amazon.SQS;
 using Models;
 using Momo.Models;
@@ -11,15 +12,18 @@ public class MomoClient
 {
     private readonly IAmazonSQS _sqsClient;
     private readonly IAmazonSimpleNotificationService _snsClient;
+    private readonly IAmazonS3 _s3Client;
     private readonly MomoExpectationFile _expectationFile;
 
     private MomoClient(
         IAmazonSQS sqsClient,
         IAmazonSimpleNotificationService snsClient,
+        IAmazonS3 s3Client,
         MomoExpectationFile expectationFile)
     {
         _sqsClient = sqsClient;
         _snsClient = snsClient;
+        _s3Client = s3Client;
         _expectationFile = expectationFile;
     }
 
@@ -43,6 +47,7 @@ public class MomoClient
         return arn.Service switch
         {
             "sns" => new StepHandlerLoggingDecorated(new SnsStepHandler(_sqsClient, _snsClient)),
+            "s3" => new StepHandlerLoggingDecorated(new S3StepHandler(_s3Client)),
             "sqs" => throw new InvalidOperationException("To match SQS queues, provide its SNS. If no SNS are available, skip the node and check downstream resources (eg. Lambdas, S3)"),
             _ => throw new InvalidOperationException("This type of arn is not recognized yet")
         };
@@ -51,6 +56,7 @@ public class MomoClient
     public static MomoClient ValidateAndCreate(
         IAmazonSQS sqsClient,
         IAmazonSimpleNotificationService snsClient,
+        IAmazonS3 s3Client,
         MomoExpectationFile expectationFile)
     {
         if (expectationFile.Timeout > 20)
@@ -61,6 +67,7 @@ public class MomoClient
         return new MomoClient(
             sqsClient,
             snsClient,
+            s3Client,
             expectationFile);
     }
 }

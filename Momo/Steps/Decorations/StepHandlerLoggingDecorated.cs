@@ -2,10 +2,8 @@
 
 namespace Momo.Steps.Decorations;
 
-internal class StepHandlerLoggingDecorated(IStepHandler stepHandler) : IStepHandler
+internal class StepHandlerLoggingDecorated(IStepHandler stepHandler): IStepHandler
 {
-    public void Dispose() => stepHandler.Dispose();
-
     public async Task<bool> WaitForMatchAsync(MomoExpectation step, int timeout, CancellationToken cancellationToken)
     {
         Console.WriteLine($"[{step.Arn}]: Matching {step.Match.Count} expectations...");

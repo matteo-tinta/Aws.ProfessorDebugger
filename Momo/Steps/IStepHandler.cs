@@ -2,7 +2,7 @@
 
 namespace Momo.Steps;
 
-internal interface IStepHandler: IDisposable
+internal interface IStepHandler
 {
     Task<bool> WaitForMatchAsync(MomoExpectation step, int timeout, CancellationToken cancellationToken);
 }

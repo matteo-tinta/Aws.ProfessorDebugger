@@ -1,4 +1,5 @@
-﻿using Amazon.SimpleNotificationService;
+﻿using Amazon.S3;
+using Amazon.SimpleNotificationService;
 using Amazon.SQS;
 using Momo;
 using Momo.Models;
@@ -18,8 +19,9 @@ public static class MomoClientFactory
         //clients
         var sqsClient = new AmazonSQSClient();
         var snsClient = new AmazonSimpleNotificationServiceClient();
+        var s3Client = new AmazonS3Client();
         
-        return MomoClient.ValidateAndCreate(sqsClient, snsClient, options.ExpectationFile);
+        return MomoClient.ValidateAndCreate(sqsClient, snsClient, s3Client, options.ExpectationFile);
     }
 }
 

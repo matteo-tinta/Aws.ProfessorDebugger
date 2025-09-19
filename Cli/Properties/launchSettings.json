@@ -4,7 +4,7 @@
       "commandName": "Project",
       "commandLineArgs": "momo $(ProjectDir)/MomoExamples/localstack.momo.json",
       "environmentVariables": {
-        "AWS_PROFILE": "localstack",
+        "AWS_PROFILE": "default",
         "AWS_REGION": "eu-west-1",
         "AWS__AuthenticationRegion": "eu-west-1"
       }

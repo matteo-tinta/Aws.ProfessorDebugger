@@ -11,9 +11,9 @@
       }
     },
     {
-      "arn": "arn:aws:sns:us-east-1:000000000000:my-topic_2",
+      "arn": "arn:aws:s3:::mastermind-ingestion-worklistreadytobeworked-dev-297244223532",
       "match": {
-        "Message.payload.type": "another_message"
+        "filename": "Worklist_2025-08-28-130658766.json"
       }
     }
   ]

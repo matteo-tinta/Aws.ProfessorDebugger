@@ -87,8 +87,8 @@ cli momo [json_validation_file]
 |--------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | sns    | It will create a temporary SQS queue and attach it to the specified SNS                                                                                                                    |
 | sqs    | Direct SQS inspection isn't allowed, provide it's connected SNS topic as above. If there's no SNS, avoid checking the queue and look at the resources it triggers (like Lambda functions). |
+| s3     | only "filename" expectation accepted for now (content expectations will be available in future releases)                                                                                   |
 | lambda | (Will be available in future releases)                                                                                                                                                     |
-| s3     | (Will be available in future releases)                                                                                                                                                     |
 
 ## Json File Validation Example
 
@@ -106,9 +106,9 @@ cli momo [json_validation_file]
       }
     },
     {
-      "arn": "arn:aws:sns:us-east-1:000000000000:my-topic_2",
+      "arn": "arn:aws:s3:::mastermind-ingestion-worklistreadytobeworked-dev-297244223532",
       "match": {
-        "Message.payload.type": "another_message"
+        "filename": "Worklist_2025-08-28-130658766.json"
       }
     }
   ]

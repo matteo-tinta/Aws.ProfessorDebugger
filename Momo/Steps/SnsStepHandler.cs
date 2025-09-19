@@ -99,9 +99,4 @@ internal class SnsStepHandler(
                 messageBody, e);
         }
     }
-
-    public void Dispose()
-    {
-        _sqsClient.Dispose();
-    }
 }
