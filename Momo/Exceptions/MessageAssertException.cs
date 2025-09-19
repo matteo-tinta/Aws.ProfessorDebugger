@@ -1,0 +1,32 @@
+﻿namespace Momo.Exceptions;
+
+internal class MessageAssertException: Exception
+{
+    public string MessageBody { get; private set; }
+    
+    internal MessageAssertException(string message) : base(message)
+    {
+            
+    }
+
+    internal MessageAssertException(string message, Exception innerException): base(message, innerException)
+    {
+
+    }
+
+    internal static MessageAssertException CreateExceptionWithMessageBody(string message, string messageBody)
+    {
+        return new MessageAssertException(message)
+        {
+            MessageBody = messageBody
+        };
+    }
+    
+    internal static MessageAssertException CreateExceptionWithMessageBody(string message, string messageBody, Exception innerException)
+    {
+        return new MessageAssertException(message, innerException)
+        {
+            MessageBody = messageBody
+        };
+    }
+}

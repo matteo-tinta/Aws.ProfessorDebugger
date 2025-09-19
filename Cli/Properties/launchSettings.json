@@ -1,8 +1,17 @@
 {
   "profiles": {
+    "momo": {
+      "commandName": "Project",
+      "commandLineArgs": "momo $(ProjectDir)/MomoExamples/localstack.momo.json",
+      "environmentVariables": {
+        "AWS_PROFILE": "localstack",
+        "AWS_REGION": "eu-west-1",
+        "AWS__AuthenticationRegion": "eu-west-1"
+      }
+    },
     "offer-min-reference-price-ingestor-dev": {
       "commandName": "Project",
-      "commandLineArgs": "arn:aws:lambda:eu-west-1:297244223532:function:offer-min-reference-price-ingestor-dev",
+      "commandLineArgs": "graph arn:aws:lambda:eu-west-1:297244223532:function:offer-min-reference-price-ingestor-dev",
       "environmentVariables": {
         "AWS_PROFILE": "mastermind-dev",
         "AWS__AuthenticationRegion": "eu-west-1"
@@ -10,42 +19,42 @@
     },
     "mastermind-searchindexer-searchinfochanged-dev": {
       "commandName": "Project",
-      "commandLineArgs": "arn:aws:lambda:eu-west-1:297244223532:function:mastermind-searchindexer-searchinfochanged-dev --output-as Json",
+      "commandLineArgs": "graph arn:aws:lambda:eu-west-1:297244223532:function:mastermind-searchindexer-searchinfochanged-dev --output-as Json",
       "environmentVariables": {
         "AWS_PROFILE": "mastermind-dev"
       }
     },
     "mastermind-ingestion-worklist-worklistreadytobeworked-dev": {
       "commandName": "Project",
-      "commandLineArgs": "arn:aws:lambda:eu-west-1:297244223532:function:mastermind-ingestion-worklist-worklistreadytobeworked-dev",
+      "commandLineArgs": "graph arn:aws:lambda:eu-west-1:297244223532:function:mastermind-ingestion-worklist-worklistreadytobeworked-dev",
       "environmentVariables": {
         "AWS_PROFILE": "mastermind-dev"
       }
     },
     "mastermind-dataloader-price-variantinfochanged-dev": {
       "commandName": "Project",
-      "commandLineArgs": "arn:aws:lambda:eu-west-1:297244223532:function:mastermind-dataloader-price-variantinfochanged-dev",
+      "commandLineArgs": "graph arn:aws:lambda:eu-west-1:297244223532:function:mastermind-dataloader-price-variantinfochanged-dev",
       "environmentVariables": {
         "AWS_PROFILE": "mastermind-dev"
       }
     },
     "acl-pricelist-ingestor-dev": {
       "commandName": "Project",
-      "commandLineArgs": "arn:aws:lambda:eu-west-1:297244223532:function:acl-pricelist-ingestor-dev",
+      "commandLineArgs": "graph arn:aws:lambda:eu-west-1:297244223532:function:acl-pricelist-ingestor-dev",
       "environmentVariables": {
         "AWS_PROFILE": "mastermind-dev"
       }
     },
     "mastermind-dataloader-product-essentialinfochanged-dev": {
       "commandName": "Project",
-      "commandLineArgs": "arn:aws:lambda:eu-west-1:297244223532:function:mastermind-dataloader-product-essentialinfochanged-dev",
+      "commandLineArgs": "graph arn:aws:lambda:eu-west-1:297244223532:function:mastermind-dataloader-product-essentialinfochanged-dev",
       "environmentVariables": {
         "AWS_PROFILE": "mastermind-dev"
       }
     },
     "arn:aws:s3:::mastermind-ingestion-worklistreadytobeworked-dev-297244223532": {
       "commandName": "Project",
-      "commandLineArgs": "arn:aws:s3:::mastermind-ingestion-worklistreadytobeworked-dev-297244223532",
+      "commandLineArgs": "graph arn:aws:s3:::mastermind-ingestion-worklistreadytobeworked-dev-297244223532",
       "environmentVariables": {
         "AWS_PROFILE": "mastermind-dev"
       }

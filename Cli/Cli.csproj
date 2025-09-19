@@ -1,12 +1,12 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
     <PropertyGroup>
-        <AssemblyTitle>F31 Aws Graph Tool</AssemblyTitle>
+        <AssemblyTitle>F31 Mastermind AWS Professor Debugger</AssemblyTitle>
         <AssemblyVersion>1.0.0.0</AssemblyVersion>
         <FileVersion>1.0.0.0</FileVersion>
         <Company>YNAP</Company>
         <Authors>Matteo Tinta (F31)</Authors>
-        <Product>F31 Aws Graph Tool</Product>
+        <Product>F31 Mastermind AWS Professor Debugger</Product>
         <Description>CLI to traverse AWS resource dependencies.</Description>
         <Copyright>Copyright (c) Matteo Tinta (F31)</Copyright>
     </PropertyGroup>
@@ -20,6 +20,7 @@
     
     <ItemGroup>
       <ProjectReference Include="..\Core\Core.csproj" />
+      <ProjectReference Include="..\Momo\Momo.csproj" />
     </ItemGroup>
 
     <ItemGroup>

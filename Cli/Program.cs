@@ -1,5 +1,7 @@
-﻿using Core;
+﻿using Cli.FileLoader;
+using Core;
 using Core.Cache.Providers;
+using Momo.Models;
 
 namespace Cli;
 
@@ -10,37 +12,61 @@ class Program
         try
         {
             var cli = new CliHandler();
-            var options = cli.ParseArguments(args);
-
-            var cacheProvider = CacheProviderFactory.CreateCacheProviderForAwsCache(new CreateCacheProviderOptions()
+            var parsed = cli.ParseArguments(args);
+            
+            switch (parsed)
             {
-                CacheType = options.Value.CacheType
-            });
+                case { Command: CommandType.Momo, Options: MomoOptions opts }:
+                    await ExecuteMomo(opts);
+                    break;
 
-            //TODO: This belongs to CLI not CORE!
-            var graphCacheProvider = CacheProviderFactory.CreateCacheProviderForAwsGraph(new CreateCacheProviderOptions()
-            {
-                CacheType = options.Value.CacheType
-            });
-
-            var explorer = await AwsClientFactory.Create(new CreateResourceResolverOptions()
-            {
-                CacheProvider = cacheProvider,
-                GraphCacheProvider = graphCacheProvider,
-                MaxLevel = options.Value.MaxLevel
-            });
-
-            await explorer.TraverseAsync(options.Value.AwsArn);
-
-            await graphCacheProvider.SaveAsync(explorer.Graph);
-
-            CliClientFactory.CreateGraphPrinter(new CreateGraphPrinterOptions() {
-                Type = options.Value.OutputAs
-            }).Print(explorer.Graph, explorer.Graph.GetOrCreateNode(options.Value.AwsArn));
+                case { Command: CommandType.Graph, Options: GraphOptions opts }:
+                    await ExecuteGraphAsync(opts);
+                    break;
+            }
         }
         catch (Exception ex)
         {
             Console.Error.WriteLine($"Error: {ex.Message}");
         }
+    }
+
+    static async Task ExecuteMomo(MomoOptions options)
+    {
+        var client = MomoClientFactory.FeedMomo(new MomoClientFactoryOptions()
+        {
+            ExpectationFile = await MomoFileLoader.LoadAsync(options.InputFile)
+        });
+
+        await client.MatchExpectations(CancellationToken.None);
+    }
+    
+    static async Task ExecuteGraphAsync(GraphOptions options)
+    {
+        var cacheProvider = CacheProviderFactory.CreateCacheProviderForAwsCache(new CreateCacheProviderOptions()
+        {
+            CacheType = options.CacheType
+        });
+
+        //TODO: This belongs to CLI not CORE!
+        var graphCacheProvider = CacheProviderFactory.CreateCacheProviderForAwsGraph(new CreateCacheProviderOptions()
+        {
+            CacheType = options.CacheType
+        });
+
+        var explorer = await AwsClientFactory.Create(new CreateResourceResolverOptions()
+        {
+            CacheProvider = cacheProvider,
+            GraphCacheProvider = graphCacheProvider,
+            MaxLevel = options.MaxLevel
+        });
+
+        await explorer.TraverseAsync(options.AwsArn);
+
+        await graphCacheProvider.SaveAsync(explorer.Graph);
+
+        CliClientFactory.CreateGraphPrinter(new CreateGraphPrinterOptions() {
+            Type = options.OutputAs
+        }).Print(explorer.Graph, explorer.Graph.GetOrCreateNode(options.AwsArn));
     }
 }

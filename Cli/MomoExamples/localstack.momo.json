@@ -1,0 +1,20 @@
+﻿{
+  "traceId": "abc123",
+  "timeout": 20,
+  "expectations": [
+    {
+      "arn": "arn:aws:sns:us-east-1:000000000000:my-topic",
+      "match": {
+        "Message.payload.type": "user",
+        "Message.users[0].Name": "Name",
+        "Message.users[0].Surname": "Surname"
+      }
+    },
+    {
+      "arn": "arn:aws:sns:us-east-1:000000000000:my-topic_2",
+      "match": {
+        "Message.payload.type": "another_message"
+      }
+    }
+  ]
+}

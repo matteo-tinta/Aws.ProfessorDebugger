@@ -1,7 +1,10 @@
 # Mastermind.ProfessorDebugger
 
-This repository includes a set of tools designed to simplify working with AWS infrastructure by generating a dependency 
-graph of resources starting from a single AWS ARN.
+This repository includes a set of tools designed to simplify working with AWS infrastructure
+
+## Graph
+This project includes a set of tools that generates a dependency graph of resources 
+starting from a single AWS ARN.
 
 Currently, the tool focuses on the following AWS services:
 - Lambda
@@ -28,10 +31,10 @@ relying on them for critical tasks. If you encounter an incorrect dependency res
 ## CLI
 
 ```bash
-Aws Graph Tool 1.0.0+dad39f1a5f55149981c490fc5513f64c73c179ee
+F31 Mastermind AWS Professor Debugger 1.0.0+dad39f1a5f55149981c490fc5513f64c73c179ee
 Copyright (c) Matteo Tinta (F31)
 
-cli [aws_arn] [args]
+cli graph [aws_arn] [args]
 
   --ignore-cache    (Default: false) Ignore stored cache. Actual present cache file will be overidden.
   --output-as       (Default: Cli) Cli, Json or Graph (case sensitive)
@@ -39,29 +42,7 @@ cli [aws_arn] [args]
   --max-level       Set the max level to stop
   --help            Display this help screen.
   --version         Display version information.
-
 ```
-
-
-### How to use the CLI
-1. Configure your ~/.aws/credentials with the api key provided by AWS Credentials login page
-2. Download, build this repository (CLI Project)
-3. **Optional**: copy the output bin directory somewhere easily accessible to you
-4. Invoke the CLI as mentioned above
-
-#### How to develop this tool
-1. You do need to set your SSO AWS Profile called mastermind-dev (use AWS Explorer vs extension)
-2. Start the Cli project within visual studio
-3. Open a new branch from master
-4. Submit a PR with your changes
-
-<b>
-💡 Note: If you encounter errors such as 
-"AWS_ACCESS_KEY_ID/AWS_SECRET_ACCESS_KEY/AWS_SESSION_TOKEN were not set with AWS credentials",
-you likely need to either:
-- Restart Visual Studio, or
-- Renew your SSO login using your usual workflow.
-</b>
 
 ## Caching
 
@@ -76,6 +57,78 @@ In future release a redis connection can be used to cache the whole json file. O
 **The caching system is designed to avoid redundant work and prevent unnecessary AWS API calls — which can cost both time and money.
 If you keep clearing the cache, you're defeating the entire purpose of this tool. Use it responsibly.**
 
+# Momo Tool (Message Observer & Matching Operator)
+**THIS TOOL IS IN PREVIEW, USE AT YOUR OWN RISK**
+
+This fantastic tool comes in handy when you need to trace a series of messages inside your infrastructure. 
+
+Create a json somewhere and feed it to momo. It will try to match all your expectations or return an exception if some are not respected
+
+## Cli
+```bash
+F31 Mastermind AWS Professor Debugger 1.0.0+dad39f1a5f55149981c490fc5513f64c73c179ee
+Copyright (c) Matteo Tinta (F31)
+
+cli momo [json_validation_file]
+
+  --help            Display this help screen.
+  --version         Display version information.
+```
+
+## Allowed services
+
+| Type   | Notes                                                                                                                                                                                      |
+|--------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| sns    | It will create a temporary SQS queue and attach it to the specified SNS                                                                                                                    |
+| sqs    | Direct SQS inspection isn't allowed, provide it's connected SNS topic as above. If there's no SNS, avoid checking the queue and look at the resources it triggers (like Lambda functions). |
+| lambda | (Will be available in future releases)                                                                                                                                                     |
+| s3     | (Will be available in future releases)                                                                                                                                                     |
+
+## Json File Validation Example
+
+```json
+{
+  "traceId": "abc123",
+  "timeout": 20,
+  "expectations": [
+    {
+      "arn": "arn:aws:sns:us-east-1:000000000000:my-topic",
+      "match": {
+        "Message.payload.type": "user",
+        "Message.users[0].Name": "Name",
+        "Message.users[0].Surname": "Surname"
+      }
+    },
+    {
+      "arn": "arn:aws:sns:us-east-1:000000000000:my-topic_2",
+      "match": {
+        "Message.payload.type": "another_message"
+      }
+    }
+  ]
+}
+```
+
+## How to use the CLI
+1. Configure your ~/.aws/credentials with the api key provided by AWS Credentials login page
+2. Download, build this repository (CLI Project)
+3. **Optional**: copy the output bin directory somewhere easily accessible to you
+4. Invoke the CLI as mentioned above
+
+## How to develop this tool
+1. You do need to set your SSO AWS Profile called mastermind-dev (use AWS Explorer vs extension)
+2. Start the Cli project within visual studio
+3. Open a new branch from master
+4. Submit a PR with your changes
+
+<b>
+💡 Note: If you encounter errors such as 
+"AWS_ACCESS_KEY_ID/AWS_SECRET_ACCESS_KEY/AWS_SESSION_TOKEN were not set with AWS credentials",
+you likely need to either:
+- Restart Visual Studio, or
+- Renew your SSO login using your usual workflow.
+</b>
+
 # FAQ
 - ?: I cannot use the CLI because the token is expired
-- !: Save your tokens again (read the CLI HELP) 
+- !: Save your tokens again (read the CLI HELP)

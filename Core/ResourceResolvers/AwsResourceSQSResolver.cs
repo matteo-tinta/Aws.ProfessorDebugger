@@ -3,6 +3,7 @@ using System.Text.RegularExpressions;
 using Amazon.SimpleSystemsManagement.Model;
 using Core.Cache;
 using Core.Models;
+using Models;
 
 namespace Core.ResourceResolvers
 {

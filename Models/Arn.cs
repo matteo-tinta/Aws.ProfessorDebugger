@@ -1,6 +1,6 @@
 ﻿using System.Text.RegularExpressions;
 
-namespace Core.Models
+namespace Models
 {
     /// <summary>
     /// Reppresent a resource ARN
@@ -30,7 +30,7 @@ namespace Core.Models
             if (!match.Success)
                 throw new ArgumentException("Invalid ARN format");
 
-            string resource = match.Groups["resource"].Value;
+            var resource = match.Groups["resource"].Value;
             
             return new Arn
             {
