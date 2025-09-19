@@ -2,6 +2,12 @@
 
 This repository includes a set of tools designed to simplify working with AWS infrastructure
 
+# How to use the CLI
+1. Configure your ~/.aws/credentials with the api key provided by AWS Credentials login page
+2. Download, build this repository (CLI Project)
+3. **Optional**: copy the output bin directory somewhere easily accessible to you
+4. Invoke the CLI as mentioned above
+
 ## Graph
 This project includes a set of tools that generates a dependency graph of resources 
 starting from a single AWS ARN.
@@ -109,13 +115,7 @@ cli momo [json_validation_file]
 }
 ```
 
-## How to use the CLI
-1. Configure your ~/.aws/credentials with the api key provided by AWS Credentials login page
-2. Download, build this repository (CLI Project)
-3. **Optional**: copy the output bin directory somewhere easily accessible to you
-4. Invoke the CLI as mentioned above
-
-## How to develop this tool
+# How to develop this tool
 1. You do need to set your SSO AWS Profile called mastermind-dev (use AWS Explorer vs extension)
 2. Start the Cli project within visual studio
 3. Open a new branch from master
