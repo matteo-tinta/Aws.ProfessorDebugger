@@ -1,6 +1,7 @@
 ﻿using Cli.FileLoader;
 using Core;
 using Core.Cache.Providers;
+using Momo.Exceptions;
 using Momo.Models;
 
 namespace Cli;
@@ -27,7 +28,26 @@ class Program
         }
         catch (Exception ex)
         {
-            Console.Error.WriteLine($"Error: {ex.Message}");
+            PrintException(ex);
+        }
+    }
+
+    static void PrintException(Exception ex)
+    {
+        Console.Error.WriteLine($"Error: {ex.Message}");
+        if (ex is MessageAssertException messageAssertException)
+        {
+            Console.Error.WriteLine(messageAssertException.MessageBody);
+        }
+        
+        if (ex.InnerException is not null)
+        {
+            PrintException(ex.InnerException);
+        }
+
+        if (ex is not AssertException)
+        {
+            Console.Error.WriteLine($"{ex.StackTrace}");
         }
     }
 

@@ -19,9 +19,14 @@ public static class MomoClientFactory
         //clients
         var sqsClient = new AmazonSQSClient();
         var snsClient = new AmazonSimpleNotificationServiceClient();
-        var s3Client = new AmazonS3Client();
-        
+        var s3Client = new AmazonS3Client(new AmazonS3Config()
+        {
+            ServiceURL = Environment.GetEnvironmentVariable("AWS_S3_ENDPOINT"),
+            ForcePathStyle = true,
+            UseHttp = true,
+            AuthenticationRegion = Environment.GetEnvironmentVariable("AWS_REGION")
+        });
+
         return MomoClient.ValidateAndCreate(sqsClient, snsClient, s3Client, options.ExpectationFile);
     }
 }
-

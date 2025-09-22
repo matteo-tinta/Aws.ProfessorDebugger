@@ -1,19 +1,23 @@
 ﻿{
   "traceId": "abc123",
-  "timeout": 20,
+  "timeout": 15,
   "expectations": [
     {
       "arn": "arn:aws:sns:us-east-1:000000000000:my-topic",
       "match": {
-        "Message.payload.type": "user",
-        "Message.users[0].Name": "Name",
-        "Message.users[0].Surname": "Surname"
+        "Message.users[0].Name": "This is a name"
       }
     },
     {
-      "arn": "arn:aws:s3:::mastermind-ingestion-worklistreadytobeworked-dev-297244223532",
+      "arn": "arn:aws:s3:::ingestion-bucket",
       "match": {
-        "filename": "Worklist_2025-08-28-130658766.json"
+        "filename": "file.txt"
+      }
+    },
+    {
+      "arn": "arn:aws:sns:us-east-1:000000000000:my-topic",
+      "match": {
+        "Message.users[0].Name": "This is the wrong name value, should raise"
       }
     }
   ]

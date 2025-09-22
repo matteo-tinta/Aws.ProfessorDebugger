@@ -1,11 +1,14 @@
-﻿using System.Text.Json;
+﻿using System.Collections.Concurrent;
+using System.Text.Json;
 using Amazon.SimpleNotificationService;
 using Amazon.SQS;
 using Amazon.SQS.Model;
 using Models;
 using Momo.Commands;
 using Momo.Exceptions;
+using Momo.Helpers;
 using Momo.Models;
+using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 
 namespace Momo.Steps;
@@ -41,22 +44,32 @@ internal class SnsStepHandler(
             await command.ExecuteAsync(cancellationToken);
 
             _queueUrl = command.GetQueueUrl();
-            
-            var response = await _sqsClient.ReceiveMessageAsync(new ReceiveMessageRequest
-            {
-                QueueUrl = _queueUrl,
-                MaxNumberOfMessages = 10,
-                WaitTimeSeconds = timeout,
-                MessageAttributeNames = ["All"],
-                VisibilityTimeout = 1
-            }, cancellationToken);
+            ConcurrentDictionary<string, Message> checkedMessages = [];
 
-            if (response.Messages is not null && response.Messages.Count > 0)
-            {
-                return response.Messages.Any(message => MessageMatches(message.Body, config.Match));
-            }
-            
-            throw new AssertException($"No messages were found on SQS {command.GetQueueUrl()} on Subscription {command.GetSubscriptionArn()}");
+            return await RetryHelper.RetryAsync(
+                async () =>
+                {
+                    var response = await _sqsClient.ReceiveMessageAsync(new ReceiveMessageRequest
+                    {
+                        QueueUrl = _queueUrl,
+                        MaxNumberOfMessages = 10,
+                        WaitTimeSeconds = timeout > 20 ? 20 : timeout,
+                        MessageAttributeNames = ["All"],
+                        VisibilityTimeout = 1
+                    }, cancellationToken);
+
+                    foreach (var message in response.Messages ?? [])
+                        checkedMessages[message.MessageId] = message;
+                    
+                    if (response.Messages is not null && response.Messages.Any(message => MessageMatches(message.Body, config.Match)))
+                    {
+                        return true;
+                    }
+                                        
+                    throw new AssertException($"No messages were matched on SQS {command.GetQueueUrl()} on Subscription {command.GetSubscriptionArn()}", 
+                        new AssertException($"Current expectation failed:\n{JsonConvert.SerializeObject(config, Formatting.Indented)}", 
+                            new AssertException($"Checked messages:\n{JsonConvert.SerializeObject(checkedMessages, Formatting.Indented)}")));
+                }, TimeSpan.FromSeconds(timeout), cancellationToken);
         }
         finally
         {
@@ -77,20 +90,15 @@ internal class SnsStepHandler(
             foreach (var kvp in matchRules)
             {
                 var token = root.SelectToken(kvp.Key);
-                if (token == null)
-                    throw new AssertException($"Token {kvp.Key} was not found in expected path", 
-                        MessageAssertException.CreateExceptionWithMessageBody("Message was invalid", messageBody));
-
-                if (!string.Equals(token.ToString(), kvp.Value, StringComparison.OrdinalIgnoreCase))
-                    throw new AssertException($"Token {kvp.Key} was found in expectation, but actual value {kvp.Value} didn't matched expectation {token}", 
-                        MessageAssertException.CreateExceptionWithMessageBody("Message was invalid", messageBody));
+                
+                //Cannot assume here that the message we are reading at this moment is the message we want to read
+                //so false is returned, message did not match.
+                //In the exception output there will be all the messages that are being received during this time
+                if (token == null || !string.Equals(token.ToString(), kvp.Value, StringComparison.OrdinalIgnoreCase))
+                    return false;
             }
 
             return true;
-        }
-        catch (AssertException)
-        {
-            throw;
         }
         catch (Exception e)
         {

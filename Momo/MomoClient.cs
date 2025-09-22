@@ -2,6 +2,7 @@
 using Amazon.SimpleNotificationService;
 using Amazon.SQS;
 using Models;
+using Momo.Exceptions;
 using Momo.Models;
 using Momo.Steps;
 using Momo.Steps.Decorations;
@@ -35,7 +36,7 @@ public class MomoClient
             var result = await step.WaitForMatchAsync(expectation, _expectationFile.Timeout, cancellationToken);
             if (!result)
             {
-                throw new Exception($"Step {expectation.Arn} failed");
+                throw new AssertException($"Step {expectation.Arn} failed");
             }
         }
     }
@@ -59,11 +60,6 @@ public class MomoClient
         IAmazonS3 s3Client,
         MomoExpectationFile expectationFile)
     {
-        if (expectationFile.Timeout > 20)
-        {
-            throw new ArgumentOutOfRangeException(nameof(expectationFile.Timeout), "Must be >= 0 and <= 20, if provided");
-        }
-        
         return new MomoClient(
             sqsClient,
             snsClient,

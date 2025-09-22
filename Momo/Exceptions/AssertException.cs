@@ -1,6 +1,6 @@
 ﻿namespace Momo.Exceptions;
 
-internal class AssertException: Exception
+public class AssertException: Exception
 {
     internal AssertException(string message): base(message)
     {

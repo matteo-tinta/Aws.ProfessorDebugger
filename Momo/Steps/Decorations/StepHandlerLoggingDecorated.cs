@@ -8,10 +8,13 @@ internal class StepHandlerLoggingDecorated(IStepHandler stepHandler): IStepHandl
     {
         Console.WriteLine($"[{step.Arn}]: Matching {step.Match.Count} expectations...");
         
-        var result = await stepHandler.WaitForMatchAsync(step, timeout, cancellationToken);
-        
-        Console.WriteLine($"[{step.Arn}]: Matched all {step.Match.Count} expectations");
+        var matches = await stepHandler.WaitForMatchAsync(step, timeout, cancellationToken);
 
-        return result;
+        if (matches)
+        {
+            Console.WriteLine($"[{step.Arn}]: Matched all expectations");
+        }
+
+        return matches;
     }
 }

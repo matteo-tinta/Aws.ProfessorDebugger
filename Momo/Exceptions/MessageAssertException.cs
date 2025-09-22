@@ -1,6 +1,6 @@
 ﻿namespace Momo.Exceptions;
 
-internal class MessageAssertException: Exception
+public class MessageAssertException: Exception
 {
     public string MessageBody { get; private set; }
     
