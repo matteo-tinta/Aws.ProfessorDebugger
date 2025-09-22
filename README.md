@@ -20,9 +20,8 @@ Currently, the tool focuses on the following AWS services:
 
 The project is composed of two main libraries:
 
-- Core:
-A reusable .NET 8.0 library that can be integrated into any C# project. It provides all the logic required to traverse 
-and cache AWS resource relationships.
+- Core / Momo:
+A reusable .NET 8.0 library that can be integrated into any C# project. It provides all the logic executed by the CLI.
 
 - CLI:
 A command-line interface built on top of the Core library. This is ideal for interactive exploration or scripting purposes.
@@ -68,7 +67,7 @@ If you keep clearing the cache, you're defeating the entire purpose of this tool
 
 This fantastic tool comes in handy when you need to trace a series of messages inside your infrastructure. 
 
-Create a json somewhere and feed it to momo. It will try to match all your expectations or return an exception if some are not respected
+Create a json somewhere and feed it to momo. It will try to match all your expectations or return an exception if some are not respected in a given timeout
 
 ## Cli
 ```bash
@@ -83,33 +82,47 @@ cli momo [json_validation_file]
 
 ## Allowed services
 
-| Type   | Notes                                                                                                                                                                                      |
-|--------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| sns    | It will create a temporary SQS queue and attach it to the specified SNS                                                                                                                    |
-| sqs    | Direct SQS inspection isn't allowed, provide it's connected SNS topic as above. If there's no SNS, avoid checking the queue and look at the resources it triggers (like Lambda functions). |
-| s3     | only "filename" expectation accepted for now (content expectations will be available in future releases)                                                                                   |
-| lambda | (Will be available in future releases)                                                                                                                                                     |
+| Type    | Notes                                                                                                                                                                                    |
+|---------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| sns     | It will create a temporary SQS queue and attach it to the specified SNS                                                                                                                  |
+| sqs     | Direct SQS inspection isn't allowed, provide it's connected SNS topic as above. If there's no SNS, avoid checking the queue and look at the resources it triggers (like Lambda functions). |
+| s3      | only "filename" expectation accepted for now (content expectations will be available in future releases)                                                                                 |
+| lambda  | (Will be available in future releases)                                                                                                                                                   |
+| mongo   | Connect to a mongo database (database name must be included in query string) and assert a query result 
 
 ## Json File Validation Example
 
 ```json
 {
   "traceId": "abc123",
-  "timeout": 20,
+  "timeout": 30,
   "expectations": [
     {
       "arn": "arn:aws:sns:us-east-1:000000000000:my-topic",
       "match": {
-        "Message.payload.type": "user",
-        "Message.users[0].Name": "Name",
-        "Message.users[0].Surname": "Surname"
+        "Message.users[0].Name": "This is a name"
       }
     },
     {
-      "arn": "arn:aws:s3:::mastermind-ingestion-worklistreadytobeworked-dev-297244223532",
+      "arn": "arn:aws:s3:::ingestion-bucket",
       "match": {
-        "filename": "Worklist_2025-08-28-130658766.json"
+        "filename": "file.txt"
       }
+    },
+    {
+      "connectionString": "mongodb://mongo:mongo@localhost:27017/NAP_Mastermind_lcl?directConnection=true&authSource=admin&retryWrites=true&w=majority",
+      "match": [
+        {
+          "query": {
+            "find": "uploadList",
+            "filter": { "name": "123123" }
+          },
+          "match": {
+            "documents[0].name": "123123",
+            "documents[1].name": "123123"
+          }
+        }
+      ]
     }
   ]
 }

@@ -10,7 +10,7 @@ public record MomoExpectationFile
     public string TraceId { get; set; }
     
     [JsonProperty("expect")]
-    public IReadOnlyCollection<MomoExpectation> Expectations { get; set; }
+    public IReadOnlyCollection<IMomoExpectation> Expectations { get; set; }
     
     public int Timeout { get; set; }
 }

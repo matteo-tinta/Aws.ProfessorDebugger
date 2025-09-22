@@ -11,8 +11,14 @@ internal class S3StepHandler(IAmazonS3 s3Client): IStepHandler
     private readonly IAmazonS3 _s3Client = s3Client ?? throw new ArgumentNullException(nameof(s3Client));
     private Dictionary<string, object> _validations = new();
 
-    public async Task<bool> WaitForMatchAsync(MomoExpectation config, int timeout, CancellationToken cancellationToken)
+    public async Task<bool> WaitForMatchAsync(IMomoExpectation baseConfig, int timeout, CancellationToken cancellationToken)
     {
+        if (baseConfig is not MomoAwsExpectation config)
+        {
+            throw new InvalidOperationException(
+                $"type of config in {nameof(S3StepHandler)} is invalid, expected MomoExpectation");
+        }
+        
         var s3BucketArn = Arn.ParseArn(config.Arn);
 
         return await RetryHelper.RetryAsync(async () =>

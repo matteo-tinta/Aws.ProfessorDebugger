@@ -14,6 +14,7 @@ public static class MomoFileLoader
         
         var options = new JsonSerializerOptions
         {
+            Converters = { new IMomoExpectationConverter() },
             PropertyNameCaseInsensitive = true
         };
 

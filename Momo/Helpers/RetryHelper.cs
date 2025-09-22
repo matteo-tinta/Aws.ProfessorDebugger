@@ -1,4 +1,6 @@
-﻿namespace Momo.Helpers;
+﻿using Momo.Exceptions;
+
+namespace Momo.Helpers;
 
 public static class RetryHelper
 {
@@ -21,7 +23,7 @@ public static class RetryHelper
             {
                 return await operationFactory();
             }
-            catch (Exception)
+            catch (Exception ex) when (ex is AssertException or MessageAssertException)
             {
                 if (DateTime.UtcNow - startTime >= timeout)
                     throw;

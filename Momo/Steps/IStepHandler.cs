@@ -4,5 +4,5 @@ namespace Momo.Steps;
 
 internal interface IStepHandler
 {
-    Task<bool> WaitForMatchAsync(MomoExpectation step, int timeout, CancellationToken cancellationToken);
+    Task<bool> WaitForMatchAsync(IMomoExpectation step, int timeout, CancellationToken cancellationToken);
 }

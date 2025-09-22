@@ -1,6 +1,6 @@
 ﻿{
   "traceId": "abc123",
-  "timeout": 15,
+  "timeout": 30,
   "expectations": [
     {
       "arn": "arn:aws:sns:us-east-1:000000000000:my-topic",
@@ -15,10 +15,19 @@
       }
     },
     {
-      "arn": "arn:aws:sns:us-east-1:000000000000:my-topic",
-      "match": {
-        "Message.users[0].Name": "This is the wrong name value, should raise"
-      }
+      "connectionString": "mongodb://mongo:mongo@localhost:27017/NAP_Mastermind_lcl?directConnection=true&authSource=admin&retryWrites=true&w=majority",
+      "match": [
+        {
+          "query": {
+            "find": "uploadList",
+            "filter": { "name": "123123" }
+          },
+          "match": {
+            "documents[0].name": "123123",
+            "documents[1].name": "123123"
+          }
+        }
+      ]
     }
   ]
 }

@@ -1,5 +1,4 @@
 ﻿using System.Collections.Concurrent;
-using System.Text.Json;
 using Amazon.SimpleNotificationService;
 using Amazon.SQS;
 using Amazon.SQS.Model;
@@ -22,8 +21,14 @@ internal class SnsStepHandler(
     private readonly IAmazonSimpleNotificationService _snsClient = snsClient ?? throw new ArgumentNullException(nameof(snsClient));
     private string? _queueUrl;
 
-    public async Task<bool> WaitForMatchAsync(MomoExpectation config, int timeout, CancellationToken cancellationToken)
+    public async Task<bool> WaitForMatchAsync(IMomoExpectation baseConfig, int timeout, CancellationToken cancellationToken)
     {
+        if (baseConfig is not MomoAwsExpectation config)
+        {
+            throw new InvalidOperationException(
+                $"type of config in {nameof(S3StepHandler)} is invalid, expected MomoExpectation");
+        }
+        
         if (config.Arn == null)
             throw new ArgumentException("SNS Arn must be provided.");
 

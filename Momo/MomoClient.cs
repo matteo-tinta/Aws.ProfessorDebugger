@@ -6,6 +6,7 @@ using Momo.Exceptions;
 using Momo.Models;
 using Momo.Steps;
 using Momo.Steps.Decorations;
+using Newtonsoft.Json;
 
 namespace Momo;
 
@@ -36,21 +37,28 @@ public class MomoClient
             var result = await step.WaitForMatchAsync(expectation, _expectationFile.Timeout, cancellationToken);
             if (!result)
             {
-                throw new AssertException($"Step {expectation.Arn} failed");
+                throw new AssertException($"Step {JsonConvert.SerializeObject(expectation)} failed");
             }
         }
     }
 
-    private IStepHandler GetStepHandler(MomoExpectation expectation)
+    private IStepHandler GetStepHandler(IMomoExpectation expectation)
     {
-        var arn = Arn.ParseArn(expectation.Arn);
-
-        return arn.Service switch
+        return expectation switch
         {
-            "sns" => new StepHandlerLoggingDecorated(new SnsStepHandler(_sqsClient, _snsClient)),
-            "s3" => new StepHandlerLoggingDecorated(new S3StepHandler(_s3Client)),
-            "sqs" => throw new InvalidOperationException("To match SQS queues, provide its SNS. If no SNS are available, skip the node and check downstream resources (eg. Lambdas, S3)"),
-            _ => throw new InvalidOperationException("This type of arn is not recognized yet")
+            MomoMongoExpectation => new StepHandlerLoggingDecorated(new MongoStepHandler()),
+
+            MomoAwsExpectation momoExpectation when Arn.ParseArn(momoExpectation.Arn).Service == "sns"
+                => new StepHandlerLoggingDecorated(new SnsStepHandler(_sqsClient, _snsClient)),
+
+            MomoAwsExpectation momoExpectation when Arn.ParseArn(momoExpectation.Arn).Service == "s3"
+                => new StepHandlerLoggingDecorated(new S3StepHandler(_s3Client)),
+
+            MomoAwsExpectation momoExpectation when Arn.ParseArn(momoExpectation.Arn).Service == "sqs"
+                => throw new InvalidOperationException(
+                    "To match SQS queues, provide its SNS. If no SNS are available, skip the node and check downstream resources (eg. Lambdas, S3)"),
+
+            _ => throw new ArgumentOutOfRangeException("This type of arn is not recognized yet")
         };
     }
     
