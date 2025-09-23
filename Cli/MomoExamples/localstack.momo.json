@@ -3,15 +3,15 @@
   "timeout": 30,
   "expectations": [
     {
-      "arn": "arn:aws:sns:us-east-1:000000000000:my-topic",
+      "arn": "arn:aws:sns:us-east-1:000000000000:my-test-topic",
       "match": {
-        "Message.users[0].Name": "This is a name"
+        "Message.event": "user signup"
       }
     },
     {
       "arn": "arn:aws:s3:::ingestion-bucket",
       "match": {
-        "filename": "file.txt"
+        "filename": "worklist-ready-to-be-worked/variant-move-between-worklists/event-0.json"
       }
     },
     {
