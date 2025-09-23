@@ -82,13 +82,13 @@ cli momo [json_validation_file]
 
 ## Allowed services
 
-| Type    | Notes                                                                                                                                                                                    |
-|---------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| sns     | It will create a temporary SQS queue and attach it to the specified SNS                                                                                                                  |
+| Type    | Notes                                                                                                                                                                                      |
+|---------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| sns     | It will create a temporary SQS queue and attach it to the specified SNS                                                                                                                    |
 | sqs     | Direct SQS inspection isn't allowed, provide it's connected SNS topic as above. If there's no SNS, avoid checking the queue and look at the resources it triggers (like Lambda functions). |
-| s3      | only "filename" expectation accepted for now (content expectations will be available in future releases)                                                                                 |
-| lambda  | (Will be available in future releases)                                                                                                                                                   |
-| mongo   | Connect to a mongo database (database name must be included in query string) and assert a query result 
+| s3      | `filename` **is mandatory** and expects an S3 file key to be found in the given bucket, `content` expect a JsonPath to be found with the given value                                       |
+| lambda  | (Will be available in future releases)                                                                                                                                                     |
+| mongo   | Connect to a mongo database (database name must be included in query string) and assert a query result                                                                                     
 
 ## Json File Validation Example
 
@@ -106,7 +106,8 @@ cli momo [json_validation_file]
     {
       "arn": "arn:aws:s3:::ingestion-bucket",
       "match": {
-        "filename": "file.txt"
+        "filename": "worklist-ready-to-be-worked/variant-move-between-worklists/event-0.json",
+        "content.location": "DC4" # File content location
       }
     },
     {

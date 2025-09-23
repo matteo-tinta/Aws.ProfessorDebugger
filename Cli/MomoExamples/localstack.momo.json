@@ -11,7 +11,8 @@
     {
       "arn": "arn:aws:s3:::ingestion-bucket",
       "match": {
-        "filename": "worklist-ready-to-be-worked/variant-move-between-worklists/event-0.json"
+        "filename": "worklist-ready-to-be-worked/variant-move-between-worklists/event-0.json",
+        "content.location": "DC4"
       }
     },
     {
