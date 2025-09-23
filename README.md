@@ -128,6 +128,13 @@ cli momo [json_validation_file]
 }
 ```
 
+## Limitations
+
+- Due to the nature of our shared AWS infrastructure and the possibility of manual or external message publication to SNS topics, it is **not possible to guarantee strict correlation between test actions and observed messages**.
+- This tool attempts to assert the presence of expected messages within a specified window, but **cannot guarantee** that matched messages were produced exclusively by the test under execution.
+- All test data/resources are deleted after each cycle to minimize contamination, but as trace IDs or unique correlation identifiers cannot be enforced, there is a potential for false positives.
+- For highest reliability, use this tool in isolated environments or when no manual/external messages are being published.
+
 # How to develop this tool
 1. You do need to set your SSO AWS Profile called mastermind-dev (use AWS Explorer vs extension)
 2. Start the Cli project within visual studio
