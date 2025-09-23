@@ -20,7 +20,7 @@ internal class AwsResourceSingleFlightCache(
     IAmazonSimpleSystemsManagement ssmClient,
     IAmazonSimpleNotificationService snsClient,
     IAmazonIdentityManagementService iamClient,
-    AmazonSQSClient sqsClient)
+    IAmazonSQS sqsClient)
 {
     private readonly SingleFlightCache _cache = new();
 

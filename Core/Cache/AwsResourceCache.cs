@@ -156,7 +156,7 @@ namespace Core.Cache
             return value;
         }
         
-        public static async Task<GetQueueUrlResponse> GetSqsQueueUrl(AmazonSQSClient sqsClient, string queueName)
+        public static async Task<GetQueueUrlResponse> GetSqsQueueUrl(IAmazonSQS sqsClient, string queueName)
         {
             if (SqsQueueUrls.TryGetValue(queueName, out var cached))
             {
@@ -169,7 +169,7 @@ namespace Core.Cache
             return value;
         }
         
-        public static async Task<GetQueueAttributesResponse> GetSqsQueueAttributes(AmazonSQSClient sqsClient, string sqsUrl)
+        public static async Task<GetQueueAttributesResponse> GetSqsQueueAttributes(IAmazonSQS sqsClient, string sqsUrl)
         {
             if (SqsQueueAttributes.TryGetValue(sqsUrl, out var cached))
             {

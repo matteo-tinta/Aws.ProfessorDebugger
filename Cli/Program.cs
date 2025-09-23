@@ -1,6 +1,13 @@
-﻿using Cli.FileLoader;
+﻿using Amazon.IdentityManagement;
+using Amazon.Lambda;
+using Amazon.S3;
+using Amazon.SimpleNotificationService;
+using Amazon.SimpleSystemsManagement;
+using Amazon.SQS;
+using Cli.FileLoader;
 using Core;
 using Core.Cache.Providers;
+using Momo;
 using Momo.Exceptions;
 using Momo.Models;
 
@@ -51,11 +58,38 @@ class Program
         }
     }
 
+    static AmazonS3Client GetAmazonS3Client()
+    {
+        try
+        {
+            return new AmazonS3Client(new AmazonS3Config()
+            {
+                ServiceURL = Environment.GetEnvironmentVariable("AWS_S3_ENDPOINT"),
+                ForcePathStyle = true,
+                UseHttp = true,
+                AuthenticationRegion = Environment.GetEnvironmentVariable("AWS_REGION")
+            });
+        }
+        catch (Exception e)
+        {
+            Console.WriteLine($"[WARNING]: unable to construct s3 client, returning default: {e}");
+            return new AmazonS3Client();
+        }
+    }
+
     static async Task ExecuteMomo(MomoOptions options)
     {
+        //clients
+        var sqsClient = new AmazonSQSClient();
+        var snsClient = new AmazonSimpleNotificationServiceClient();
+        
+        
         var client = MomoClientFactory.FeedMomo(new MomoClientFactoryOptions()
         {
-            ExpectationFile = await MomoFileLoader.LoadAsync(options.InputFile)
+            ExpectationFile = await MomoFileLoader.LoadAsync(options.InputFile),
+            s3Client = GetAmazonS3Client(),
+            snsClient = snsClient,
+            sqsClient = sqsClient
         });
 
         await client.MatchExpectations(CancellationToken.None);
@@ -63,6 +97,13 @@ class Program
     
     static async Task ExecuteGraphAsync(GraphOptions options)
     {
+        //clients
+        var sqsClient = new AmazonSQSClient();
+        var snsClient = new AmazonSimpleNotificationServiceClient();
+        var iamClient = new AmazonIdentityManagementServiceClient();
+        var lambdaClient = new AmazonLambdaClient();
+        var ssmClient = new AmazonSimpleSystemsManagementClient();
+        
         var cacheProvider = CacheProviderFactory.CreateCacheProviderForAwsCache(new CreateCacheProviderOptions()
         {
             CacheType = options.CacheType
@@ -78,7 +119,13 @@ class Program
         {
             CacheProvider = cacheProvider,
             GraphCacheProvider = graphCacheProvider,
-            MaxLevel = options.MaxLevel
+            MaxLevel = options.MaxLevel,
+            SQSClient = sqsClient,
+            IamClient = iamClient,
+            LambdaClient = lambdaClient,
+            S3Client = GetAmazonS3Client(),
+            SNSClient = snsClient,
+            SsmClient = ssmClient
         });
 
         await explorer.TraverseAsync(options.AwsArn);

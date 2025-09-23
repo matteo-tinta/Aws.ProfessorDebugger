@@ -24,6 +24,14 @@
     </ItemGroup>
 
     <ItemGroup>
+        <PackageReference Include="AWSSDK.IdentityManagement" Version="4.0.3.2" />
+        <PackageReference Include="AWSSDK.Lambda" Version="4.0.2.8" />
+        <PackageReference Include="AWSSDK.S3" Version="4.0.6.12" />
+        <PackageReference Include="AWSSDK.SimpleNotificationService" Version="4.0.1.1" />
+        <PackageReference Include="AWSSDK.SimpleSystemsManagement" Version="4.0.3.1" />
+        <PackageReference Include="AWSSDK.SQS" Version="4.0.1.2" />
+        <PackageReference Include="AWSSDK.SSO" Version="4.0.1.1" />
+        <PackageReference Include="AWSSDK.SSOOIDC" Version="4.0.1.1" />
       <PackageReference Include="CommandLineParser" Version="2.9.1" />
     </ItemGroup>
 
