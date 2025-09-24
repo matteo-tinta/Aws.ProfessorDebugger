@@ -88,7 +88,7 @@ cli momo [json_validation_file]
 
 The core functionality of this project is also available as an independent DLL that you can include in your C# projects.
 
-Using the DLL allows you to extend the tool by writing your own custom steps and validations that are not yet provided in the CLI. For example, you could implement custom integrations such as SQL Server connections or other specific checks tailored to your infrastructure.
+Using the DLL allows you to extend the tool by writing your own custom steps and validations that are not yet provided in the base version used by the CLI. For example, you could implement custom integrations such as SQL Server connections or other specific checks tailored to your infrastructure.
 
 This flexibility enables seamless integration of Momo’s message tracing and validation capabilities directly into your existing applications or testing frameworks.
 
@@ -127,9 +127,9 @@ public void Example()
     var client = MomoClientFactory.FeedMomo(new MomoClientFactoryOptions()
     {
         ExpectationFile = expectationFile,
-        s3Client = s3Client, //your s3Client
-        snsClient = snsClient, //your SNSClient
-        sqsClient = sqsClient //your SQSClient
+        s3Client = s3Client, //your s3Client (if any)
+        snsClient = snsClient, //your SNSClient (if any)
+        sqsClient = sqsClient //your SQSClient (if any)
     });
 
     try {
@@ -144,13 +144,13 @@ public void Example()
 
 ## Allowed services
 
-| Type    | Notes                                                                                                                                                                                      |
-|---------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| sns     | It will create a temporary SQS queue and attach it to the specified SNS                                                                                                                    |
-| sqs     | Direct SQS inspection isn't allowed, provide it's connected SNS topic as above. If there's no SNS, avoid checking the queue and look at the resources it triggers (like Lambda functions). |
-| s3      | `filename` **is mandatory** and expects an S3 file key to be found in the given bucket, `content` expect a JsonPath to be found with the given value                                       |
-| lambda  | (Will be available in future releases)                                                                                                                                                     |
-| mongo   | Connect to a mongo database (database name must be included in query string) and assert a query result                                                                                     
+| Type    | Notes                                                                                                                                                                                                                                                 |
+|---------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| sns     | It will create a temporary SQS queue and attach it to the specified SNS                                                                                                                                                                               |
+| sqs     | **In order to avoid race conditions in your environments** direct SQS inspection isn't allowed, provide it's connected SNS topic as above. If there's no SNS, avoid checking the queue and look at the resources it triggers (like Lambda functions). |
+| s3      | `filename` **is mandatory** and expects an S3 file key to be found in the given bucket, `content` expect a JsonPath to be found with the given value                                                                                                  |
+| lambda  | (Will be available in future releases)                                                                                                                                                                                                                |
+| mongo   | Connect to a mongo database (database name must be included in query string) and assert a query result. `documents` is a typed key and it must be used to access fetched documents (which is always an array).                                                                                                                                               
 
 ## Json File Validation Example
 
@@ -196,6 +196,7 @@ public void Example()
 - Due to the nature of our shared AWS infrastructure and the possibility of manual or external message publication to SNS topics, it is **not possible to guarantee strict correlation between test actions and observed messages**.
 - This tool attempts to assert the presence of expected messages within a specified window, but **cannot guarantee** that matched messages were produced exclusively by the test under execution.
 - All test resources are deleted after each cycle to minimize contamination (not data), but as trace IDs or unique correlation identifiers cannot be enforced, there is a potential for false positives.
+- *This tool do not provide an automatic detection of created resources during the test phase*. So remember to delete them at the end of `WaitForMatchAsync` method to avoid dangling resources in your infrastructure.
 - For highest reliability, use this tool in isolated environments or when no manual/external messages are being published.
 
 # How to develop this tool
