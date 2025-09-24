@@ -144,13 +144,14 @@ public void Example()
 
 ## Allowed services
 
-| Type    | Notes                                                                                                                                                                                                                                                 |
-|---------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| sns     | It will create a temporary SQS queue and attach it to the specified SNS                                                                                                                                                                               |
-| sqs     | **In order to avoid race conditions in your environments** direct SQS inspection isn't allowed, provide it's connected SNS topic as above. If there's no SNS, avoid checking the queue and look at the resources it triggers (like Lambda functions). |
-| s3      | `filename` **is mandatory** and expects an S3 file key to be found in the given bucket, `content` expect a JsonPath to be found with the given value                                                                                                  |
-| lambda  | (Will be available in future releases)                                                                                                                                                                                                                |
-| mongo   | Connect to a mongo database (database name must be included in query string) and assert a query result. `documents` is a typed key and it must be used to access fetched documents (which is always an array).                                                                                                                                               
+| Type     | Notes                                                                                                                                                                                                                                                 |
+|----------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| sns      | It will create a temporary SQS queue and attach it to the specified SNS                                                                                                                                                                               |
+| sqs      | **In order to avoid race conditions in your environments** direct SQS inspection isn't allowed, provide it's connected SNS topic as above. If there's no SNS, avoid checking the queue and look at the resources it triggers (like Lambda functions). |
+| s3       | `filename` **is mandatory** and expects an S3 file key to be found in the given bucket, `content` expect a JsonPath to be found with the given value                                                                                                  |
+| lambda   | (Will be available in future releases)                                                                                                                                                                                                                |
+| mongo    | Connect to a mongo database (database name must be included in query string) and assert a query result. `documents` is a typed key and it must be used to access fetched documents (which is always an array).                                                                                                                                               
+| parallel | allow previous steps to run in parallel mode
 
 ## Json File Validation Example
 
@@ -160,30 +161,42 @@ public void Example()
   "timeout": 30,
   "expectations": [
     {
-      "arn": "arn:aws:sns:us-east-1:000000000000:my-topic",
+      "arn": "arn:aws:s3:::ingestion-bucket",
       "match": {
-        "Message.users[0].Name": "This is a name"
+        "filename": "worklist-ready-to-be-worked/variant-move-between-worklists/event-0.json",
+        "content.location": "DC4"
       }
     },
     {
       "arn": "arn:aws:s3:::ingestion-bucket",
       "match": {
         "filename": "worklist-ready-to-be-worked/variant-move-between-worklists/event-0.json",
-        "content.location": "DC4" # File content location
+        "content.location": "DC4"
       }
     },
     {
-      "connectionString": "mongodb://mongo:mongo@localhost:27017/NAP_Mastermind_lcl?directConnection=true&authSource=admin&retryWrites=true&w=majority",
-      "match": [
+      "parallelExpectations": [
         {
-          "query": {
-            "find": "uploadList",
-            "filter": { "name": "123123" }
-          },
+          "arn": "arn:aws:s3:::ingestion-bucket",
           "match": {
-            "documents[0].name": "123123",
-            "documents[1].name": "123123"
+            "filename": "worklist-ready-to-be-worked/variant-move-between-worklists/event-0.json",
+            "content.location": "DC5"
           }
+        },
+        {
+          "connectionString": "mongodb://mongo:mongo@localhost:27017/NAP_Mastermind_lcl?directConnection=true&authSource=admin&retryWrites=true&w=majority",
+          "match": [
+            {
+              "query": {
+                "find": "uploadList",
+                "filter": { "name": "123123" }
+              },
+              "match": {
+                "documents[0].name": "123123",
+                "documents[1].name": "123123"
+              }
+            }
+          ]
         }
       ]
     }

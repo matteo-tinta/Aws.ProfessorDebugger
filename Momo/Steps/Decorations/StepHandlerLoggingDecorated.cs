@@ -10,8 +10,22 @@ internal class StepHandlerLoggingDecorated(IStepHandler stepHandler): IStepHandl
         {
             MomoMongoExpectation momoDatabaseExpectation => await WaitForMatchAsync(momoDatabaseExpectation, timeout, cancellationToken),
             MomoAwsExpectation momoExpectation => await WaitForMatchAsync(momoExpectation, timeout, cancellationToken),
+            MomoParallelExpectation momoParallelExpectation => await WaitForMatchAsync(momoParallelExpectation, timeout, cancellationToken),
             _ => await WaitForGeneralMatchAsync(step, timeout, cancellationToken)
         };
+    
+    private async Task<bool> WaitForMatchAsync(MomoParallelExpectation momoExpectation, int timeout, CancellationToken cancellationToken)
+    {
+        Console.WriteLine($"---> [Parallel]: Matching {momoExpectation.ParallelExpectations.Count} parallel expectations...");
+        var matches = await stepHandler.WaitForMatchAsync(momoExpectation, timeout, cancellationToken);
+
+        if (matches)
+        {
+            Console.WriteLine($"<--- [Parallel]: Matched all {momoExpectation.ParallelExpectations.Count} expectations");
+        }
+
+        return matches;
+    }
 
     private async Task<bool> WaitForGeneralMatchAsync(IMomoExpectation momoExpectation, int timeout,
         CancellationToken cancellationToken)

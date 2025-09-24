@@ -3,9 +3,10 @@
   "timeout": 30,
   "expectations": [
     {
-      "arn": "arn:aws:sns:us-east-1:000000000000:my-test-topic",
+      "arn": "arn:aws:s3:::ingestion-bucket",
       "match": {
-        "Message.event": "user signup"
+        "filename": "worklist-ready-to-be-worked/variant-move-between-worklists/event-0.json",
+        "content.location": "DC4"
       }
     },
     {
@@ -16,17 +17,28 @@
       }
     },
     {
-      "connectionString": "mongodb://mongo:mongo@localhost:27017/NAP_Mastermind_lcl?directConnection=true&authSource=admin&retryWrites=true&w=majority",
-      "match": [
+      "parallelExpectations": [
         {
-          "query": {
-            "find": "uploadList",
-            "filter": { "name": "123123" }
-          },
+          "arn": "arn:aws:s3:::ingestion-bucket",
           "match": {
-            "documents[0].name": "123123",
-            "documents[1].name": "123123"
+            "filename": "worklist-ready-to-be-worked/variant-move-between-worklists/event-0.json",
+            "content.location": "DC5"
           }
+        },
+        {
+          "connectionString": "mongodb://mongo:mongo@localhost:27017/NAP_Mastermind_lcl?directConnection=true&authSource=admin&retryWrites=true&w=majority",
+          "match": [
+            {
+              "query": {
+                "find": "uploadList",
+                "filter": { "name": "123123" }
+              },
+              "match": {
+                "documents[0].name": "123123",
+                "documents[1].name": "123123"
+              }
+            }
+          ]
         }
       ]
     }

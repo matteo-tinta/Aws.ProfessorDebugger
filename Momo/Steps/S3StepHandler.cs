@@ -2,6 +2,7 @@
 using Amazon.S3;
 using Amazon.S3.Model;
 using Models;
+using Momo.Exceptions;
 using Momo.Expectations;
 using Momo.Helpers;
 using Newtonsoft.Json;
@@ -30,6 +31,7 @@ internal partial class S3StepHandler(IAmazonS3 s3Client): IStepHandler
 
         return await RetryHelper.RetryAsync(async () =>
             {
+                _validations = new Dictionary<string, object>();
                 foreach (var expectation in config.Match)
                 {
                     switch (expectation.Key.ToLower().Trim())
@@ -49,14 +51,16 @@ internal partial class S3StepHandler(IAmazonS3 s3Client): IStepHandler
                         var newKey = pattern.Replace(expectation.Key, "___MomoContent");
                         var token = file.Content.SelectToken(newKey);
                         
-                        if (token == null || !string.Equals(token.ToString(), expectation.Value, StringComparison.OrdinalIgnoreCase))
-                            return false;
+                        if (token is not null && string.Equals(token.ToString(), expectation.Value, StringComparison.OrdinalIgnoreCase))
+                            return true;
+
+                        throw new AssertException(
+                            $"A file with the current key was found on bucket \"{s3BucketArn.ResourceName}\" but the \"{expectation.Key}\" didn't match the expectation");
                     }
                 }
 
                 return true;
-            },
-            TimeSpan.FromMilliseconds(timeout), cancellationToken);
+            },TimeSpan.FromSeconds(timeout), cancellationToken);
     }
     
     private (JObject Content, MetadataCollection Metadata) GetFileFromValidation()
@@ -94,10 +98,12 @@ internal partial class S3StepHandler(IAmazonS3 s3Client): IStepHandler
         DownloadJsonWithMetadataAsync(string bucketName, string key, CancellationToken cancellationToken)
     {
         var response = await _s3Client.GetObjectAsync(bucketName, key, cancellationToken);
+        //TODO: add assertion exception file not found
 
         using var stream = response.ResponseStream;
         using var reader = new StreamReader(stream);
         string content = await reader.ReadToEndAsync();
+        
 
         AddFileToValidations((content, response.Metadata));
     }

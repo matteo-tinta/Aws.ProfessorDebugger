@@ -17,9 +17,15 @@ public class IMomoExpectationConverter : JsonConverter<IMomoExpectation>
         {
             return JsonSerializer.Deserialize<MomoMongoExpectation>(root.GetRawText(), options);
         }
-        else if (root.TryGetProperty("arn", out _))
+        
+        if (root.TryGetProperty("arn", out _))
         {
             return JsonSerializer.Deserialize<MomoAwsExpectation>(root.GetRawText(), options);
+        }
+        
+        if (root.TryGetProperty("parallelExpectations", out _))
+        {
+            return JsonSerializer.Deserialize<MomoParallelExpectation>(root.GetRawText(), options);
         }
 
         throw new JsonException("Unknown IMomoExpectation implementation.");
@@ -33,6 +39,9 @@ public class IMomoExpectationConverter : JsonConverter<IMomoExpectation>
                 JsonSerializer.Serialize(writer, dbExp, options);
                 break;
             case MomoAwsExpectation exp:
+                JsonSerializer.Serialize(writer, exp, options);
+                break;
+            case MomoParallelExpectation exp:
                 JsonSerializer.Serialize(writer, exp, options);
                 break;
             default:
