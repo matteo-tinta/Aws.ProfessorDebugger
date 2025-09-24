@@ -20,10 +20,6 @@ public static class MomoClientFactory
     /// </summary>
     public static MomoClient FeedMomo(MomoClientFactoryOptions options)
     {
-        return MomoClient.ValidateAndCreate(
-            options.sqsClient, 
-            options.snsClient, 
-            options.s3Client, 
-            options.ExpectationFile);
+        return MomoClient.ValidateAndCreate(options);
     }
 }

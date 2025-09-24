@@ -1,8 +1,8 @@
-﻿using Momo.Models;
+﻿using Momo.Expectations;
 
 namespace Momo.Steps;
 
-internal interface IStepHandler
+public interface IStepHandler
 {
     Task<bool> WaitForMatchAsync(IMomoExpectation step, int timeout, CancellationToken cancellationToken);
 }

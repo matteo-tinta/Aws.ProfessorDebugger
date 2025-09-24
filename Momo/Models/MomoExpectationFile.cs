@@ -1,9 +1,7 @@
-﻿using Newtonsoft.Json;
+﻿using Momo.Expectations;
+using Newtonsoft.Json;
 
 namespace Momo.Models;
-
-
-
 
 public record MomoExpectationFile
 {

@@ -2,8 +2,8 @@
 using Amazon.S3;
 using Amazon.S3.Model;
 using Models;
+using Momo.Expectations;
 using Momo.Helpers;
-using Momo.Models;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 

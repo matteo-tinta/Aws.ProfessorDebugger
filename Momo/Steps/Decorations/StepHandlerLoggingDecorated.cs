@@ -1,4 +1,4 @@
-﻿using Momo.Models;
+﻿using Momo.Expectations;
 using MongoDB.Driver;
 
 namespace Momo.Steps.Decorations;
@@ -10,9 +10,25 @@ internal class StepHandlerLoggingDecorated(IStepHandler stepHandler): IStepHandl
         {
             MomoMongoExpectation momoDatabaseExpectation => await WaitForMatchAsync(momoDatabaseExpectation, timeout, cancellationToken),
             MomoAwsExpectation momoExpectation => await WaitForMatchAsync(momoExpectation, timeout, cancellationToken),
-            _ => throw new ArgumentOutOfRangeException(nameof(step))
+            _ => await WaitForGeneralMatchAsync(step, timeout, cancellationToken)
         };
 
+    private async Task<bool> WaitForGeneralMatchAsync(IMomoExpectation momoExpectation, int timeout,
+        CancellationToken cancellationToken)
+    {
+        string? name = momoExpectation.GetType().FullName ?? "custom";
+        
+        Console.WriteLine($"[{name}]: Matching expectations...");
+        var matches = await stepHandler.WaitForMatchAsync(momoExpectation, timeout, cancellationToken);
+
+        if (matches)
+        {
+            Console.WriteLine($"[{name}]: Matched all expectations");
+        }
+
+        return matches;
+    }
+    
     private async Task<bool> WaitForMatchAsync(MomoMongoExpectation momoExpectation, int timeout,
         CancellationToken cancellationToken)
     {

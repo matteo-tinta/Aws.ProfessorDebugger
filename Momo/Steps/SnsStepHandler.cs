@@ -5,8 +5,8 @@ using Amazon.SQS.Model;
 using Models;
 using Momo.Commands;
 using Momo.Exceptions;
+using Momo.Expectations;
 using Momo.Helpers;
-using Momo.Models;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 
