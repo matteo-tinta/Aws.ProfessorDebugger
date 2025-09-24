@@ -67,7 +67,11 @@ If you keep clearing the cache, you're defeating the entire purpose of this tool
 
 This fantastic tool comes in handy when you need to trace a series of messages inside your infrastructure. 
 
-Create a json somewhere and feed it to momo. It will try to match all your expectations or return an exception if some are not respected in a given timeout
+Create a json somewhere and feed it to momo. 
+It will try to match all your expectations or return an exception if some are not respected in a given timeout.
+
+Timeout is intended as "wait until" not a "sleep timeout": if the assertion is not verified before the given 
+timeout an exception will be raied (_don't be scared to use longer timeouts_)
 
 ## Cli
 ```bash
@@ -78,6 +82,64 @@ cli momo [json_validation_file]
 
   --help            Display this help screen.
   --version         Display version information.
+```
+
+## DLL
+
+The core functionality of this project is also available as an independent DLL that you can include in your C# projects.
+
+Using the DLL allows you to extend the tool by writing your own custom steps and validations that are not yet provided in the CLI. For example, you could implement custom integrations such as SQL Server connections or other specific checks tailored to your infrastructure.
+
+This flexibility enables seamless integration of Momo’s message tracing and validation capabilities directly into your existing applications or testing frameworks.
+
+Here is a brief example on how to integrate with a custom step:
+
+```c#
+public class CustomStepHandler : IStepHandler 
+{
+    public Task<bool> WaitForMatchAsync(IMomoExpectation step, int timeout, CancellationToken cancellationToken)
+    {
+        //implement your logic (return true if all steps are asserted, false if not)
+        //you can also throw an AssertException/MessageAssertException with custom data if you wish
+        return Task.FromResult(true);
+    }
+}
+
+public class CustomExpectation : IMomoExpectation 
+{
+    public IStepHandler GetStepHandler(MomoClientFactoryOptions options)
+    {
+        return new CustomStepHandler();
+    }
+}
+
+
+public void Example() 
+{
+    var momoStep = new CustomStepHandler();
+    var momoExpectation = new CustomExpectation();
+    
+    var expectationFile = new MomoExpectationFile()
+    {
+        Expectations = [momoExpectation]
+    };
+    
+    var client = MomoClientFactory.FeedMomo(new MomoClientFactoryOptions()
+    {
+        ExpectationFile = expectationFile,
+        s3Client = s3Client, //your s3Client
+        snsClient = snsClient, //your SNSClient
+        sqsClient = sqsClient //your SQSClient
+    });
+
+    try {
+        await client.MatchExpectations(CancellationToken.None);
+    }
+    catch (AssertException) {
+        //if an assert exception is raised, a step cannot be verified in the given timeout
+        throw;
+    }
+}
 ```
 
 ## Allowed services
@@ -133,7 +195,7 @@ cli momo [json_validation_file]
 
 - Due to the nature of our shared AWS infrastructure and the possibility of manual or external message publication to SNS topics, it is **not possible to guarantee strict correlation between test actions and observed messages**.
 - This tool attempts to assert the presence of expected messages within a specified window, but **cannot guarantee** that matched messages were produced exclusively by the test under execution.
-- All test data/resources are deleted after each cycle to minimize contamination, but as trace IDs or unique correlation identifiers cannot be enforced, there is a potential for false positives.
+- All test resources are deleted after each cycle to minimize contamination (not data), but as trace IDs or unique correlation identifiers cannot be enforced, there is a potential for false positives.
 - For highest reliability, use this tool in isolated environments or when no manual/external messages are being published.
 
 # How to develop this tool
@@ -153,3 +215,12 @@ you likely need to either:
 # FAQ
 - ?: I cannot use the CLI because the token is expired
 - !: Save your tokens again (read the CLI HELP)
+---
+- ?: I want to use the cli, but with another profile (eg. Localstack)
+- !: Export an env variable called AWS_PROFILE with your configured aws profile, and run the cli
+---
+- ?: I want to use the cli, but with an sso profile (eg. mastermind-dev)
+- !: login through your terminal first (`aws sso login --profile mastermind-dev`) and then run the cli
+---
+- ?: I want to use the cli, but with custom tokens
+- !: Export the AWS env variables given by aws login and run the cli
