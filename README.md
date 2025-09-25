@@ -103,21 +103,33 @@ capabilities directly into your existing applications or testing frameworks.
 Here is a brief example on how to integrate with a custom step:
 
 ```c#
-public class CustomStepHandler : IStepHandler 
+public class CustomStepHandler(bool shouldPass) : IStepHandler 
 {
-    public Task<bool> WaitForMatchAsync(IMomoExpectation step, int timeout, CancellationToken cancellationToken)
+    public ValueTask DisposeAsync()
     {
-        //implement your logic (return true if all steps are asserted, false if not)
-        //you can also throw an AssertException/MessageAssertException with custom data if you wish
-        return Task.FromResult(true);
+        //dispose your resources
+        //will be called after CheckAsync or in case of any exception during the matching process
+        return ValueTask.CompletedTask;
+    }
+
+    public Task PrepareAsync(IMomoExpectation config, CancellationToken cancellationToken)
+    {
+        //prepare your step
+        return Task.CompletedTask;
+    }
+
+    public Task<bool> CheckAsync(IMomoExpectation config, int timeout, CancellationToken cancellationToken)
+    {
+        //This step will be called multiple times, do not initialize anything here!
+        return Task.FromResult(shouldPass);
     }
 }
 
-public class CustomExpectation : IMomoExpectation 
+public class CustomExpectation(bool shouldPass) : IMomoExpectation 
 {
     public IStepHandler GetStepHandler(MomoClientFactoryOptions options)
     {
-        return new CustomStepHandler();
+        return new CustomStepHandler(shouldPass);
     }
 }
 
@@ -126,10 +138,9 @@ public class CustomExpectation : IMomoExpectation
 public class UnitTestProject 
 {
     [Test]
-    public void This_Is_Passing_Test() 
+    public async Task This_Is_Passing_Test() 
     {
-        var momoStep = new CustomStepHandler();
-        var momoExpectation = new CustomExpectation();
+        var momoExpectation = new CustomExpectation(shouldPass: true);
         
         var expectationFile = new MomoExpectationFile()
         {
@@ -147,10 +158,9 @@ public class UnitTestProject
     }
     
     [Test]
-    public void This_Is_An_Expected_Failed_Test() 
+    public async Task This_Is_An_Expected_Failed_Test() 
     {
-        var momoStep = new CustomStepHandler();
-        var momoExpectation = new CustomExpectation();
+        var momoExpectation = new CustomExpectation(shouldPass: false);
         
         var expectationFile = new MomoExpectationFile()
         {
@@ -162,7 +172,7 @@ public class UnitTestProject
             ExpectationFile = expectationFile
         });
     
-        Assert.ThrowsAsync<AssertException>(async () => await client.MatchExpectations(CancellationToken.None), "message")
+        await Assert.ThrowsAsync<AssertException>(async () => await client.MatchExpectations(CancellationToken.None), "message")
     }
 }
 ```
@@ -176,7 +186,7 @@ public class UnitTestProject
 | s3 (Momo.Expectations.S3)             | `filename` **is mandatory** and expects an S3 file key to be found in the given bucket, `content` expect a JsonPath to be found with the given value                                                                                                  |
 | lambda                                | (Will be available in future releases)                                                                                                                                                                                                                |
 | mongo (Momo.Expectations.Mongo)       | Connect to a mongo database (database name must be included in query string) and assert a query result. `documents` is a typed key and it must be used to access fetched documents (which is always an array).                                                                                                                                               
-| parallel (Momo.Expectations.Parallel) | allow previous steps to run in parallel mode
+| parallel (Momo.Expectations.Parallel) | allow previous steps to run in parallel mode. If a step fails, the whole parallel stack will throw an exception
 
 ## Json File Validation Example
 
@@ -186,10 +196,9 @@ public class UnitTestProject
   "timeout": 30,
   "expectations": [
     {
-      "arn": "arn:aws:s3:::ingestion-bucket",
+      "arn": "arn:aws:sns:us-east-1:000000000000:my-test-topic",
       "match": {
-        "filename": "worklist-ready-to-be-worked/variant-move-between-worklists/event-0.json",
-        "content.location": "DC4"
+        "Message.event": "user signup"
       }
     },
     {
@@ -206,6 +215,12 @@ public class UnitTestProject
           "match": {
             "filename": "worklist-ready-to-be-worked/variant-move-between-worklists/event-0.json",
             "content.location": "DC5"
+          }
+        },
+        {
+          "arn": "arn:aws:sns:us-east-1:000000000000:my-second-test-topic",
+          "match": {
+            "Message.event": "user login"
           }
         },
         {
