@@ -1,0 +1,23 @@
+﻿using Amazon.SimpleNotificationService;
+using Amazon.SQS;
+using Momo.Expectations.SNS.Steps;
+using Momo.Steps;
+using ResourceArn = Models.Arn;
+
+namespace Momo.Expectations.SNS.Expectations;
+
+public class MomoAwsSnsExpectation(IAmazonSQS sqsClient, IAmazonSimpleNotificationService snsClient) : IMomoExpectation
+{
+    public required string Arn { get; set; }
+    public required Dictionary<string, string> Match { get; set; }
+    public IStepHandler GetStepHandler(MomoClientFactoryOptions options)
+    {
+        var service = ResourceArn.ParseArn(Arn).Service;
+
+        return service.ToLower().Trim() switch
+        {
+            "sns" => new MomoAwsSnsStepHandler(sqsClient, snsClient),
+            _ => throw new InvalidOperationException($"This type of arn ({Arn} -> {service}) is not recognized yet")
+        };
+    }
+}

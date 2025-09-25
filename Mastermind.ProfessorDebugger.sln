@@ -18,6 +18,20 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Core.Tests", "tests\Core.Te
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Momo.Tests", "tests\Momo.Tests\Momo.Tests.csproj", "{76BF30AA-5200-48A1-B158-02878DB2BC32}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Momo.Expectations.SNS", "Momo.Expectations\Momo.Expectations.SNS\Momo.Expectations.SNS.csproj", "{763D510D-0A22-498C-952E-59A952F0E152}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Momo Expectations", "Momo Expectations", "{B15EAB45-7071-4C1E-96A0-BCDED38CD3C4}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Momo.Expectations.SNS.Tests", "tests\Momo.Expectations.SNS.Tests\Momo.Expectations.SNS.Tests.csproj", "{0E963919-1D75-487F-8F4B-09612C27C057}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Momo.Expectations.S3", "Momo.Expectations\Momo.Expectations.S3\Momo.Expectations.S3.csproj", "{FB80DF02-9F16-419C-86CD-A3C2ED3D0E4F}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Momo.Expectations.Mongo", "Momo.Expectations\Momo.Expectations.Mongo\Momo.Expectations.Mongo.csproj", "{68E018BE-D812-4362-8687-3DF991AEF8A4}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Momo.Expectations.Mongo.Tests", "tests\Momo.Expectations.Mongo.Tests\Momo.Expectations.Mongo.Tests.csproj", "{AA1DF8F3-B312-48BA-9BCA-5BC9FAAB57BA}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Momo.Expectations.Parallel", "Momo.Expectations\Momo.Expectations.Parallel\Momo.Expectations.Parallel.csproj", "{89783467-672E-474F-9698-9149E9C62B99}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -48,6 +62,30 @@ Global
 		{76BF30AA-5200-48A1-B158-02878DB2BC32}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{76BF30AA-5200-48A1-B158-02878DB2BC32}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{76BF30AA-5200-48A1-B158-02878DB2BC32}.Release|Any CPU.Build.0 = Release|Any CPU
+		{763D510D-0A22-498C-952E-59A952F0E152}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{763D510D-0A22-498C-952E-59A952F0E152}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{763D510D-0A22-498C-952E-59A952F0E152}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{763D510D-0A22-498C-952E-59A952F0E152}.Release|Any CPU.Build.0 = Release|Any CPU
+		{0E963919-1D75-487F-8F4B-09612C27C057}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{0E963919-1D75-487F-8F4B-09612C27C057}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{0E963919-1D75-487F-8F4B-09612C27C057}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{0E963919-1D75-487F-8F4B-09612C27C057}.Release|Any CPU.Build.0 = Release|Any CPU
+		{FB80DF02-9F16-419C-86CD-A3C2ED3D0E4F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{FB80DF02-9F16-419C-86CD-A3C2ED3D0E4F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{FB80DF02-9F16-419C-86CD-A3C2ED3D0E4F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{FB80DF02-9F16-419C-86CD-A3C2ED3D0E4F}.Release|Any CPU.Build.0 = Release|Any CPU
+		{68E018BE-D812-4362-8687-3DF991AEF8A4}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{68E018BE-D812-4362-8687-3DF991AEF8A4}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{68E018BE-D812-4362-8687-3DF991AEF8A4}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{68E018BE-D812-4362-8687-3DF991AEF8A4}.Release|Any CPU.Build.0 = Release|Any CPU
+		{AA1DF8F3-B312-48BA-9BCA-5BC9FAAB57BA}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{AA1DF8F3-B312-48BA-9BCA-5BC9FAAB57BA}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{AA1DF8F3-B312-48BA-9BCA-5BC9FAAB57BA}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{AA1DF8F3-B312-48BA-9BCA-5BC9FAAB57BA}.Release|Any CPU.Build.0 = Release|Any CPU
+		{89783467-672E-474F-9698-9149E9C62B99}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{89783467-672E-474F-9698-9149E9C62B99}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{89783467-672E-474F-9698-9149E9C62B99}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{89783467-672E-474F-9698-9149E9C62B99}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -58,5 +96,11 @@ Global
 	GlobalSection(NestedProjects) = preSolution
 		{73066831-7757-41DE-9739-E3EF2D31C9D4} = {4C965AD5-22D9-4EBD-BF5B-325F2A76235D}
 		{76BF30AA-5200-48A1-B158-02878DB2BC32} = {4C965AD5-22D9-4EBD-BF5B-325F2A76235D}
+		{763D510D-0A22-498C-952E-59A952F0E152} = {B15EAB45-7071-4C1E-96A0-BCDED38CD3C4}
+		{0E963919-1D75-487F-8F4B-09612C27C057} = {4C965AD5-22D9-4EBD-BF5B-325F2A76235D}
+		{FB80DF02-9F16-419C-86CD-A3C2ED3D0E4F} = {B15EAB45-7071-4C1E-96A0-BCDED38CD3C4}
+		{68E018BE-D812-4362-8687-3DF991AEF8A4} = {B15EAB45-7071-4C1E-96A0-BCDED38CD3C4}
+		{AA1DF8F3-B312-48BA-9BCA-5BC9FAAB57BA} = {4C965AD5-22D9-4EBD-BF5B-325F2A76235D}
+		{89783467-672E-474F-9698-9149E9C62B99} = {B15EAB45-7071-4C1E-96A0-BCDED38CD3C4}
 	EndGlobalSection
 EndGlobal

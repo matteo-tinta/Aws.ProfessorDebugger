@@ -1,6 +1,7 @@
-﻿using Momo.Steps;
+﻿using Momo.Expectations.Parallel.Steps;
+using Momo.Steps;
 
-namespace Momo.Expectations;
+namespace Momo.Expectations.Parallel.Expectations;
 
 public class MomoParallelExpectation: IMomoExpectation
 {

@@ -1,16 +1,10 @@
-﻿using Amazon.S3;
-using Amazon.SimpleNotificationService;
-using Amazon.SQS;
-using Momo.Models;
+﻿using Momo.Models;
 
 namespace Momo;
 
 public class MomoClientFactoryOptions
 {
     public required MomoExpectationFile ExpectationFile { get; set; }
-    public required IAmazonS3 s3Client { get; set; }
-    public required IAmazonSimpleNotificationService snsClient { get; set; }
-    public required IAmazonSQS sqsClient { get; set; }
 }
 
 public static class MomoClientFactory

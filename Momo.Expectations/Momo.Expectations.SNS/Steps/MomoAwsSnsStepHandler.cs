@@ -3,30 +3,32 @@ using Amazon.SimpleNotificationService;
 using Amazon.SQS;
 using Amazon.SQS.Model;
 using Models;
-using Momo.Commands;
 using Momo.Exceptions;
-using Momo.Expectations;
-using Momo.Helpers;
+using Momo.Expectations.SNS.Commands;
+using Momo.Expectations.SNS.Expectations;
+using Momo.Steps;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 
-namespace Momo.Steps;
+namespace Momo.Expectations.SNS.Steps;
 
-internal class SnsStepHandler(
+internal class MomoAwsSnsStepHandler(
     IAmazonSQS sqsClient,
-    IAmazonSimpleNotificationService snsClient)
-    : IStepHandler
+    IAmazonSimpleNotificationService snsClient) : IStepHandler
 {
     private readonly IAmazonSQS _sqsClient = sqsClient ?? throw new ArgumentNullException(nameof(sqsClient));
     private readonly IAmazonSimpleNotificationService _snsClient = snsClient ?? throw new ArgumentNullException(nameof(snsClient));
     private string? _queueUrl;
+    private string? _subscriptionArn;
+    private ConcurrentDictionary<string, Message> _checkedMessages;
+    private CreateSqsAndSubscribeCommand _command;
 
-    public async Task<bool> WaitForMatchAsync(IMomoExpectation baseConfig, int timeout, CancellationToken cancellationToken)
+    public async Task PrepareAsync(IMomoExpectation baseConfig, CancellationToken cancellationToken)
     {
-        if (baseConfig is not MomoAwsExpectation config)
+        if (baseConfig is not MomoAwsSnsExpectation config)
         {
             throw new InvalidOperationException(
-                $"type of config in {nameof(S3StepHandler)} is invalid, expected MomoExpectation");
+                $"type of config in {nameof(IMomoExpectation)} is invalid, expected MomoExpectation");
         }
         
         if (config.Arn == null)
@@ -37,49 +39,49 @@ internal class SnsStepHandler(
         if(arn.Service != "sns")
             throw new ArgumentException("Invalid SNS Arn.");
 
-        var command = new CreateSqsAndSubscribeCommand(
+        _command = new CreateSqsAndSubscribeCommand(
             _sqsClient,
             _snsClient,
             queueName: $"momo-debug-queue-{new DateTime().Ticks}",
             snsTopicArn: arn.ResourceArn
         );
-        
-        try
+
+        await _command.ExecuteAsync(cancellationToken);
+
+        _queueUrl = _command.GetQueueUrl();
+        _subscriptionArn = _command.GetSubscriptionArn();
+        _checkedMessages = new ConcurrentDictionary<string, Message>();
+    }
+
+    public async Task<bool> CheckAsync(IMomoExpectation baseConfig, int timeout, CancellationToken cancellationToken)
+    {
+        var config = (MomoAwsSnsExpectation)baseConfig;
+            
+        var response = await _sqsClient.ReceiveMessageAsync(new ReceiveMessageRequest
         {
-            await command.ExecuteAsync(cancellationToken);
+            QueueUrl = _queueUrl,
+            MaxNumberOfMessages = 10,
+            WaitTimeSeconds = timeout > 20 ? 20 : timeout,
+            MessageAttributeNames = ["All"],
+            VisibilityTimeout = 1
+        }, cancellationToken);
 
-            _queueUrl = command.GetQueueUrl();
-            ConcurrentDictionary<string, Message> checkedMessages = [];
-
-            return await RetryHelper.RetryAsync(
-                async () =>
-                {
-                    var response = await _sqsClient.ReceiveMessageAsync(new ReceiveMessageRequest
-                    {
-                        QueueUrl = _queueUrl,
-                        MaxNumberOfMessages = 10,
-                        WaitTimeSeconds = timeout > 20 ? 20 : timeout,
-                        MessageAttributeNames = ["All"],
-                        VisibilityTimeout = 1
-                    }, cancellationToken);
-
-                    foreach (var message in response.Messages ?? [])
-                        checkedMessages[message.MessageId] = message;
+        foreach (var message in response.Messages ?? [])
+            _checkedMessages[message.MessageId] = message;
                     
-                    if (response.Messages is not null && response.Messages.Any(message => MessageMatches(message.Body, config.Match)))
-                    {
-                        return true;
-                    }
-                                        
-                    throw new AssertException($"No messages were matched on SQS {command.GetQueueUrl()} on Subscription {command.GetSubscriptionArn()}", 
-                        new AssertException($"Current expectation failed:\n{JsonConvert.SerializeObject(config, Formatting.Indented)}", 
-                            new AssertException($"Checked messages:\n{JsonConvert.SerializeObject(checkedMessages, Formatting.Indented)}")));
-                }, TimeSpan.FromSeconds(timeout), cancellationToken);
-        }
-        finally
+        if (response.Messages is not null && response.Messages.Any(message => MessageMatches(message.Body, config.Match)))
         {
-            await command.UndoAsync(cancellationToken);
+            return true;
         }
+                                        
+        throw new AssertException($"No messages were matched on SQS {_queueUrl} on Subscription {_subscriptionArn}", 
+            new AssertException($"Current expectation failed:\n{JsonConvert.SerializeObject(config, Formatting.Indented)}", 
+                new AssertException($"Checked messages:\n{JsonConvert.SerializeObject(_checkedMessages, Formatting.Indented)}")));
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        await _command.UndoAsync(CancellationToken.None);
     }
     
     private bool MessageMatches(string messageBody, Dictionary<string, string> matchRules)

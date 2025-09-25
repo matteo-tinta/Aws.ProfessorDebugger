@@ -65,7 +65,9 @@ If you keep clearing the cache, you're defeating the entire purpose of this tool
 # Momo Tool (Message Observer & Matching Operator)
 **THIS TOOL IS IN PREVIEW, USE AT YOUR OWN RISK**
 
-This fantastic tool comes in handy when you need to trace a series of messages inside your infrastructure. 
+This fantastic CLI comes in handy when you need to trace a series of messages inside your infrastructure. 
+Installing the DLL as standalone allows you to add more expectations and steps in order 
+to adapt it to match your architecture (See DLL section)
 
 Create a json somewhere and feed it to momo. 
 It will try to match all your expectations or return an exception if some are not respected in a given timeout.
@@ -87,10 +89,16 @@ cli momo [json_validation_file]
 ## DLL
 
 The core functionality of this project is also available as an independent DLL that you can include in your C# projects.
+Base functionalities must be installed as well (indipendent libraries, see table below)
 
-Using the DLL allows you to extend the tool by writing your own custom steps and validations that are not yet provided in the base version used by the CLI. For example, you could implement custom integrations such as SQL Server connections or other specific checks tailored to your infrastructure.
+Using the DLL allows you to extend the tool by writing your own custom steps and validations that 
+are not yet provided in the base version used by the CLI. 
 
-This flexibility enables seamless integration of Momo’s message tracing and validation capabilities directly into your existing applications or testing frameworks.
+For example, you could implement custom integrations such as 
+SQL Server connections or other specific checks tailored to your infrastructure.
+
+This flexibility enables seamless integration of Momo and validation 
+capabilities directly into your existing applications or testing frameworks.
 
 Here is a brief example on how to integrate with a custom step:
 
@@ -114,44 +122,61 @@ public class CustomExpectation : IMomoExpectation
 }
 
 
-public void Example() 
+//NUnit test class
+public class UnitTestProject 
 {
-    var momoStep = new CustomStepHandler();
-    var momoExpectation = new CustomExpectation();
-    
-    var expectationFile = new MomoExpectationFile()
+    [Test]
+    public void This_Is_Passing_Test() 
     {
-        Expectations = [momoExpectation]
-    };
+        var momoStep = new CustomStepHandler();
+        var momoExpectation = new CustomExpectation();
+        
+        var expectationFile = new MomoExpectationFile()
+        {
+            Expectations = [momoExpectation]
+        };
+        
+        var client = MomoClientFactory.FeedMomo(new MomoClientFactoryOptions()
+        {
+            ExpectationFile = expectationFile
+        });
     
-    var client = MomoClientFactory.FeedMomo(new MomoClientFactoryOptions()
-    {
-        ExpectationFile = expectationFile,
-        s3Client = s3Client, //your s3Client (if any)
-        snsClient = snsClient, //your SNSClient (if any)
-        sqsClient = sqsClient //your SQSClient (if any)
-    });
-
-    try {
         await client.MatchExpectations(CancellationToken.None);
+        
+        //if an assert exception is raised test will fail, a step cannot be verified in the given timeout
     }
-    catch (AssertException) {
-        //if an assert exception is raised, a step cannot be verified in the given timeout
-        throw;
+    
+    [Test]
+    public void This_Is_An_Expected_Failed_Test() 
+    {
+        var momoStep = new CustomStepHandler();
+        var momoExpectation = new CustomExpectation();
+        
+        var expectationFile = new MomoExpectationFile()
+        {
+            Expectations = [momoExpectation]
+        };
+        
+        var client = MomoClientFactory.FeedMomo(new MomoClientFactoryOptions()
+        {
+            ExpectationFile = expectationFile
+        });
+    
+        Assert.ThrowsAsync<AssertException>(async () => await client.MatchExpectations(CancellationToken.None), "message")
     }
 }
 ```
 
 ## Allowed services
 
-| Type     | Notes                                                                                                                                                                                                                                                 |
-|----------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| sns      | It will create a temporary SQS queue and attach it to the specified SNS                                                                                                                                                                               |
-| sqs      | **In order to avoid race conditions in your environments** direct SQS inspection isn't allowed, provide it's connected SNS topic as above. If there's no SNS, avoid checking the queue and look at the resources it triggers (like Lambda functions). |
-| s3       | `filename` **is mandatory** and expects an S3 file key to be found in the given bucket, `content` expect a JsonPath to be found with the given value                                                                                                  |
-| lambda   | (Will be available in future releases)                                                                                                                                                                                                                |
-| mongo    | Connect to a mongo database (database name must be included in query string) and assert a query result. `documents` is a typed key and it must be used to access fetched documents (which is always an array).                                                                                                                                               
-| parallel | allow previous steps to run in parallel mode
+| Type                                  | Notes                                                                                                                                                                                                                                                 |
+|---------------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| sns (Momo.Expectations.SNS)           | It will create a temporary SQS queue and attach it to the specified SNS                                                                                                                                                                               |
+| sqs                                   | **In order to avoid race conditions in your environments** direct SQS inspection isn't allowed, provide it's connected SNS topic as above. If there's no SNS, avoid checking the queue and look at the resources it triggers (like Lambda functions). |
+| s3 (Momo.Expectations.S3)             | `filename` **is mandatory** and expects an S3 file key to be found in the given bucket, `content` expect a JsonPath to be found with the given value                                                                                                  |
+| lambda                                | (Will be available in future releases)                                                                                                                                                                                                                |
+| mongo (Momo.Expectations.Mongo)       | Connect to a mongo database (database name must be included in query string) and assert a query result. `documents` is a typed key and it must be used to access fetched documents (which is always an array).                                                                                                                                               
+| parallel (Momo.Expectations.Parallel) | allow previous steps to run in parallel mode
 
 ## Json File Validation Example
 

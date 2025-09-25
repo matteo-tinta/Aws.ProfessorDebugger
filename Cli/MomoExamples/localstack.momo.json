@@ -3,10 +3,9 @@
   "timeout": 30,
   "expectations": [
     {
-      "arn": "arn:aws:s3:::ingestion-bucket",
+      "arn": "arn:aws:sns:us-east-1:000000000000:my-test-topic",
       "match": {
-        "filename": "worklist-ready-to-be-worked/variant-move-between-worklists/event-0.json",
-        "content.location": "DC4"
+        "Message.event": "user signup"
       }
     },
     {

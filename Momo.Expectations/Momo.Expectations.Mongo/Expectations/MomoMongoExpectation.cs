@@ -1,8 +1,9 @@
 ﻿using System.Text.Json;
+using Momo.Expectations.Mongo.Steps;
 using Momo.Steps;
 using MongoDB.Driver;
 
-namespace Momo.Expectations;
+namespace Momo.Expectations.Mongo.Expectations;
 
 public class MomoMongoExpectation: IMomoExpectation
 {
@@ -14,7 +15,7 @@ public class MomoMongoExpectation: IMomoExpectation
         try
         {
             _ = new MongoUrl(ConnectionString);
-            return new MongoStepHandler();
+            return new MomoMongoStepHandler();
         }
         catch (Exception e)
         {
@@ -27,5 +28,4 @@ public record MomoMongoQueryExpectation
 {
     public JsonElement Query { get; set; }
     public Dictionary<string, string> Match { get; set; }
-
 }

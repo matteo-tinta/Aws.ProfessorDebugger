@@ -1,5 +1,4 @@
-﻿using Core.Models;
-using Models;
+﻿using Models;
 
 namespace Core.Tests.Models;
 

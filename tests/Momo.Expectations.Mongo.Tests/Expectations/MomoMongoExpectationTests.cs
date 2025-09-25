@@ -1,25 +1,17 @@
-﻿using Amazon.S3;
-using Amazon.SimpleNotificationService;
-using Amazon.SQS;
-using Momo.Expectations;
-using Momo.Models;
-using Momo.Steps;
-using NSubstitute;
+﻿using Momo.Expectations.Mongo.Expectations;
+using Momo.Expectations.Mongo.Steps;
 
-namespace Momo.Tests.Expectations;
+namespace Momo.Expectations.Mongo.Tests.Expectations;
 
 public class MomoMongoExpectationTests
 {
     private MomoClientFactoryOptions _options = new()
     {
         ExpectationFile = null,
-        s3Client = Substitute.For<IAmazonS3>(),
-        snsClient = Substitute.For<IAmazonSimpleNotificationService>(),
-        sqsClient = Substitute.For<IAmazonSQS>()
     };
     
     [Test]
-    [TestCase(typeof(MongoStepHandler))]
+    [TestCase(typeof(MomoMongoStepHandler))]
     public void GetStepHandler_Returns_TheCorrectStepHandler(Type expectedType)
     {
         //Arrange

@@ -1,7 +1,11 @@
 ﻿using System.Text.Json;
 using System.Text.Json.Serialization;
+using Cli.FileLoader.Models;
 using Momo.Expectations;
-using Momo.Models;
+using Momo.Expectations.Mongo.Expectations;
+using Momo.Expectations.Parallel.Expectations;
+using Momo.Expectations.S3.Expectations;
+using Momo.Expectations.SNS.Expectations;
 
 namespace Cli.FileLoader;
 
@@ -18,9 +22,27 @@ public class IMomoExpectationConverter : JsonConverter<IMomoExpectation>
             return JsonSerializer.Deserialize<MomoMongoExpectation>(root.GetRawText(), options);
         }
         
-        if (root.TryGetProperty("arn", out _))
+        if (root.TryGetProperty("arn", out JsonElement arn))
         {
-            return JsonSerializer.Deserialize<MomoAwsExpectation>(root.GetRawText(), options);
+            if (arn.ToString().Contains(":sns:"))
+            {
+                var model = JsonSerializer.Deserialize<MomoAwsSnsExpectationJsonModel>(root.GetRawText(), options);
+                return model?.Build() ?? throw new InvalidOperationException("Invalid sns mapping");
+            }
+            
+            if (arn.ToString().Contains(":s3:"))
+            {
+                var model = JsonSerializer.Deserialize<MomoAwsS3ExpectationJsonModel>(root.GetRawText(), options);
+                return model?.Build() ?? throw new InvalidOperationException("Invalid s3 mapping");
+            }
+
+            if (arn.ToString().Contains(":sqs:"))
+            {
+                throw new InvalidOperationException(
+                    "To match SQS queues, provide its SNS. If no SNS are available, skip the node and check downstream resources (eg. Lambdas, S3)");
+            }
+
+            throw new InvalidOperationException($"This type of arn ({arn}) is not recognized yet");
         }
         
         if (root.TryGetProperty("parallelExpectations", out _))
@@ -38,8 +60,11 @@ public class IMomoExpectationConverter : JsonConverter<IMomoExpectation>
             case MomoMongoExpectation dbExp:
                 JsonSerializer.Serialize(writer, dbExp, options);
                 break;
-            case MomoAwsExpectation exp:
-                JsonSerializer.Serialize(writer, exp, options);
+            case MomoAwsSnsExpectation dbExp:
+                JsonSerializer.Serialize(writer, dbExp, options);
+                break;
+            case MomoAwsS3Expectation dbExp:
+                JsonSerializer.Serialize(writer, dbExp, options);
                 break;
             case MomoParallelExpectation exp:
                 JsonSerializer.Serialize(writer, exp, options);

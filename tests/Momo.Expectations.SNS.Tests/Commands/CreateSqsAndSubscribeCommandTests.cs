@@ -3,11 +3,10 @@ using Amazon.SimpleNotificationService;
 using Amazon.SimpleNotificationService.Model;
 using Amazon.SQS;
 using Amazon.SQS.Model;
-using Momo.Commands;
+using Momo.Expectations.SNS.Commands;
 using NSubstitute;
-using NSubstitute.Extensions;
 
-namespace Momo.Tests.Commands;
+namespace Momo.Expectations.SNS.Tests.Commands;
 
 [SuppressMessage("Structure", "NUnit1032:An IDisposable field/property should be Disposed in a TearDown method")]
 public class CreateSqsAndSubscribeCommandTests

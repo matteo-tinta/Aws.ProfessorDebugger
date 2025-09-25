@@ -14,7 +14,7 @@ public class MessageAssertException: Exception
 
     }
 
-    internal static MessageAssertException CreateExceptionWithMessageBody(string message, string messageBody)
+    public static MessageAssertException CreateExceptionWithMessageBody(string message, string messageBody)
     {
         return new MessageAssertException(message)
         {
@@ -22,7 +22,7 @@ public class MessageAssertException: Exception
         };
     }
     
-    internal static MessageAssertException CreateExceptionWithMessageBody(string message, string messageBody, Exception innerException)
+    public static MessageAssertException CreateExceptionWithMessageBody(string message, string messageBody, Exception innerException)
     {
         return new MessageAssertException(message, innerException)
         {

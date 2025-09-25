@@ -2,9 +2,9 @@
 
 namespace Momo.Helpers;
 
-public static class RetryHelper
+internal static class RetryHelper
 {
-    public static async Task<T> RetryAsync<T>(
+    internal static async Task<T> RetryAsync<T>(
         Func<Task<T>> operationFactory,
         TimeSpan timeout,
         CancellationToken cancellationToken = default)

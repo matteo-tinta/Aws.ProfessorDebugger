@@ -1,14 +1,17 @@
-﻿using Momo.Expectations;
-using Momo.Models;
-using Momo.Steps.Decorations;
+﻿using Momo.Steps;
 
-namespace Momo.Steps;
+namespace Momo.Expectations.Parallel.Steps;
 
 internal class MomoParallelStepHandler(MomoClientFactoryOptions options) : IStepHandler
 {
-    public async Task<bool> WaitForMatchAsync(IMomoExpectation step, int timeout, CancellationToken cancellationToken)
+    public Task PrepareAsync(IMomoExpectation config, CancellationToken cancellationToken)
     {
-        if (step is not MomoParallelExpectation momoExpectation)
+        return Task.CompletedTask;
+    }
+
+    public async Task<bool> CheckAsync(IMomoExpectation config, int timeout, CancellationToken cancellationToken)
+    {
+        if (config is not Expectations.MomoParallelExpectation momoExpectation)
         {
             throw new InvalidOperationException("MomoParallelStepHandler must get a MomoParallelExpectation");
         }
@@ -30,5 +33,10 @@ internal class MomoParallelStepHandler(MomoClientFactoryOptions options) : IStep
         
         var parallelResult = await Task.WhenAll(tasks);
         return parallelResult.All(x => x); //check if all are true, otherwise, return false
+    }
+    
+    public ValueTask DisposeAsync()
+    {
+        return ValueTask.CompletedTask;
     }
 }

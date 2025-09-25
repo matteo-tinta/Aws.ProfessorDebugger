@@ -2,8 +2,9 @@
 using Amazon.SimpleNotificationService.Model;
 using Amazon.SQS;
 using Amazon.SQS.Model;
+using Momo.Commands;
 
-namespace Momo.Commands;
+namespace Momo.Expectations.SNS.Commands;
 
 internal class CreateSqsAndSubscribeCommand(
     IAmazonSQS sqsClient,

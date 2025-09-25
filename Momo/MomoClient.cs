@@ -1,5 +1,5 @@
 ﻿using Momo.Exceptions;
-using Momo.Models;
+using Momo.Helpers;
 using Momo.Steps.Decorations;
 using Newtonsoft.Json;
 
@@ -22,10 +22,23 @@ public class MomoClient
             var step = expectation.GetStepHandler(_options);
             var stepButDecorated = new StepHandlerLoggingDecorated(step);
             
-            var result = await stepButDecorated.WaitForMatchAsync(expectation, _options.ExpectationFile.Timeout, cancellationToken);
-            if (!result)
+            try
             {
-                throw new AssertException($"Step {JsonConvert.SerializeObject(expectation)} failed");
+                await stepButDecorated.PrepareAsync(expectation, cancellationToken);
+
+                var timeout = TimeSpan.FromSeconds(_options.ExpectationFile.Timeout);
+                var result = await RetryHelper.RetryAsync(
+                    async () => await stepButDecorated.CheckAsync(expectation, _options.ExpectationFile.Timeout, cancellationToken),
+                        timeout, cancellationToken);
+
+                if (!result)
+                {
+                    throw new AssertException($"Step {JsonConvert.SerializeObject(expectation)} failed");
+                }
+            }
+            finally
+            {
+                await stepButDecorated.DisposeAsync();
             }
         }
     }

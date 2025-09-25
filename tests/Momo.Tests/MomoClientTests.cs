@@ -17,9 +17,6 @@ public class MomoClientTests
         _options = new MomoClientFactoryOptions
         {
             ExpectationFile = null,
-            s3Client = null,
-            snsClient = null,
-            sqsClient = null
         };
         
         _createSut = (expectations) =>
@@ -35,7 +32,7 @@ public class MomoClientTests
         var momoStep = Substitute.For<IStepHandler>();
         var momoExpectation = Substitute.For<IMomoExpectation>();
 
-        momoStep.WaitForMatchAsync(momoExpectation!, Arg.Any<int>(),TestContext.CurrentContext.CancellationToken)
+        momoStep.CheckAsync(momoExpectation!, Arg.Any<int>(),TestContext.CurrentContext.CancellationToken)
             .Returns(true);
         
         momoExpectation.GetStepHandler(_options).Returns(momoStep);
@@ -59,7 +56,7 @@ public class MomoClientTests
         var momoStep = Substitute.For<IStepHandler>();
         var momoExpectation = Substitute.For<IMomoExpectation>();
 
-        momoStep.WaitForMatchAsync(momoExpectation!, Arg.Any<int>(),TestContext.CurrentContext.CancellationToken)
+        momoStep.CheckAsync(momoExpectation!, Arg.Any<int>(),TestContext.CurrentContext.CancellationToken)
             .Returns(false);
         
         momoExpectation.GetStepHandler(_options).Returns(momoStep);

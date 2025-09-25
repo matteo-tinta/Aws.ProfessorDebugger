@@ -3,64 +3,74 @@ using Amazon.S3;
 using Amazon.S3.Model;
 using Models;
 using Momo.Exceptions;
-using Momo.Expectations;
-using Momo.Helpers;
+using Momo.Expectations.S3.Expectations;
+using Momo.Steps;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 
-namespace Momo.Steps;
+namespace Momo.Expectations.S3.Steps;
 
-internal partial class S3StepHandler(IAmazonS3 s3Client): IStepHandler
+internal partial class MomoAwsS3StepHandler(IAmazonS3 s3Client): IStepHandler
 {
     private readonly IAmazonS3 _s3Client = s3Client ?? throw new ArgumentNullException(nameof(s3Client));
     private Dictionary<string, object> _validations = new();
-    
+    private Arn? _arn;
+
     [GeneratedRegex(@"\bContent(?=[\.\[])", RegexOptions.IgnoreCase, "en-US")]
     private static partial Regex ExpectationContentRegex();
+    public ValueTask DisposeAsync() => ValueTask.CompletedTask;
 
-    public async Task<bool> WaitForMatchAsync(IMomoExpectation baseConfig, int timeout, CancellationToken cancellationToken)
+    public Task PrepareAsync(IMomoExpectation baseConfig, CancellationToken cancellationToken)
     {
-        if (baseConfig is not MomoAwsExpectation config)
+        if (baseConfig is not MomoAwsS3Expectation config)
         {
             throw new InvalidOperationException(
-                $"type of config in {nameof(S3StepHandler)} is invalid, expected MomoExpectation");
+                $"type of config in {nameof(MomoAwsS3StepHandler)} is invalid, expected MomoExpectation");
         }
         
-        var s3BucketArn = Arn.ParseArn(config.Arn); 
+        _arn = Arn.ParseArn(config.Arn); 
+        return Task.CompletedTask;
+    }
+
+    public async Task<bool> CheckAsync(IMomoExpectation baseConfig, int timeout, CancellationToken cancellationToken)
+    {
+        if (_arn is null)
+        {
+            throw new InvalidOperationException($"Please call {nameof(PrepareAsync)}() before calling {nameof(CheckAsync)}");
+        }
+        
+        var config = (MomoAwsS3Expectation)baseConfig;
         var pattern = ExpectationContentRegex();
 
-        return await RetryHelper.RetryAsync(async () =>
+        _validations = new Dictionary<string, object>();
+        foreach (var expectation in config.Match)
+        {
+            switch (expectation.Key.ToLower().Trim())
             {
-                _validations = new Dictionary<string, object>();
-                foreach (var expectation in config.Match)
-                {
-                    switch (expectation.Key.ToLower().Trim())
-                    {
-                        case "filename":
-                            await DownloadJsonWithMetadataAsync(
-                                s3BucketArn.ResourceName, 
-                                expectation.Value,
-                                cancellationToken);
-                            break;
-                    }
+                case "filename":
+                    await DownloadJsonWithMetadataAsync(
+                        _arn.ResourceName, 
+                        expectation.Value,
+                        cancellationToken);
+                    break;
+            }
 
-                    if (pattern.Match(expectation.Key).Success)
-                    {
-                        var file = GetFileFromValidation();
+            if (pattern.Match(expectation.Key).Success)
+            {
+                var file = GetFileFromValidation();
                         
-                        var newKey = pattern.Replace(expectation.Key, "___MomoContent");
-                        var token = file.Content.SelectToken(newKey);
+                var newKey = pattern.Replace(expectation.Key, "___MomoContent");
+                var token = file.Content.SelectToken(newKey);
                         
-                        if (token is not null && string.Equals(token.ToString(), expectation.Value, StringComparison.OrdinalIgnoreCase))
-                            return true;
+                if (token is not null && string.Equals(token.ToString(), expectation.Value, StringComparison.OrdinalIgnoreCase))
+                    return true;
 
-                        throw new AssertException(
-                            $"A file with the current key was found on bucket \"{s3BucketArn.ResourceName}\" but the \"{expectation.Key}\" didn't match the expectation");
-                    }
-                }
+                throw new AssertException(
+                    $"A file with the current key was found on bucket \"{_arn.ResourceName}\" but the \"{expectation.Key}\" didn't match the expectation");
+            }
+        }
 
-                return true;
-            },TimeSpan.FromSeconds(timeout), cancellationToken);
+        return true;
     }
     
     private (JObject Content, MetadataCollection Metadata) GetFileFromValidation()
@@ -103,10 +113,10 @@ internal partial class S3StepHandler(IAmazonS3 s3Client): IStepHandler
         using var stream = response.ResponseStream;
         using var reader = new StreamReader(stream);
         string content = await reader.ReadToEndAsync();
-        
 
         AddFileToValidations((content, response.Metadata));
     }
 
-   
+
+    
 }

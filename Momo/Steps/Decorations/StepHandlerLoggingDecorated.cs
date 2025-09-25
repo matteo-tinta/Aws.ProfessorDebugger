@@ -1,75 +1,48 @@
 ﻿using Momo.Expectations;
-using MongoDB.Driver;
+using Newtonsoft.Json;
 
 namespace Momo.Steps.Decorations;
 
 internal class StepHandlerLoggingDecorated(IStepHandler stepHandler): IStepHandler
 {
-    public async Task<bool> WaitForMatchAsync(IMomoExpectation step, int timeout, CancellationToken cancellationToken)
-        => step switch
-        {
-            MomoMongoExpectation momoDatabaseExpectation => await WaitForMatchAsync(momoDatabaseExpectation, timeout, cancellationToken),
-            MomoAwsExpectation momoExpectation => await WaitForMatchAsync(momoExpectation, timeout, cancellationToken),
-            MomoParallelExpectation momoParallelExpectation => await WaitForMatchAsync(momoParallelExpectation, timeout, cancellationToken),
-            _ => await WaitForGeneralMatchAsync(step, timeout, cancellationToken)
-        };
-    
-    private async Task<bool> WaitForMatchAsync(MomoParallelExpectation momoExpectation, int timeout, CancellationToken cancellationToken)
+    private string? _name;
+    private bool _hasAlreadyLogged = false;
+
+    public async ValueTask DisposeAsync()
     {
-        Console.WriteLine($"---> [Parallel]: Matching {momoExpectation.ParallelExpectations.Count} parallel expectations...");
-        var matches = await stepHandler.WaitForMatchAsync(momoExpectation, timeout, cancellationToken);
-
-        if (matches)
-        {
-            Console.WriteLine($"<--- [Parallel]: Matched all {momoExpectation.ParallelExpectations.Count} expectations");
-        }
-
-        return matches;
-    }
-
-    private async Task<bool> WaitForGeneralMatchAsync(IMomoExpectation momoExpectation, int timeout,
-        CancellationToken cancellationToken)
-    {
-        string? name = momoExpectation.GetType().FullName ?? "custom";
+        await stepHandler.DisposeAsync();
         
-        Console.WriteLine($"[{name}]: Matching expectations...");
-        var matches = await stepHandler.WaitForMatchAsync(momoExpectation, timeout, cancellationToken);
-
-        if (matches)
-        {
-            Console.WriteLine($"[{name}]: Matched all expectations");
-        }
-
-        return matches;
+        Console.WriteLine($"[{GetName()}]: Disposed");
     }
-    
-    private async Task<bool> WaitForMatchAsync(MomoMongoExpectation momoExpectation, int timeout,
-        CancellationToken cancellationToken)
+
+    public async Task PrepareAsync(IMomoExpectation config, CancellationToken cancellationToken)
     {
-        var mongoUrl = new MongoUrl(momoExpectation.ConnectionString);
-        Console.WriteLine($"[{mongoUrl.DatabaseName ?? mongoUrl.Url}]: Matching {momoExpectation.Match.Count} queries...");
-            
-        var matches = await stepHandler.WaitForMatchAsync(momoExpectation, timeout, cancellationToken);
-
-        if (matches)
-        {
-            Console.WriteLine($"[{mongoUrl.DatabaseName ?? mongoUrl.Url}]: Matched all expectations");
-        }
-
-        return matches;
+        _name = config.GetType().FullName;
+        //Logging? 
+        await stepHandler.PrepareAsync(config, cancellationToken);
     }
-    
-    private async Task<bool> WaitForMatchAsync(MomoAwsExpectation step, int timeout, CancellationToken cancellationToken)
+
+    public async Task<bool> CheckAsync(IMomoExpectation step, int timeout, CancellationToken cancellationToken)
     {
-        Console.WriteLine($"[{step.Arn}]: Matching {step.Match.Count} expectations...");
-            
-        var matches = await stepHandler.WaitForMatchAsync(step, timeout, cancellationToken);
+        LogCheckProcess(() => Console.WriteLine($"[{GetName()}]: Matching expectations...:\n{JsonConvert.SerializeObject(step, Formatting.Indented)}\n"));
+        var matches = await stepHandler.CheckAsync(step, timeout, cancellationToken);
 
         if (matches)
         {
-            Console.WriteLine($"[{step.Arn}]: Matched all expectations");
+            Console.WriteLine($"[{GetName()}]: Matched all expectations");
         }
 
         return matches;
     }
+
+    private void LogCheckProcess(Action logAction)
+    {
+        if (!_hasAlreadyLogged)
+        {
+            logAction();
+        }
+        _hasAlreadyLogged = true;
+    }
+
+    private string GetName() => _name ?? "Unknown";
 }

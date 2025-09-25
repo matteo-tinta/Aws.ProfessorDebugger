@@ -20,6 +20,10 @@
     
     <ItemGroup>
       <ProjectReference Include="..\Core\Core.csproj" />
+      <ProjectReference Include="..\Momo.Expectations\Momo.Expectations.Mongo\Momo.Expectations.Mongo.csproj" />
+      <ProjectReference Include="..\Momo.Expectations\Momo.Expectations.Parallel\Momo.Expectations.Parallel.csproj" />
+      <ProjectReference Include="..\Momo.Expectations\Momo.Expectations.S3\Momo.Expectations.S3.csproj" />
+      <ProjectReference Include="..\Momo.Expectations\Momo.Expectations.SNS\Momo.Expectations.SNS.csproj" />
       <ProjectReference Include="..\Momo\Momo.csproj" />
     </ItemGroup>
 
@@ -33,6 +37,7 @@
         <PackageReference Include="AWSSDK.SSO" Version="4.0.1.1" />
         <PackageReference Include="AWSSDK.SSOOIDC" Version="4.0.1.1" />
       <PackageReference Include="CommandLineParser" Version="2.9.1" />
+      <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="10.0.0-rc.1.25451.107" />
     </ItemGroup>
 
 </Project>
