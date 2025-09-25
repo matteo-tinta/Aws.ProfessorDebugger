@@ -65,15 +65,43 @@ If you keep clearing the cache, you're defeating the entire purpose of this tool
 # Momo Tool (Message Observer & Matching Operator)
 **THIS TOOL IS IN PREVIEW, USE AT YOUR OWN RISK**
 
-This fantastic CLI comes in handy when you need to trace a series of messages inside your infrastructure. 
-Installing the DLL as standalone allows you to add more expectations and steps in order 
-to adapt it to match your architecture (See DLL section)
+Momo is a powerful command-line interface (CLI) tool designed to help developers and infrastructure engineers trace, 
+observe, and validate message flows within distributed systems, particularly those leveraging AWS services such as SNS, SQS, S3, and MongoDB. 
 
-Create a json somewhere and feed it to momo. 
-It will try to match all your expectations or return an exception if some are not respected in a given timeout.
+Its core purpose is to verify that expected messages and events occur within a specified timeframe, 
+while being designed to operate ephemerally and transparently—leaving no lasting footprint in your infrastructure—making 
+it especially useful for integration testing, debugging, and validating event-driven architectures.
 
-Timeout is intended as "wait until" not a "sleep timeout": if the assertion is not verified before the given 
-timeout an exception will be raied (_don't be scared to use longer timeouts_)
+## Key Features and Capabilities
+
+### 1. Message Tracing and Validation
+- Monitors asynchronous messages traveling through AWS services or other infrastructure components.
+- Users define **expectations** for messages or files in a JSON file.
+- Matches expectations against actual events within a configurable timeout.
+- Raises an exception if expectations are not met in time.
+
+### 2. Timeout as a "Wait Until" Mechanism
+- Continuously checks for expected conditions until they are met or the timeout expires.
+- Provides flexible waiting without unnecessary delays.
+
+### 3. Extensibility via DLL Integration
+- Core logic available as a DLL for C# projects for **full extensibility**.
+- Allows creation of **custom steps and validations** tailored to unique architectures.
+- Easily integrates with testing frameworks like NUnit, XUnit, TUnit.
+
+### 4. JSON-Based Configuration
+- Defines expectations with:
+    - Timeout for matching operation.
+    - List of expectations including service ARNs, filters, and match rules.
+- Supports nested parallel expectations for complex validation scenarios.
+
+## Limitations
+
+- Due to the nature of our shared AWS infrastructure and the possibility of manual or external message publication to SNS topics, it is **not possible to guarantee strict correlation between test actions and observed messages**.
+- This tool attempts to assert the presence of expected messages within a specified window, but **cannot guarantee** that matched messages were produced exclusively by the test under execution.
+- All test resources are deleted after each cycle to minimize contamination (not data), but as trace IDs or unique correlation identifiers cannot be enforced, there is a potential for false positives.
+- *This tool do not provide an automatic detection of created resources during the test phase*. So remember to delete them in the `DisposeAsync` method to avoid dangling resources in your infrastructure.
+- For highest reliability, use this tool in isolated environments or when no manual/external messages are being published.
 
 ## Cli
 ```bash
@@ -177,7 +205,7 @@ public class UnitTestProject
 }
 ```
 
-## Allowed services
+## Available services (in CLI)
 
 | Type                                  | Notes                                                                                                                                                                                                                                                 |
 |---------------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
@@ -244,13 +272,7 @@ public class UnitTestProject
 }
 ```
 
-## Limitations
 
-- Due to the nature of our shared AWS infrastructure and the possibility of manual or external message publication to SNS topics, it is **not possible to guarantee strict correlation between test actions and observed messages**.
-- This tool attempts to assert the presence of expected messages within a specified window, but **cannot guarantee** that matched messages were produced exclusively by the test under execution.
-- All test resources are deleted after each cycle to minimize contamination (not data), but as trace IDs or unique correlation identifiers cannot be enforced, there is a potential for false positives.
-- *This tool do not provide an automatic detection of created resources during the test phase*. So remember to delete them at the end of `WaitForMatchAsync` method to avoid dangling resources in your infrastructure.
-- For highest reliability, use this tool in isolated environments or when no manual/external messages are being published.
 
 # How to develop this tool
 1. You do need to set your SSO AWS Profile called mastermind-dev (use AWS Explorer vs extension)
