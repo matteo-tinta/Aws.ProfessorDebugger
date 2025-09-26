@@ -2,6 +2,7 @@
 using Amazon.SQS;
 using Momo.Expectations.SNS.Steps;
 using Momo.Steps;
+using Momo.Validators;
 using ResourceArn = Models.Arn;
 
 namespace Momo.Expectations.SNS.Expectations;
@@ -9,7 +10,7 @@ namespace Momo.Expectations.SNS.Expectations;
 public class MomoAwsSnsExpectation(IAmazonSQS sqsClient, IAmazonSimpleNotificationService snsClient) : IMomoExpectation
 {
     public required string Arn { get; set; }
-    public required Dictionary<string, string> Match { get; set; }
+    public required Dictionary<string, Value> Match { get; set; }
     public IStepHandler GetStepHandler(MomoClientFactoryOptions options)
     {
         var service = ResourceArn.ParseArn(Arn).Service;
@@ -20,4 +21,6 @@ public class MomoAwsSnsExpectation(IAmazonSQS sqsClient, IAmazonSimpleNotificati
             _ => throw new InvalidOperationException($"This type of arn ({Arn} -> {service}) is not recognized yet")
         };
     }
+
+    public override string ToString() => Arn;
 }

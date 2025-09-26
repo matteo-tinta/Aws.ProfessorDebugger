@@ -25,6 +25,8 @@ internal static class RetryHelper
             }
             catch (Exception ex) when (ex is AssertException or MessageAssertException)
             {
+                CheckForInternalsBreakdownThrows(ex);
+                
                 if (DateTime.UtcNow - startTime >= timeout)
                     throw;
 
@@ -33,6 +35,17 @@ internal static class RetryHelper
 
                 await Task.Delay(delay, cancellationToken);
             }
+        }
+    }
+
+    private static void CheckForInternalsBreakdownThrows(Exception e)
+    {
+        switch (e)
+        {
+            case AssertException { Breakout: true }: throw e;
+            case { InnerException: not null }:
+                CheckForInternalsBreakdownThrows(e.InnerException);
+                break;
         }
     }
 }

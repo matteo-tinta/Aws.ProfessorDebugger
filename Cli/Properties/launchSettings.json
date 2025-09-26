@@ -2,7 +2,7 @@
   "profiles": {
     "momo": {
       "commandName": "Project",
-      "commandLineArgs": "momo $(ProjectDir)/MomoExamples/localstack.momo.json",
+      "commandLineArgs": "momo $(ProjectDir)/MomoExamples/pricelist.momo.json",
       "environmentVariables": {
         "AWS_PROFILE": "mastermind-dev",
         "AWS_REGION": "eu-west-1",
@@ -56,7 +56,7 @@
     },
     "acl-pricelist-ingestor-dev": {
       "commandName": "Project",
-      "commandLineArgs": "graph arn:aws:lambda:eu-west-1:297244223532:function:acl-pricelist-ingestor-dev",
+      "commandLineArgs": "graph arn:aws:s3:::acl-input-pricelist-dev-eu-west-1-297244223532",
       "environmentVariables": {
         "AWS_PROFILE": "mastermind-dev"
       }

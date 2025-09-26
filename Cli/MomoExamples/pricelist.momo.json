@@ -1,0 +1,43 @@
+﻿{
+  "traceId": "abc123",
+  "timeout": 120,
+  "expectations": [
+    {
+      "parallelExpectations": [
+        {
+          "arn": "arn:aws:sns:eu-west-1:297244223532:pricelist-s3-event-notification-dev",
+          "match": {
+            "Message.Records[0].s3.bucket.arn": {
+              "contains": "offer-input-pricelists-dev-eu-west-1-297244223532"
+            }
+          }
+        },
+        {
+          "arn": "arn:aws:sns:eu-west-1:297244223532:price-info-changes-dev",
+          "match": {
+            "Message.channel": {
+              "equals": "NAP"
+            },
+            "Message.market": {
+              "equals": "IT"
+            }
+          }
+        },
+        {
+          "arn": "arn:aws:sns:eu-west-1:297244223532:mastermind-dataloader-price-searchinfochanged-dev",
+          "match": {
+            "Message.brand": {
+              "equals": "NAP"
+            },
+            "Message.variantId": {
+              "equals": "1646396840995247"
+            },
+            "Message.salesCatalogs.NAP_AM.price.details.salePrice": {
+              "equals": 200
+            }
+          }
+        }
+      ]
+    }
+  ]
+}

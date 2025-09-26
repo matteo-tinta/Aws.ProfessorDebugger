@@ -7,6 +7,7 @@ namespace Cli.FileLoader.Models;
 public class MomoAwsS3ExpectationJsonModel
 {
     public string Arn { get; set; }
+    public MomoAwsS3FileJsonModel File { get; set; }
     public Dictionary<string, string> Match { get; set; }
 
     public MomoAwsS3Expectation Build()
@@ -16,7 +17,18 @@ public class MomoAwsS3ExpectationJsonModel
         return new MomoAwsS3Expectation(s3Client)
         {
             Arn = Arn,
+            File = new MomoAwsS3FileModel
+            {
+                Key = File.Key,
+                Prefix = File.Prefix
+            },
             Match = Match
         };
     }
+}
+
+public record MomoAwsS3FileJsonModel
+{
+    public string Prefix { get; set; }
+    public string Key { get; set; }
 }

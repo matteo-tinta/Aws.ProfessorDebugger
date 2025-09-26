@@ -22,6 +22,8 @@ public class MomoMongoExpectation: IMomoExpectation
             throw new InvalidOperationException("Not a mongo connection string", e);
         }
     }
+
+    public override string ToString() => ConnectionString;
 }
 
 public record MomoMongoQueryExpectation

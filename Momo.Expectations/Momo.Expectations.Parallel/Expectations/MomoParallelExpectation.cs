@@ -11,4 +11,6 @@ public class MomoParallelExpectation: IMomoExpectation
     {
         return new MomoParallelStepHandler(options);
     }
+
+    public override string ToString() => "PARALLEL";
 }

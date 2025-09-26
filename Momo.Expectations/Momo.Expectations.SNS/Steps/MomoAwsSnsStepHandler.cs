@@ -7,6 +7,7 @@ using Momo.Exceptions;
 using Momo.Expectations.SNS.Commands;
 using Momo.Expectations.SNS.Expectations;
 using Momo.Steps;
+using Momo.Validators;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 
@@ -42,7 +43,7 @@ internal class MomoAwsSnsStepHandler(
         _command = new CreateSqsAndSubscribeCommand(
             _sqsClient,
             _snsClient,
-            queueName: $"momo-debug-queue-{new DateTime().Ticks}",
+            queueName: $"momo-debug-queue-{DateTime.UtcNow.Ticks}",
             snsTopicArn: arn.ResourceArn
         );
 
@@ -84,7 +85,7 @@ internal class MomoAwsSnsStepHandler(
         await _command.UndoAsync(CancellationToken.None);
     }
     
-    private bool MessageMatches(string messageBody, Dictionary<string, string> matchRules)
+    private bool MessageMatches(string messageBody, Dictionary<string, Value> matchRules)
     {
         try
         {
@@ -101,7 +102,7 @@ internal class MomoAwsSnsStepHandler(
                 //Cannot assume here that the message we are reading at this moment is the message we want to read
                 //so false is returned, message did not match.
                 //In the exception output there will be all the messages that are being received during this time
-                if (token == null || !string.Equals(token.ToString(), kvp.Value, StringComparison.OrdinalIgnoreCase))
+                if (token == null || !kvp.Value.Verify(token.ToObject<object>()))
                     return false;
             }
 

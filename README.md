@@ -51,6 +51,8 @@ cli graph [aws_arn] [args]
 
 ## Caching
 
+**⚠️ Important: Delete the cache if you switch environment/profile. There is any mechanism (yet) to prevent this.**
+
 AWS has quotas and we’re not about wasting money — so this tool keeps a sneaky little cache in a JSON file right in your working directory (for now).
 
 Pro tip: every now and then, manually clear out the cache to avoid the tool getting confused and showing you yesterday’s news about your infrastructure.
@@ -216,6 +218,21 @@ public class UnitTestProject
 | mongo (Momo.Expectations.Mongo)       | Connect to a mongo database (database name must be included in query string) and assert a query result. `documents` is a typed key and it must be used to access fetched documents (which is always an array).                                                                                                                                               
 | parallel (Momo.Expectations.Parallel) | allow previous steps to run in parallel mode. If a step fails, the whole parallel stack will throw an exception
 
+## Value matching
+At the moment the value matching operator is valid only for SNS service. It is planned to be released in the future versions for all plugins.
+
+If you want to include this matching values, you can use `Value` record object
+
+| Operator | Matching type                                                         |
+|----------|-----------------------------------------------------------------------|
+| equals   | Try to match primitive values (for strings is case insensitive)       |
+| contains | Try to search for strings inside the value (case insensitive)         |
+| match    | Try to match the given pattern against the value (case insensitive)   |
+| lt       | (future releases) Less than                                           |
+| gt       | (future releases) Greater than                                        |
+| lte      | (future releases) Less Than Equal                                     |
+| gte      | (future releases) Greater then equal                                  |
+
 ## Json File Validation Example
 
 ```json
@@ -226,13 +243,18 @@ public class UnitTestProject
     {
       "arn": "arn:aws:sns:us-east-1:000000000000:my-test-topic",
       "match": {
-        "Message.event": "user signup"
+        "Message.event": {
+          "contains": "user signup"
+        }
       }
     },
     {
       "arn": "arn:aws:s3:::ingestion-bucket",
+      "file": {
+        "prefix": "worklist-ready-to-be-worked/variant-move-between-worklists",
+        "key": "event-[0-9].json"
+      },
       "match": {
-        "filename": "worklist-ready-to-be-worked/variant-move-between-worklists/event-0.json",
         "content.location": "DC4"
       }
     },
@@ -240,15 +262,23 @@ public class UnitTestProject
       "parallelExpectations": [
         {
           "arn": "arn:aws:s3:::ingestion-bucket",
+          "file": {
+            "prefix": "worklist-ready-to-be-worked/variant-move-between-worklists",
+            "key": "event-[0-9].json"
+          },
           "match": {
-            "filename": "worklist-ready-to-be-worked/variant-move-between-worklists/event-0.json",
-            "content.location": "DC5"
+            "content.location": "DC4"
           }
         },
         {
           "arn": "arn:aws:sns:us-east-1:000000000000:my-second-test-topic",
           "match": {
-            "Message.event": "user login"
+            "Message.event": {
+              "equals": "user login"
+            },
+            "Message.status": {
+              "equals": "200"
+            }
           }
         },
         {

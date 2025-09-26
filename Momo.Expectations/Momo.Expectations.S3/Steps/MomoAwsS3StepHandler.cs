@@ -1,4 +1,5 @@
-﻿using System.Text.RegularExpressions;
+﻿using System.Net;
+using System.Text.RegularExpressions;
 using Amazon.S3;
 using Amazon.S3.Model;
 using Models;
@@ -14,6 +15,7 @@ internal partial class MomoAwsS3StepHandler(IAmazonS3 s3Client): IStepHandler
 {
     private readonly IAmazonS3 _s3Client = s3Client ?? throw new ArgumentNullException(nameof(s3Client));
     private Dictionary<string, object> _validations = new();
+    private (string Content, MetadataCollection Metadata)? _file;
     private Arn? _arn;
 
     [GeneratedRegex(@"\bContent(?=[\.\[])", RegexOptions.IgnoreCase, "en-US")]
@@ -43,78 +45,94 @@ internal partial class MomoAwsS3StepHandler(IAmazonS3 s3Client): IStepHandler
         var pattern = ExpectationContentRegex();
 
         _validations = new Dictionary<string, object>();
+        
+        await DownloadFileWithMetadataAsync(_arn.ResourceName, config.File, cancellationToken);
+        
         foreach (var expectation in config.Match)
         {
-            switch (expectation.Key.ToLower().Trim())
-            {
-                case "filename":
-                    await DownloadJsonWithMetadataAsync(
-                        _arn.ResourceName, 
-                        expectation.Value,
-                        cancellationToken);
-                    break;
-            }
-
             if (pattern.Match(expectation.Key).Success)
             {
-                var file = GetFileFromValidation();
-                        
                 var newKey = pattern.Replace(expectation.Key, "___MomoContent");
-                var token = file.Content.SelectToken(newKey);
+                var token = ParseFileToJson().Content.SelectToken(newKey);
                         
                 if (token is not null && string.Equals(token.ToString(), expectation.Value, StringComparison.OrdinalIgnoreCase))
                     return true;
 
-                throw new AssertException(
-                    $"A file with the current key was found on bucket \"{_arn.ResourceName}\" but the \"{expectation.Key}\" didn't match the expectation");
+                throw new AssertException($"A file with the current key was found on bucket \"{_arn.ResourceName}\" but the \"{expectation.Key}\" didn't match the expectation");
             }
         }
 
         return true;
     }
     
-    private (JObject Content, MetadataCollection Metadata) GetFileFromValidation()
+    private (JObject Content, MetadataCollection Metadata) ParseFileToJson()
     {
-        if (!_validations.TryGetValue("filename", out var value) || value is not (string Content, MetadataCollection Metadata))
-            throw new ArgumentException("you need to specify a \"filename\" expectation as first expectation in order to do expectation to the file");
-        
-        var jsonResult = JsonConvert.DeserializeObject<JObject>(Content);
+        var jsonResult = JsonConvert.DeserializeObject<JObject>(_file!.Value.Content);
         if (jsonResult is null)
         {
-            throw new JsonException("Content was not a json object");
+            throw new AssertException("Invalid format (json expected)",
+                new JsonException("Content was not a json object"));
         }
 
         //moving all the content inside __MomoContent so that if it's an array or an object does not make any difference
         jsonResult["___MomoContent"] = jsonResult;
 
-        return (jsonResult, Metadata);
+        return (jsonResult, _file.Value.Metadata);
 
     }
 
-    private void AddFileToValidations((string Content, MetadataCollection Metadata) file)
+    private async Task DownloadFileWithMetadataAsync(string bucketName, MomoAwsS3FileModel file, CancellationToken cancellationToken)
     {
+        ArgumentNullException.ThrowIfNull(file);
+        
+        var fileKey = file.Key;
+        if (file.Prefix is not null)
+        {
+            try
+            {
+                var searchRegex = new Regex(file.Key);
+                var searchingResponse = await _s3Client.ListObjectsV2Async(new ListObjectsV2Request()
+                {
+                    BucketName = bucketName,
+                    MaxKeys = 50,
+                    Prefix = file.Prefix,
+                }, cancellationToken);
+            
+                var fileResults = searchingResponse.S3Objects
+                    .Where(o => searchRegex.IsMatch(o.Key))
+                    .Select(o => o.Key)
+                    .ToList();
+
+                if (fileResults.Count != 1)
+                {
+                    throw new AssertException($"Unable to locate a single file from your search", 
+                        fileResults.Count == 0 
+                            ? new AssertException($"No files were found in {bucketName}")
+                            : new AssertException($"Multiple files were found in {bucketName}:\n{JsonConvert.SerializeObject(fileResults, Formatting.Indented)}").BreakWhenRaised());
+                }
+
+                fileKey = fileResults.ElementAt(0);
+            }
+            catch (Exception e)
+            {
+                throw new AssertException($"An error occurred searching your files", e);
+            }
+        }
+        
         try
         {
-            _validations.Add("filename", (file.Content, file.Metadata));
+            var response = await _s3Client.GetObjectAsync(bucketName, fileKey, cancellationToken);
+            
+            using var stream = response.ResponseStream;
+            using var reader = new StreamReader(stream);
+            string content = await reader.ReadToEndAsync();
+
+            _file = (content, response.Metadata);
         }
-        catch (ArgumentException e)
+        catch (AmazonS3Exception e) when (e.StatusCode is HttpStatusCode.NotFound)
         {
-            throw new ArgumentException(
-                "Filename was already added, for each S3 bucket you need to create a new expectation node", e);
+            throw new AssertException($"File key {fileKey} was not found in the specified bucket {bucketName}");
         }
-    }
-
-    private async Task
-        DownloadJsonWithMetadataAsync(string bucketName, string key, CancellationToken cancellationToken)
-    {
-        var response = await _s3Client.GetObjectAsync(bucketName, key, cancellationToken);
-        //TODO: add assertion exception file not found
-
-        using var stream = response.ResponseStream;
-        using var reader = new StreamReader(stream);
-        string content = await reader.ReadToEndAsync();
-
-        AddFileToValidations((content, response.Metadata));
     }
 
 
