@@ -233,6 +233,34 @@ If you want to include this matching values, you can use `Value` record object
 | lte      | (future releases) Less Than Equal                                     |
 | gte      | (future releases) Greater then equal                                  |
 
+## S3 File searching
+To directly find a file, avoid specifying `prefix` and just type the full file key like so
+```json
+{
+      "arn": "arn:aws:s3:::ingestion-bucket",
+      "file": {
+        "key": "worklist-ready-to-be-worked/variant-move-between-worklists/event-0.json"
+      },
+      "match": {}
+    }
+```
+
+In order to find a file, which can be dynamically composed (such as dates in the name), you can use a regex like so:
+```json
+{
+      "arn": "arn:aws:s3:::ingestion-bucket",
+      "file": {
+        "prefix": "worklist-ready-to-be-worked/variant-move-between-worklists",
+        "key": "event-[0-9].json"
+      },
+      "match": {}
+    }
+```
+
+If multiple files are found, an exception will be raised. 
+
+In future release it's planned a better way to compose the complete file key
+
 ## Json File Validation Example
 
 ```json
