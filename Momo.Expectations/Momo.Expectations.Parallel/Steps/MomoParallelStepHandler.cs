@@ -61,7 +61,7 @@ internal class MomoParallelStepHandler(MomoClientFactoryOptions options) : IStep
                 }
 
                 throw new InvalidOperationException(
-                    "A non AutoMomoClient was found, this is an internal error, please report");
+                    $"A non {nameof(AutoMomoClient)} was found in autogeneration! This is an internal error, please report");
             })
             .ToList();
         

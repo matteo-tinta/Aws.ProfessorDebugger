@@ -8,18 +8,15 @@ using Momo.Expectations.S3.Expectations;
 using Momo.Steps;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+using NJsonSchema;
 
 namespace Momo.Expectations.S3.Steps;
 
-internal partial class MomoAwsS3StepHandler(IAmazonS3 s3Client): IStepHandler
+internal class MomoAwsS3StepHandler(IAmazonS3 s3Client): IStepHandler
 {
-    private readonly IAmazonS3 _s3Client = s3Client ?? throw new ArgumentNullException(nameof(s3Client));
-    private Dictionary<string, object> _validations = new();
-    private (string Content, MetadataCollection Metadata)? _file;
     private Arn? _arn;
+    private readonly IAmazonS3 _s3Client = s3Client ?? throw new ArgumentNullException(nameof(s3Client));
 
-    [GeneratedRegex(@"\bContent(?=[\.\[])", RegexOptions.IgnoreCase, "en-US")]
-    private static partial Regex ExpectationContentRegex();
     public ValueTask DisposeAsync() => ValueTask.CompletedTask;
 
     public Task PrepareAsync(IMomoExpectation baseConfig, CancellationToken cancellationToken)
@@ -42,51 +39,69 @@ internal partial class MomoAwsS3StepHandler(IAmazonS3 s3Client): IStepHandler
         }
         
         var config = (MomoAwsS3Expectation)baseConfig;
-        var pattern = ExpectationContentRegex();
 
-        _validations = new Dictionary<string, object>();
-        
-        await DownloadFileWithMetadataAsync(_arn.ResourceName, config.File, cancellationToken);
-        
-        foreach (var expectation in config.Match)
+        var file = await DownloadFileWithMetadataAsync(_arn.ResourceName, config.File, cancellationToken);
+
+        if (config.Match is not null)
         {
-            if (pattern.Match(expectation.Key).Success)
+            try
             {
-                var newKey = pattern.Replace(expectation.Key, "___MomoContent");
-                var token = ParseFileToJson().Content.SelectToken(newKey);
-                        
-                if (token is not null && string.Equals(token.ToString(), expectation.Value, StringComparison.OrdinalIgnoreCase))
-                    return true;
-
-                throw new AssertException($"A file with the current key was found on bucket \"{_arn.ResourceName}\" but the \"{expectation.Key}\" didn't match the expectation");
+                var content = ParseFileToJson(file);
+                var validationErrors = config.Match.Validate(content.Content);
+                return  validationErrors.Count == 0;
+            }
+            catch (JsonException e)
+            {
+                throw new AssertException(
+                    "A schema was provided, but the file was not a json format. Only json format files can be matched", e);
             }
         }
 
         return true;
     }
 
-    public Task<IMomoExpectation> GenerateExpectationAsync(IMomoExpectation config, CancellationToken cancellationToken)
+    public async Task<IMomoExpectation> GenerateExpectationAsync(IMomoExpectation baseConfig, CancellationToken cancellationToken)
     {
-        throw new NotImplementedException();
-    }
+        await PrepareAsync(baseConfig, cancellationToken);
+        
+        var config = (MomoAwsS3Expectation)baseConfig;
 
-    private (JObject Content, MetadataCollection Metadata) ParseFileToJson()
-    {
-        var jsonResult = JsonConvert.DeserializeObject<JObject>(_file!.Value.Content);
-        if (jsonResult is null)
+        var newExpectation = new MomoAwsS3Expectation(_s3Client)
         {
-            throw new AssertException("Invalid format (json expected)",
-                new JsonException("Content was not a json object"));
+            File = config.File,
+            Arn = config.Arn,
+        };
+            
+        var file = await DownloadFileWithMetadataAsync(_arn!.ResourceName, config.File, cancellationToken);
+
+        try
+        {
+            var content = ParseFileToJson(file);
+
+            var schema = JsonSchema.FromSampleJson(content.Content.ToString());
+            newExpectation.Match = schema;
+        }
+        catch (JsonException)
+        {
+            Console.WriteLine("[WARNING]: File was not in json format. Only json format files can be matched");
         }
 
-        //moving all the content inside __MomoContent so that if it's an array or an object does not make any difference
-        jsonResult["___MomoContent"] = jsonResult;
-
-        return (jsonResult, _file.Value.Metadata);
-
+        return newExpectation;
     }
 
-    private async Task DownloadFileWithMetadataAsync(string bucketName, MomoAwsS3FileModel file, CancellationToken cancellationToken)
+    private (JObject Content, MetadataCollection Metadata) ParseFileToJson(
+        (string Content, MetadataCollection Metadata) file)
+    {
+        var jsonResult = JsonConvert.DeserializeObject<JObject>(file.Content);
+        if (jsonResult is null)
+        {
+            throw new JsonException("Content was not a json object");
+        }
+
+        return (jsonResult, file.Metadata);
+    }
+
+    private async Task<(string Content, MetadataCollection Metadata)> DownloadFileWithMetadataAsync(string bucketName, MomoAwsS3FileModel file, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(file);
         
@@ -132,7 +147,7 @@ internal partial class MomoAwsS3StepHandler(IAmazonS3 s3Client): IStepHandler
             using var reader = new StreamReader(stream);
             string content = await reader.ReadToEndAsync();
 
-            _file = (content, response.Metadata);
+            return (content, response.Metadata);
         }
         catch (AmazonS3Exception e) when (e.StatusCode is HttpStatusCode.NotFound)
         {

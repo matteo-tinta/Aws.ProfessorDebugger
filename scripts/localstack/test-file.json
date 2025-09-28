@@ -1,1 +1,53 @@
-{}
+{
+  "id": "C",
+  "number": "MYCOOLPONUMBERK1234",
+  "internal": false,
+  "dc": "DC1",
+  "channel": "NAP",
+  "createdDate": "2023-05-29T15:50:58+00:00",
+  "lastModifiedDate": "2023-06-21T13:49:59.8578035+00:00",
+  "status": "PartialDelivery",
+  "department": "Men's Contemporary",
+  "orderVariants": [
+    {
+      "id": "fd1e8a31-565c-4701-b3c3-bf2b7c6fcc49",
+      "status": "PartialDelivery",
+      "pricing": {
+        "landedCost": {
+          "value": 968,
+          "currency": "GBP"
+        }
+      },
+      "variant": {
+        "brandCode": "GUCCI",
+        "colourName": "Yellow",
+        "colourCode": "xfjdkls33",
+        "modelFabric": "ABC00128-",
+        "sizeSchema": "Italian",
+        "category": "Bag",
+        "subCategory": "Shoulder bag",
+        "id": "3"
+      }
+    },
+    {
+      "id": "fd1e8a31-565c-4701-b3c3-bf2b7c6fcc49",
+      "status": "PartialDelivery",
+      "pricing": {
+        "landedCost": {
+          "value": 968,
+          "currency": "GBP"
+        }
+      },
+      "variant": {
+        "brandCode": "GUCCI",
+        "colourName": "Yellow",
+        "colourCode": "xfjdkls33",
+        "modelFabric": "ABC00128-",
+        "sizeSchema": "Italian",
+        "category": "Bag",
+        "subCategory": "Shoulder bag",
+        "id": "4"
+      }
+    }
+  ]
+}
