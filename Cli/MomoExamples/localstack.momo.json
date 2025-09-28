@@ -2,124 +2,128 @@
   "traceId": "abc123",
   "expectations": [
     {
-      "arn": "arn:aws:sns:us-east-1:000000000000:my-sns-topic",
-      "match": {
-        "$schema": "http://json-schema.org/draft-04/schema#",
-        "type": "object",
-        "properties": {
-          "eventType": {
-            "type": "string"
-          },
-          "userId": {
-            "type": "integer"
-          },
-          "email": {
-            "type": "string"
-          }
-        }
-      }
-    },
-    {
-      "connectionString": "mongodb://mongo:mongo@localhost:27017/NAP_Mastermind_lcl?directConnection=true\u0026authSource=admin\u0026retryWrites=true\u0026w=majority",
-      "match": [
+      "parallelExpectations": [
         {
-          "query": {
-            "find": "uploadList",
-            "filter": {
-              "name": "123123"
-            },
-            "limit": 1
-          },
+          "arn": "arn:aws:sns:us-east-1:000000000000:my-sns-topic",
           "match": {
             "$schema": "http://json-schema.org/draft-04/schema#",
-            "type": "array",
-            "items": {
-              "$ref": "#/definitions/Anonymous"
-            },
-            "definitions": {
-              "_id": {
-                "type": "object",
-                "properties": {
-                  "$binary": {
-                    "$ref": "#/definitions/$binary"
-                  }
-                }
+            "type": "object",
+            "properties": {
+              "eventType": {
+                "type": "string"
               },
-              "$binary": {
-                "type": "object",
-                "properties": {
-                  "base64": {
-                    "type": "string"
-                  },
-                  "subType": {
-                    "type": "string"
-                  }
-                }
+              "userId": {
+                "type": "integer"
               },
-              "Timestamp": {
-                "type": "object",
-                "properties": {
-                  "DateTime": {
-                    "$ref": "#/definitions/DateTime"
-                  },
-                  "Ticks": {
-                    "type": "integer"
-                  },
-                  "Offset": {
-                    "type": "integer"
-                  }
-                }
+              "email": {
+                "type": "string"
+              }
+            }
+          }
+        },
+        {
+          "connectionString": "mongodb://mongo:mongo@localhost:27017/NAP_Mastermind_lcl?directConnection=true\u0026authSource=admin\u0026retryWrites=true\u0026w=majority",
+          "match": [
+            {
+              "query": {
+                "find": "uploadList",
+                "filter": {
+                  "name": "123123"
+                },
+                "limit": 1
               },
-              "DateTime": {
-                "type": "object",
-                "properties": {
-                  "$date": {
-                    "type": "string",
-                    "format": "date-time"
-                  }
-                }
-              },
-              "Anonymous": {
-                "type": "object",
-                "properties": {
+              "match": {
+                "$schema": "http://json-schema.org/draft-04/schema#",
+                "type": "array",
+                "items": {
+                  "$ref": "#/definitions/Anonymous"
+                },
+                "definitions": {
                   "_id": {
-                    "$ref": "#/definitions/_id"
+                    "type": "object",
+                    "properties": {
+                      "$binary": {
+                        "$ref": "#/definitions/$binary"
+                      }
+                    }
                   },
-                  "version": {
-                    "type": "integer"
+                  "$binary": {
+                    "type": "object",
+                    "properties": {
+                      "base64": {
+                        "type": "string"
+                      },
+                      "subType": {
+                        "type": "string"
+                      }
+                    }
                   },
-                  "timestamp": {
-                    "$ref": "#/definitions/Timestamp"
+                  "Timestamp": {
+                    "type": "object",
+                    "properties": {
+                      "DateTime": {
+                        "$ref": "#/definitions/DateTime"
+                      },
+                      "Ticks": {
+                        "type": "integer"
+                      },
+                      "Offset": {
+                        "type": "integer"
+                      }
+                    }
                   },
-                  "lastModifiedBy": {
-                    "type": "string"
+                  "DateTime": {
+                    "type": "object",
+                    "properties": {
+                      "$date": {
+                        "type": "string",
+                        "format": "date-time"
+                      }
+                    }
                   },
-                  "salesCatalog": {
-                    "type": "string"
-                  },
-                  "name": {
-                    "type": "string"
-                  },
-                  "nextTriggerDate": {
-                    "$ref": "#/definitions/Timestamp"
-                  },
-                  "publishDate": {
-                    "$ref": "#/definitions/Timestamp"
-                  },
-                  "eip": {},
-                  "whatsNew": {},
-                  "status": {
-                    "type": "string"
-                  },
-                  "scheduleDate": {},
-                  "variants": {
-                    "type": "array",
-                    "items": {}
+                  "Anonymous": {
+                    "type": "object",
+                    "properties": {
+                      "_id": {
+                        "$ref": "#/definitions/_id"
+                      },
+                      "version": {
+                        "type": "integer"
+                      },
+                      "timestamp": {
+                        "$ref": "#/definitions/Timestamp"
+                      },
+                      "lastModifiedBy": {
+                        "type": "string"
+                      },
+                      "salesCatalog": {
+                        "type": "string"
+                      },
+                      "name": {
+                        "type": "string"
+                      },
+                      "nextTriggerDate": {
+                        "$ref": "#/definitions/Timestamp"
+                      },
+                      "publishDate": {
+                        "$ref": "#/definitions/Timestamp"
+                      },
+                      "eip": {},
+                      "whatsNew": {},
+                      "status": {
+                        "type": "string"
+                      },
+                      "scheduleDate": {},
+                      "variants": {
+                        "type": "array",
+                        "items": {}
+                      }
+                    }
                   }
                 }
               }
             }
-          }
+          ]
         }
       ]
     }
