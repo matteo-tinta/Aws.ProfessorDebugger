@@ -1,15 +1,36 @@
 ﻿using System.Text.Json;
-using System.Text.Json.Serialization;
 using Cli.FileLoader.Models;
 using Momo.Expectations;
 using Momo.Expectations.Mongo.Expectations;
 using Momo.Expectations.Parallel.Expectations;
 using Momo.Expectations.S3.Expectations;
 using Momo.Expectations.SNS.Expectations;
+using Newtonsoft.Json;
+using NJsonSchema;
+using JsonException = System.Text.Json.JsonException;
+using JsonSerializer = System.Text.Json.JsonSerializer;
 
 namespace Cli.FileLoader;
 
-public class IMomoExpectationConverter : JsonConverter<IMomoExpectation>
+public class JsonSchemaConverter(Formatting formatting = Formatting.None) : System.Text.Json.Serialization.JsonConverter<JsonSchema>
+{
+    public override JsonSchema? Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
+    {
+        using var jsonDoc = JsonDocument.ParseValue(ref reader);
+        var root = jsonDoc.RootElement;
+        return JsonSerializer.Deserialize<JsonSchema>(root.GetRawText(), options);
+    }
+
+    public override void Write(Utf8JsonWriter writer, JsonSchema value, JsonSerializerOptions options)
+    {
+        // Get raw JSON as string
+        var jsonString = value.ToJson(formatting);
+        using var document = JsonDocument.Parse(jsonString);
+        document.RootElement.WriteTo(writer);
+    }
+}
+
+public class IMomoExpectationConverter : System.Text.Json.Serialization.JsonConverter<IMomoExpectation>
 {
     public override IMomoExpectation Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
     {

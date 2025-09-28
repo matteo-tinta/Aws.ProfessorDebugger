@@ -10,6 +10,8 @@ using Momo.Steps;
 using Momo.Validators;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+using NJsonSchema;
+using NJsonSchema.Validation;
 
 namespace Momo.Expectations.SNS.Steps;
 
@@ -57,56 +59,78 @@ internal class MomoAwsSnsStepHandler(
     public async Task<bool> CheckAsync(IMomoExpectation baseConfig, int timeout, CancellationToken cancellationToken)
     {
         var config = (MomoAwsSnsExpectation)baseConfig;
-            
-        var response = await _sqsClient.ReceiveMessageAsync(new ReceiveMessageRequest
-        {
-            QueueUrl = _queueUrl,
-            MaxNumberOfMessages = 10,
-            WaitTimeSeconds = timeout > 20 ? 20 : timeout,
-            MessageAttributeNames = ["All"],
-            VisibilityTimeout = 1
-        }, cancellationToken);
+        var messages = await CheckMessages(config, message => MessageMatches(message.ToString(), config.Match), cancellationToken);
 
-        foreach (var message in response.Messages ?? [])
-            _checkedMessages[message.MessageId] = message;
-                    
-        if (response.Messages is not null && response.Messages.Any(message => MessageMatches(message.Body, config.Match)))
+        //Return true if at least one is valid
+        return messages.Any(c => c);
+    }
+
+    public async Task<IMomoExpectation> GenerateExpectationAsync(IMomoExpectation baseConfig, CancellationToken cancellationToken)
+    {
+        var config = (MomoAwsSnsExpectation)baseConfig;
+        await PrepareAsync(config, cancellationToken);
+
+        var schemas = await CheckMessages(config, message => JsonSchema.FromSampleJson(message.ToString()), cancellationToken);
+
+        return new MomoAwsSnsExpectation(_sqsClient, _snsClient)
         {
-            return true;
-        }
-                                        
-        throw new AssertException($"No messages were matched on SQS {_queueUrl} on Subscription {_subscriptionArn}", 
-            new AssertException($"Current expectation failed:\n{JsonConvert.SerializeObject(config, Formatting.Indented)}", 
-                new AssertException($"Checked messages:\n{JsonConvert.SerializeObject(_checkedMessages, Formatting.Indented)}")));
+            Arn = config.Arn,
+            Match = schemas.ElementAt(0)
+        };
     }
 
     public async ValueTask DisposeAsync()
     {
         await _command.UndoAsync(CancellationToken.None);
     }
-    
-    private bool MessageMatches(string messageBody, Dictionary<string, Value> matchRules)
+
+    private async Task<List<TOut>> CheckMessages<TOut>(
+        MomoAwsSnsExpectation config,
+        Func<JToken, TOut> onMessageRead,
+        CancellationToken cancellationToken)
     {
-        try
+        var response = await _sqsClient.ReceiveMessageAsync(new ReceiveMessageRequest
         {
-            var root = JObject.Parse(messageBody);
+            QueueUrl = _queueUrl,
+            MaxNumberOfMessages = 10,
+            WaitTimeSeconds = 20,
+            MessageAttributeNames = ["All"],
+            VisibilityTimeout = 1
+        }, cancellationToken);
+
+        foreach (var message in response.Messages ?? [])
+            _checkedMessages[message.MessageId] = message;
+
+        if (response.Messages is null)
+            throw new AssertException($"No messages were matched on SQS {_queueUrl} on Subscription {_subscriptionArn}",
+                new AssertException($"Current expectation failed:\n{JsonConvert.SerializeObject(config, Formatting.Indented)}",
+                    new AssertException($"Checked messages:\n{JsonConvert.SerializeObject(_checkedMessages, Formatting.Indented)}")));
+            
+        var list = new List<TOut>();
+                
+        foreach (var message in response.Messages ?? [])
+        {
+            var root = JObject.Parse(message.Body);
 
             var messageContent = root["Message"]!.ToString();
             var parsedMessage = JToken.Parse(messageContent);
             root["Message"] = parsedMessage;
-            
-            foreach (var kvp in matchRules)
-            {
-                var token = root.SelectToken(kvp.Key);
-                
-                //Cannot assume here that the message we are reading at this moment is the message we want to read
-                //so false is returned, message did not match.
-                //In the exception output there will be all the messages that are being received during this time
-                if (token == null || !kvp.Value.Verify(token.ToObject<object>()))
-                    return false;
-            }
 
-            return true;
+            if (root["Message"] is null)
+                throw new JsonException("Message was empty");
+                    
+            list.Add(onMessageRead(root["Message"]));  
+        }
+
+        return list;
+    } 
+    
+    private bool MessageMatches(string messageBody, JsonSchema schema)
+    {
+        try
+        {
+            var validationErrors = schema.Validate(messageBody);
+            return validationErrors.Count == 0;
         }
         catch (Exception e)
         {

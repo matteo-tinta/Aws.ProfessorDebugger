@@ -7,34 +7,119 @@
         {
           "arn": "arn:aws:sns:eu-west-1:297244223532:pricelist-s3-event-notification-dev",
           "match": {
-            "Message.Records[0].s3.bucket.arn": {
-              "contains": "offer-input-pricelists-dev-eu-west-1-297244223532"
-            }
+            "$schema": "http://json-schema.org/draft-07/schema#",
+            "type": "object",
+            "properties": {
+              "Message": {
+                "type": "object",
+                "properties": {
+                  "Records": {
+                    "type": "array",
+                    "minItems": 1,
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "s3": {
+                          "type": "object",
+                          "properties": {
+                            "bucket": {
+                              "type": "object",
+                              "properties": {
+                                "arn": {
+                                  "type": "string",
+                                  "pattern": ".*offer-input-pricelists-dev-eu-west-1-297244223532.*"
+                                }
+                              },
+                              "required": ["arn"]
+                            }
+                          },
+                          "required": ["bucket"]
+                        }
+                      },
+                      "required": ["s3"]
+                    }
+                  }
+                },
+                "required": ["Records"]
+              }
+            },
+            "required": ["Message"]
           }
         },
         {
           "arn": "arn:aws:sns:eu-west-1:297244223532:price-info-changes-dev",
           "match": {
-            "Message.channel": {
-              "equals": "NAP"
+            "$schema": "http://json-schema.org/draft-07/schema#",
+            "type": "object",
+            "properties": {
+              "Message": {
+                "type": "object",
+                "properties": {
+                  "channel": {
+                    "type": "string",
+                    "const": "NAP"
+                  },
+                  "market": {
+                    "type": "string",
+                    "const": "IT"
+                  }
+                },
+                "required": ["channel", "market"]
+              }
             },
-            "Message.market": {
-              "equals": "IT"
-            }
+            "required": ["Message"]
           }
         },
         {
           "arn": "arn:aws:sns:eu-west-1:297244223532:mastermind-dataloader-price-searchinfochanged-dev",
           "match": {
-            "Message.brand": {
-              "equals": "NAP"
+            "$schema": "http://json-schema.org/draft-07/schema#",
+            "type": "object",
+            "properties": {
+              "Message": {
+                "type": "object",
+                "properties": {
+                  "brand": {
+                    "type": "string",
+                    "const": "NAP"
+                  },
+                  "variantId": {
+                    "type": "string",
+                    "const": "1646396840995247"
+                  },
+                  "salesCatalogs": {
+                    "type": "object",
+                    "properties": {
+                      "NAP_AM": {
+                        "type": "object",
+                        "properties": {
+                          "price": {
+                            "type": "object",
+                            "properties": {
+                              "details": {
+                                "type": "object",
+                                "properties": {
+                                  "salePrice": {
+                                    "type": "number",
+                                    "const": 200
+                                  }
+                                },
+                                "required": ["salePrice"]
+                              }
+                            },
+                            "required": ["details"]
+                          }
+                        },
+                        "required": ["price"]
+                      }
+                    },
+                    "required": ["NAP_AM"]
+                  }
+                },
+                "required": ["brand", "variantId", "salesCatalogs"]
+              }
             },
-            "Message.variantId": {
-              "equals": "1646396840995247"
-            },
-            "Message.salesCatalogs.NAP_AM.price.details.salePrice": {
-              "equals": 200
-            }
+            "required": ["Message"]
           }
         }
       ]

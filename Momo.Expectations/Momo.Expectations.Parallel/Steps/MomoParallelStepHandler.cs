@@ -23,7 +23,7 @@ internal class MomoParallelStepHandler(MomoClientFactoryOptions options) : IStep
                 //Creating a shadow new client, recursivelly, so that parallel reuse main logic
                 options.ExpectationFile = options.ExpectationFile with { Expectations = [c] };
                 
-                var client = MomoClient.ValidateAndCreate(options);
+                var client = MomoClientFactory.FeedMomo(options);
                 
                 await client.MatchExpectations(cancellationToken);
 
@@ -34,7 +34,11 @@ internal class MomoParallelStepHandler(MomoClientFactoryOptions options) : IStep
         var parallelResult = await Task.WhenAll(tasks);
         return parallelResult.All(x => x); //check if all are true, otherwise, return false
     }
-    
+
+    public Task<IMomoExpectation>
+        GenerateExpectationAsync(IMomoExpectation config, CancellationToken cancellationToken) =>
+        Task.FromResult(config);
+
     public ValueTask DisposeAsync()
     {
         return ValueTask.CompletedTask;

@@ -1,4 +1,5 @@
-﻿using Momo.Steps;
+﻿using Momo.Models;
+using Momo.Steps;
 
 namespace Momo.Expectations;
 

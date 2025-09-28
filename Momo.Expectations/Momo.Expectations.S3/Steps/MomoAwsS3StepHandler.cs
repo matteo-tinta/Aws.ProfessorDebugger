@@ -64,7 +64,12 @@ internal partial class MomoAwsS3StepHandler(IAmazonS3 s3Client): IStepHandler
 
         return true;
     }
-    
+
+    public Task<IMomoExpectation> GenerateExpectationAsync(IMomoExpectation config, CancellationToken cancellationToken)
+    {
+        throw new NotImplementedException();
+    }
+
     private (JObject Content, MetadataCollection Metadata) ParseFileToJson()
     {
         var jsonResult = JsonConvert.DeserializeObject<JObject>(_file!.Value.Content);

@@ -39,6 +39,18 @@ internal class StepHandlerLoggingDecorated(IStepHandler stepHandler): IStepHandl
         return matches;
     }
 
+    public async Task<IMomoExpectation> GenerateExpectationAsync(IMomoExpectation step, CancellationToken cancellationToken)
+    {
+        _name = step.ToString() ?? step.GetType().FullName;
+        LogCheckProcess(() => Console.WriteLine($"[{GetName()}]: Generating expectation..."));
+        
+        var expectation = await stepHandler.GenerateExpectationAsync(step, cancellationToken);
+        
+        Console.WriteLine($"[{GetName()}]: expectation generated successfully");
+
+        return expectation;
+    }
+
     private void LogCheckProcess(Action logAction)
     {
         if (!_hasAlreadyLogged)

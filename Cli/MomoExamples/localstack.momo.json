@@ -1,13 +1,24 @@
-﻿{
+{
   "traceId": "abc123",
-  "timeout": 2,
   "expectations": [
     {
-      "arn": "arn:aws:s3:::offer-input-pricelists-dev-eu-west-1-297244223532",
-      "file": {
-        "key": "Prince/MRP/2025/09/16/MRP_ALL_2025-09-16T08-16-59.247Z_MarketPriceLists.json.gz"
-      },
-      "match": {}
+      "arn": "arn:aws:sns:us-east-1:000000000000:my-sns-topic",
+      "match": {
+        "$schema": "http://json-schema.org/draft-04/schema#",
+        "type": "object",
+        "properties": {
+          "eventType": {
+            "type": "string"
+          },
+          "userId": {
+            "type": "integer"
+          },
+          "email": {
+            "type": "string"
+          }
+        }
+      }
     }
-  ]
+  ],
+  "timeout": 120
 }

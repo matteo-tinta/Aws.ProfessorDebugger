@@ -60,7 +60,12 @@ public class MomoMongoStepHandler: IStepHandler
 
         return true;
     }
-    
+
+    public Task<IMomoExpectation> GenerateExpectationAsync(IMomoExpectation config, CancellationToken cancellationToken)
+    {
+        throw new NotImplementedException();
+    }
+
     private async Task<BsonDocument> TryExecutingQuery(CancellationToken cancellationToken, IMongoDatabase database,
         Expectations.MomoMongoQueryExpectation query)
     {
