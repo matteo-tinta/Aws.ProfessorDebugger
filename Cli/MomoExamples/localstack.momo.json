@@ -18,6 +18,110 @@
           }
         }
       }
+    },
+    {
+      "connectionString": "mongodb://mongo:mongo@localhost:27017/NAP_Mastermind_lcl?directConnection=true\u0026authSource=admin\u0026retryWrites=true\u0026w=majority",
+      "match": [
+        {
+          "query": {
+            "find": "uploadList",
+            "filter": {
+              "name": "123123"
+            },
+            "limit": 1
+          },
+          "match": {
+            "$schema": "http://json-schema.org/draft-04/schema#",
+            "type": "array",
+            "items": {
+              "$ref": "#/definitions/Anonymous"
+            },
+            "definitions": {
+              "_id": {
+                "type": "object",
+                "properties": {
+                  "$binary": {
+                    "$ref": "#/definitions/$binary"
+                  }
+                }
+              },
+              "$binary": {
+                "type": "object",
+                "properties": {
+                  "base64": {
+                    "type": "string"
+                  },
+                  "subType": {
+                    "type": "string"
+                  }
+                }
+              },
+              "Timestamp": {
+                "type": "object",
+                "properties": {
+                  "DateTime": {
+                    "$ref": "#/definitions/DateTime"
+                  },
+                  "Ticks": {
+                    "type": "integer"
+                  },
+                  "Offset": {
+                    "type": "integer"
+                  }
+                }
+              },
+              "DateTime": {
+                "type": "object",
+                "properties": {
+                  "$date": {
+                    "type": "string",
+                    "format": "date-time"
+                  }
+                }
+              },
+              "Anonymous": {
+                "type": "object",
+                "properties": {
+                  "_id": {
+                    "$ref": "#/definitions/_id"
+                  },
+                  "version": {
+                    "type": "integer"
+                  },
+                  "timestamp": {
+                    "$ref": "#/definitions/Timestamp"
+                  },
+                  "lastModifiedBy": {
+                    "type": "string"
+                  },
+                  "salesCatalog": {
+                    "type": "string"
+                  },
+                  "name": {
+                    "type": "string"
+                  },
+                  "nextTriggerDate": {
+                    "$ref": "#/definitions/Timestamp"
+                  },
+                  "publishDate": {
+                    "$ref": "#/definitions/Timestamp"
+                  },
+                  "eip": {},
+                  "whatsNew": {},
+                  "status": {
+                    "type": "string"
+                  },
+                  "scheduleDate": {},
+                  "variants": {
+                    "type": "array",
+                    "items": {}
+                  }
+                }
+              }
+            }
+          }
+        }
+      ]
     }
   ],
   "timeout": 120

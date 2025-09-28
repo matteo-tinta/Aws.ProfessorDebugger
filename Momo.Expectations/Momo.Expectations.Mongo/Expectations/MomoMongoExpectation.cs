@@ -1,7 +1,9 @@
 ﻿using System.Text.Json;
+using System.Text.Json.Nodes;
 using Momo.Expectations.Mongo.Steps;
 using Momo.Steps;
 using MongoDB.Driver;
+using NJsonSchema;
 
 namespace Momo.Expectations.Mongo.Expectations;
 
@@ -28,6 +30,6 @@ public class MomoMongoExpectation: IMomoExpectation
 
 public record MomoMongoQueryExpectation
 {
-    public JsonElement Query { get; set; }
-    public Dictionary<string, string> Match { get; set; }
+    public JsonNode Query { get; set; }
+    public JsonSchema Match { get; set; }
 }

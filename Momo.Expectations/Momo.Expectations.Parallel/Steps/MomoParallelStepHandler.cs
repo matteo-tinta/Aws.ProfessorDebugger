@@ -35,8 +35,7 @@ internal class MomoParallelStepHandler(MomoClientFactoryOptions options) : IStep
         return parallelResult.All(x => x); //check if all are true, otherwise, return false
     }
 
-    public Task<IMomoExpectation>
-        GenerateExpectationAsync(IMomoExpectation config, CancellationToken cancellationToken) =>
+    public Task<IMomoExpectation> GenerateExpectationAsync(IMomoExpectation config, CancellationToken cancellationToken) =>
         Task.FromResult(config);
 
     public ValueTask DisposeAsync()

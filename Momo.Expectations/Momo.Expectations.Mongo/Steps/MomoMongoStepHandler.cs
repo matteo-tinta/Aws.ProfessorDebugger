@@ -1,15 +1,18 @@
 ﻿using System.Collections.Concurrent;
 using Momo.Exceptions;
+using Momo.Expectations.Mongo.Expectations;
 using Momo.Steps;
 using MongoDB.Bson;
 using MongoDB.Driver;
 using Newtonsoft.Json.Linq;
+using NJsonSchema;
 
 namespace Momo.Expectations.Mongo.Steps;
 
 public class MomoMongoStepHandler: IStepHandler
 {
     private IMongoDatabase? _mongoDatabase;
+    private ConcurrentDictionary<string, string> _executedQueriesWithResults = [];
 
     public ValueTask DisposeAsync()
     {
@@ -39,31 +42,81 @@ public class MomoMongoStepHandler: IStepHandler
             throw new InvalidOperationException("MongoDB is not initialized, please call {nameof(PrepareAsync)} before calling {nameof(CheckAsync)}");
         }
         
-        var config = (Expectations.MomoMongoExpectation)baseConfig;
-        ConcurrentDictionary<string, string> executedQueriesWithResults = [];
+        await ExecuteQueryAsync(
+            baseConfig, (result, expectation) =>
+            {
+                if (!QueryMatches(result, expectation.Match))
+                {
+                    throw new AssertException($"Query did not match",
+                        new AssertException($"Executed queries {Newtonsoft.Json.JsonConvert.SerializeObject(_executedQueriesWithResults)}"));
+                }
 
+                return true;
+            }, cancellationToken);
+
+        return true; //avoid cycling...
+    }
+    
+    public async Task<IMomoExpectation> GenerateExpectationAsync(IMomoExpectation baseConfig, CancellationToken cancellationToken)
+    {
+        await PrepareAsync(baseConfig, cancellationToken);
+        
+        var config = (MomoMongoExpectation)baseConfig;
+
+        //add "limit" as 1, to limit result to 1 output only
+        var newConfig = new MomoMongoExpectation()
+        {
+            ConnectionString = config.ConnectionString,
+            Match = config.Match.Select(m =>
+            {
+                var query = m.Query;
+                query["limit"] = 1;
+
+                return m with
+                {
+                    Query = query
+                };
+            }).ToList()
+        };
+        
+        var results = await ExecuteQueryAsync(newConfig, 
+            (result, expectation) => expectation with { Match = JsonSchema.FromSampleJson(result) }, 
+            cancellationToken);
+
+        return new MomoMongoExpectation()
+        {
+            ConnectionString = config.ConnectionString,
+            Match = results,
+        };
+    }
+
+    #region private
+
+    private async Task<List<TOut>> ExecuteQueryAsync<TOut>(
+        IMomoExpectation baseConfig, 
+        Func<string, MomoMongoQueryExpectation, TOut> OnQueryResult,
+        CancellationToken cancellationToken)
+    {
+        if (_mongoDatabase is null)
+        {
+            throw new InvalidOperationException("MongoDB is not initialized, please call {nameof(PrepareAsync)} before calling {nameof(CheckAsync)}");
+        }
+        
+        var config = (MomoMongoExpectation)baseConfig;
+        
+        List<TOut> results = [];
         foreach (var query in config.Match)
         {
             //execute query
             var queryBsonResult = await TryExecutingQuery(cancellationToken, _mongoDatabase, query);
-            var resultInJson = queryBsonResult["cursor"].ToJson();
+            var resultInJson = queryBsonResult["cursor"]["firstBatch"].ToJson();
             
-            executedQueriesWithResults[query.Query.ToString()] = resultInJson;
-
-            //Try match all the query results
-            if (!QueryMatches(resultInJson, query.Match))
-            {
-                throw new AssertException($"Query did not match", 
-                    new AssertException($"Executed queries {Newtonsoft.Json.JsonConvert.SerializeObject(executedQueriesWithResults)}"));
-            }
+            _executedQueriesWithResults[query.Query.ToString()] = resultInJson;
+            
+            results.Add(OnQueryResult(resultInJson, query));
         }
 
-        return true;
-    }
-
-    public Task<IMomoExpectation> GenerateExpectationAsync(IMomoExpectation config, CancellationToken cancellationToken)
-    {
-        throw new NotImplementedException();
+        return results;
     }
 
     private async Task<BsonDocument> TryExecutingQuery(CancellationToken cancellationToken, IMongoDatabase database,
@@ -80,24 +133,17 @@ public class MomoMongoStepHandler: IStepHandler
         }
     }
 
-    private bool QueryMatches(string queryJson, Dictionary<string, string> matchRules)
+    private bool QueryMatches(string queryJson, JsonSchema schema)
     {
-        if (matchRules is null)
+        if (schema is null)
         {
-            throw new Exception("Query match rules are empty", new ArgumentNullException(nameof(matchRules)));
+            throw new Exception("Query match rules are empty", new ArgumentNullException(nameof(schema)));
         }
         
-        var root = JObject.Parse(queryJson);
-        root["documents"] = root["firstBatch"]; //easier to query...
-        
-        foreach (var kvp in matchRules)
-        {
-            var token = root.SelectToken(kvp.Key, new JsonSelectSettings() { ErrorWhenNoMatch = true });
-                
-            if (token == null || !string.Equals(token.ToString(), kvp.Value, StringComparison.OrdinalIgnoreCase))
-                return false;
-        }
-
-        return true;
+        var validationErrors = schema.Validate(queryJson);
+        return validationErrors.Count == 0;
     }
+
+    #endregion
+    
 }
