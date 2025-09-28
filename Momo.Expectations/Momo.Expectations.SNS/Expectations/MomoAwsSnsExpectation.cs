@@ -2,7 +2,6 @@
 using Amazon.SQS;
 using Momo.Expectations.SNS.Steps;
 using Momo.Steps;
-using Momo.Validators;
 using NJsonSchema;
 using ResourceArn = Models.Arn;
 

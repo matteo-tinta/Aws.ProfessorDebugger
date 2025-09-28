@@ -1,7 +1,6 @@
 ﻿using System.Text.Json;
 using Newtonsoft.Json;
 using NJsonSchema;
-using JsonSerializer = System.Text.Json.JsonSerializer;
 
 namespace Cli.FileLoader;
 

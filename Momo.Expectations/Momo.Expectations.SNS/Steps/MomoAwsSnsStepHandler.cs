@@ -7,11 +7,9 @@ using Momo.Exceptions;
 using Momo.Expectations.SNS.Commands;
 using Momo.Expectations.SNS.Expectations;
 using Momo.Steps;
-using Momo.Validators;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using NJsonSchema;
-using NJsonSchema.Validation;
 
 namespace Momo.Expectations.SNS.Steps;
 

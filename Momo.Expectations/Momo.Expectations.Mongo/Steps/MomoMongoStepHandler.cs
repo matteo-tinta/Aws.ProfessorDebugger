@@ -4,7 +4,6 @@ using Momo.Expectations.Mongo.Expectations;
 using Momo.Steps;
 using MongoDB.Bson;
 using MongoDB.Driver;
-using Newtonsoft.Json.Linq;
 using NJsonSchema;
 
 namespace Momo.Expectations.Mongo.Steps;
