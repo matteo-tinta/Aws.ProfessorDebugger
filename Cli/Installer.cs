@@ -38,9 +38,8 @@ public static class Services
                 AuthenticationRegion = Environment.GetEnvironmentVariable("AWS_REGION")
             });
         }
-        catch (Exception e)
+        catch (Exception)
         {
-            Console.WriteLine($"[WARNING]: unable to construct s3 client, returning default: {e}");
             return new AmazonS3Client();
         }
     }

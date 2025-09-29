@@ -42,7 +42,8 @@ Copyright (c) Matteo Tinta (F31)
 cli graph [aws_arn] [args]
 
   --ignore-cache    (Default: false) Ignore stored cache. Actual present cache file will be overidden.
-  --output-as       (Default: Cli) Cli, Json or Graph (case sensitive)
+  --output-as       (Default: Cli) Cli, Json, Graph or Momo (case sensitive)
+  --output-to       Path to save the output (required and used only if --output-as=Momo)
   --cache-type      (Default: JsonFile) Only JsonFile is available for now (case sensitive)
   --max-level       Set the max level to stop
   --help            Display this help screen.

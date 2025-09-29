@@ -119,7 +119,8 @@ class Program
         await graphCacheProvider.SaveAsync(explorer.Graph);
 
         CliClientFactory.CreateGraphPrinter(new CreateGraphPrinterOptions() {
-            Type = options.OutputAs
+            Type = options.OutputAs,
+            OutputPath = options.OutputTo
         }).Print(explorer.Graph, explorer.Graph.GetOrCreateNode(options.AwsArn));
     }
 }

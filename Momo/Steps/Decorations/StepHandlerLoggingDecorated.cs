@@ -41,7 +41,6 @@ internal class StepHandlerLoggingDecorated(IStepHandler stepHandler): IStepHandl
 
     public async Task<IMomoExpectation> GenerateExpectationAsync(IMomoExpectation step, CancellationToken cancellationToken)
     {
-        _name = step.ToString() ?? step.GetType().FullName;
         LogCheckProcess(() => Console.WriteLine($"[{GetName()}]: Listening..."));
         
         var expectation = await stepHandler.GenerateExpectationAsync(step, cancellationToken);

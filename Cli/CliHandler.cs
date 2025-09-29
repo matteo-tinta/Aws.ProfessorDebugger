@@ -26,8 +26,11 @@ namespace Cli
         [Option("ignore-cache", Default = false, HelpText = "Ignore stored cache. Actual present cache file will be overidden.")]
         public bool IgnoreCache { get; set; }
 
-        [Option("output-as", Default = GraphPrinterType.Cli, HelpText = "Cli, Json or Graph (case sensitive)")]
+        [Option("output-as", Default = GraphPrinterType.Cli, HelpText = "Cli, Json, Graph or Momo (case sensitive)")]
         public GraphPrinterType OutputAs { get; set; }
+        
+        [Option("output-to", HelpText = "Path to save the output (required and used only if --output-as=Momo)")]
+        public string OutputTo { get; set; }
 
         ////TODO
         [Option("cache-type", Default = CacheType.JsonFile, HelpText = "Only JsonFile is available for now (case sensitive)")]
@@ -35,6 +38,47 @@ namespace Cli
 
         [Option("max-level", Required = false, HelpText = "Set the max level to stop")]
         public int? MaxLevel { get; set; }
+        
+        public bool Validate(out string error)
+        {
+            if (!IsValidArn(AwsArn))
+            {
+                error = "Provided Arn is not valid";
+                return false;
+            }
+            
+            if (OutputAs == GraphPrinterType.Momo)
+            {
+                if (string.IsNullOrWhiteSpace(OutputTo))
+                {
+                    error = "When --output-as=Momo is used, --output-to must also be specified.";
+                    return false;
+                }
+
+                if (!OutputTo.EndsWith(".json", StringComparison.OrdinalIgnoreCase))
+                {
+                    error = "When --output-as=Momo is used, --output-to must end with .json.";
+                    return false;
+                }
+
+                // controlla anche se la directory esiste
+                var dir = Path.GetDirectoryName(OutputTo);
+                if (!string.IsNullOrEmpty(dir) && !Directory.Exists(dir))
+                {
+                    error = $"Directory does not exist: {dir}";
+                    return false;
+                }
+            }
+
+            error = null;
+            return true;
+        }
+        
+        public bool IsValidArn(string arn)
+        {
+            var pattern = @"^arn:(aws|aws-cn|aws-us-gov):[a-z0-9-]+:[a-z0-9-]*:\d{0,12}:[^:\s]+(:[^:\s]+)*$";
+            return Regex.IsMatch(arn, pattern);
+        }
     }
 
     internal class CliHandler
@@ -50,9 +94,9 @@ namespace Cli
                 })
                 .WithParsed<GraphOptions>(options =>
                 {
-                    if (!IsValidArn(options.AwsArn))
+                    if (!options.Validate(out var error))
                     {
-                        Console.Error.WriteLine("Arn is not valid");
+                        Console.Error.WriteLine(error);
                         Environment.Exit(1);
                     }
                     
@@ -66,11 +110,7 @@ namespace Cli
             return result;
         }
 
-        public bool IsValidArn(string arn)
-        {
-            var pattern = @"^arn:(aws|aws-cn|aws-us-gov):[a-z0-9-]+:[a-z0-9-]*:\d{0,12}:[^:\s]+(:[^:\s]+)*$";
-            return Regex.IsMatch(arn, pattern);
-        }
+        
     }
     
 }

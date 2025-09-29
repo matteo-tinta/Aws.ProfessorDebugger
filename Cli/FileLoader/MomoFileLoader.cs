@@ -22,7 +22,7 @@ public static class MomoFileLoader
     public static async Task<MomoExpectationFile> LoadAsync(string path)
     {
         if (!File.Exists(path))
-            throw new FileNotFoundException($"Input file was not found at path: {path}");
+            throw new FileNotFoundException($"Input file was not found at path: {GetFullPath(path)}");
 
         var content = await File.ReadAllTextAsync(path);
 
@@ -34,16 +34,34 @@ public static class MomoFileLoader
         return result;
     }
     
+    public static void Print(MomoExpectationFile file)
+    {
+        var serializedFile = JsonSerializer.Serialize(file, _jsonOptions);
+
+        if (serializedFile is null)
+            throw new InvalidDataException("Failed to deserialize input file into correct format. Check readme");
+
+        Console.WriteLine(serializedFile);
+    }
+    
     public static async Task SaveAsync(MomoExpectationFile file, string path)
     {
-        if (!File.Exists(path))
-            throw new FileNotFoundException($"Input file was not found at path: {path}");
-
         var serializedFile = JsonSerializer.Serialize(file, _jsonOptions);
 
         if (serializedFile is null)
             throw new InvalidDataException("Failed to deserialize input file into correct format. Check readme");
 
         await File.WriteAllTextAsync(path, serializedFile);
+    }
+    
+    private static string GetFullPath(string userPath)
+    {
+        if (Path.IsPathRooted(userPath))
+        {
+            return Path.GetFullPath(userPath);
+        }
+
+        var exeDir = AppContext.BaseDirectory;
+        return Path.GetFullPath(Path.Combine(exeDir, userPath));
     }
 }
