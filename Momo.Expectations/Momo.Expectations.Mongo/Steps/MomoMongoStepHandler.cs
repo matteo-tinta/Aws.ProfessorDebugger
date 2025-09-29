@@ -11,7 +11,7 @@ namespace Momo.Expectations.Mongo.Steps;
 public class MomoMongoStepHandler: IStepHandler
 {
     private IMongoDatabase? _mongoDatabase;
-    private ConcurrentDictionary<string, string> _executedQueriesWithResults = [];
+    private readonly ConcurrentDictionary<string, string> _executedQueriesWithResults = [];
 
     public ValueTask DisposeAsync()
     {
@@ -58,8 +58,6 @@ public class MomoMongoStepHandler: IStepHandler
     
     public async Task<IMomoExpectation> GenerateExpectationAsync(IMomoExpectation baseConfig, CancellationToken cancellationToken)
     {
-        await PrepareAsync(baseConfig, cancellationToken);
-        
         var config = (MomoMongoExpectation)baseConfig;
 
         //add "limit" as 1, to limit result to 1 output only

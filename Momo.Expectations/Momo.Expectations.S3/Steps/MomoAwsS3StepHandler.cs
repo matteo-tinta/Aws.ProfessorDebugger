@@ -62,8 +62,6 @@ internal class MomoAwsS3StepHandler(IAmazonS3 s3Client): IStepHandler
 
     public async Task<IMomoExpectation> GenerateExpectationAsync(IMomoExpectation baseConfig, CancellationToken cancellationToken)
     {
-        await PrepareAsync(baseConfig, cancellationToken);
-        
         var config = (MomoAwsS3Expectation)baseConfig;
 
         var newExpectation = new MomoAwsS3Expectation(_s3Client)

@@ -71,6 +71,8 @@ public class AutoMomoClient(MomoClientFactoryOptions Options) : IMomoClient
             
             try
             {
+                await stepButDecorated.PrepareAsync(expectation, cancellationToken);
+                
                 //TODO: Add timeout callback!
                 var timeout = TimeSpan.FromSeconds(expectationFile.Timeout);
                 var result = await RetryHelper.RetryAsync(

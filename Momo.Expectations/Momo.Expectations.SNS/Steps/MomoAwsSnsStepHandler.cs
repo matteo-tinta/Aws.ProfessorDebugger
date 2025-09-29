@@ -66,7 +66,6 @@ internal class MomoAwsSnsStepHandler(
     public async Task<IMomoExpectation> GenerateExpectationAsync(IMomoExpectation baseConfig, CancellationToken cancellationToken)
     {
         var config = (MomoAwsSnsExpectation)baseConfig;
-        await PrepareAsync(config, cancellationToken);
 
         var schemas = await CheckMessages(config, message => JsonSchema.FromSampleJson(message.ToString()), cancellationToken);
 
