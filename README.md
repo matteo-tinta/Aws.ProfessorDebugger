@@ -2,6 +2,48 @@
 
 This repository includes a set of tools designed to simplify working with AWS infrastructure
 
+---
+
+# Quickstart
+
+Follow these steps to get started quickly:
+
+## 0. Login to AWS or setup your aws credentials (if needed)
+
+- If you are using an SSO login run: `aws sso login --profile [profile-name]`
+- If you are using credentials file, create and store them in: `~/.aws/credentials` as described in AWS login
+
+## 1. Download and build
+Download the repo, restore packages and build locally 
+
+Optionally, if you're using Bash, you can set an alias for convenience:
+```bash
+alias mpd='/path/to/your/repo/core/bin/Debug/net8.0/Core.exe'
+```
+
+## 2. Generate Momo File with Graph
+The Graph project will generate a CLI to traverse your AWS infrastructure given an AWS ARN.
+
+```bash
+mpd graph [resource_arn] --output-as Momo --output-at ./test.json 
+```
+> This produces a .json file representing your infrastructure.
+
+## 3. Run Momo in autogeneration mode
+This mode listens to your infrastructure and enriches your JSON with a basic schema.
+```bash
+mpd momo ./test.json -a
+```
+> Quick scaffolding only—refine the generated schemas before using in production-grade tests.
+
+## 4. Run Momo
+This mode will listen to your infrastructure and try to match your expectations:
+```bash
+mpd momo ./test.json
+```
+
+---
+
 # How to use the CLI
 1. Configure your ~/.aws/credentials with the api key provided by AWS Credentials login page
 2. Download, build this repository (CLI Project)
