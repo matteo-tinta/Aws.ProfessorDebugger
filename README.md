@@ -422,6 +422,10 @@ Start from here:
 | `mongo`    | Executes the given query with `limit: 1`. If a document is returned, it generates a schema based on the result.           |
 | `parallel` | Runs nested generations in parallel. No schema generation occurs here. Structure of this step is preserved for test flow. |
 
+### Best practices
+- Avoid (if not strictly required to your test) listening for an s3 file, listen for the push notification instead. It's safer
+- If you need to test a lambda execution, you can check following resources (mongo or sns) and listen for the correct messages output
+
 ---
 
 ### Notes
