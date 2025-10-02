@@ -5,6 +5,8 @@ namespace Momo.Expectations.Parallel.Steps;
 
 internal class MomoParallelStepHandler(MomoClientFactoryOptions options) : IStepHandler
 {
+    private readonly List<IMomoClient> _momoClients = [];
+    
     public Task PrepareAsync(IMomoExpectation config, CancellationToken cancellationToken)
     {
         return Task.CompletedTask;
@@ -25,6 +27,7 @@ internal class MomoParallelStepHandler(MomoClientFactoryOptions options) : IStep
                 options.ExpectationFile = options.ExpectationFile with { Expectations = [c] };
                 
                 var client = MomoClientFactory.FeedMomo(options);
+                _momoClients.Add(client);
                 
                 await client.MatchExpectations(cancellationToken);
 
@@ -75,8 +78,8 @@ internal class MomoParallelStepHandler(MomoClientFactoryOptions options) : IStep
         };
     }
 
-    public ValueTask DisposeAsync()
+    public async ValueTask DisposeAsync()
     {
-        return ValueTask.CompletedTask;
+        await Task.WhenAll(_momoClients.Select(c => c.DisposeAsync().AsTask()));
     }
 }

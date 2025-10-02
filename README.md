@@ -160,12 +160,12 @@ it especially useful for integration testing, debugging, and validating event-dr
 
 ## Limitations
 
-- **_If you forcefully close it, it misses a way to catch the event and dispose your resources (for now)_** - _(be kind with momo)_.
-- Due to the nature of our shared AWS infrastructure and the possibility of manual or external message publication to SNS topics, it is **not possible to guarantee strict correlation between test actions and observed messages**.
-- This tool attempts to assert the presence of expected messages within a specified window, but **cannot guarantee** that matched messages were produced exclusively by the test under execution.
-- All test resources are deleted after each cycle to minimize contamination (not data), but as trace IDs or unique correlation identifiers cannot be enforced, there is a potential for false positives.
-- *This tool do not provide an automatic detection of created resources during the test phase*. So remember to delete them in the `DisposeAsync` method to avoid dangling resources in your infrastructure.
-- For highest reliability, use this tool in isolated environments or when no manual/external messages are being published.
+- **Resource disposal:** Momo attempts to dispose of resources when a process finishes or fails (CTRL+C, Process Exit or Unhandled Exception), but forceful termination may leave lingering resources. Monitor and clean up manually if needed.
+- **Shared infrastructure risk:** In environments with shared SNS topics, SQS queues, or databases, Momo cannot guarantee that observed messages or data changes originated from the current test. External activity may cause false positives.
+- **No automatic resource detection:** Momo does not detect new resources created during tests. Always explicitly clean up resources in `DisposeAsync` to avoid dangling resources.
+- **Message correlation limitations:** Without enforced trace IDs or unique identifiers, Momo cannot strictly correlate messages with test actions. Use isolated or controlled environments for high-confidence testing.
+- **Partial AWS coverage:** Only SNS, SQS, S3, and MongoDB are currently supported; Lambda support is planned. Complex AWS resource relationships may be missed or inferred incorrectly.
+- **Cache sensitivity:** Momo relies on a local JSON cache to prevent redundant API calls. Clearing the cache frequently defeats this purpose and may cause slower runs or inconsistent results.
 
 ## Cli
 ```bash

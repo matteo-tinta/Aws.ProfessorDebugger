@@ -2,12 +2,13 @@
 using Momo.Expectations;
 using Momo.Helpers;
 using Momo.Models;
+using Momo.Steps;
 using Momo.Steps.Decorations;
 using Newtonsoft.Json;
 
 namespace Momo;
 
-public interface IMomoClient
+public interface IMomoClient: IAsyncDisposable
 {
     public Action<IMomoExpectation>? OnExpectationMatch { get; set; }
     
@@ -28,6 +29,8 @@ public class MomoClient: IMomoClient
     public Action<IMomoExpectation>? OnExpectationMatch { get; set; }
     
     public Action<MomoExpectationFile>? OnAllExpectationsMatch { get; set; }
+    
+    private readonly List<IStepHandler> _ranExpectations = [];
 
     public async Task MatchExpectations(CancellationToken cancellationToken)
     {
@@ -35,6 +38,7 @@ public class MomoClient: IMomoClient
         {
             var step = expectation.GetStepHandler(_options);
             var stepButDecorated = new StepHandlerLoggingDecorated(step);
+            _ranExpectations.Add(stepButDecorated);
             
             try
             {
@@ -75,6 +79,11 @@ public class MomoClient: IMomoClient
         
         return new(options);
     }
+
+    public async ValueTask DisposeAsync()
+    {
+        await Task.WhenAll(_ranExpectations.Select(e => e.DisposeAsync().AsTask()));
+    }
 }
 
 public class AutoMomoClient(MomoClientFactoryOptions Options) : IMomoClient
@@ -84,6 +93,8 @@ public class AutoMomoClient(MomoClientFactoryOptions Options) : IMomoClient
     public Action<IMomoExpectation>? OnExpectationMatch { get; set; }
     
     public Action<MomoExpectationFile>? OnAllExpectationsMatch { get; set; }
+    
+    private readonly List<IStepHandler> _ranExpectations = [];
 
     public async Task MatchExpectations(CancellationToken cancellationToken)
     {
@@ -95,6 +106,8 @@ public class AutoMomoClient(MomoClientFactoryOptions Options) : IMomoClient
         {
             var step = expectation.GetStepHandler(Options);
             var stepButDecorated = new StepHandlerLoggingDecorated(step);
+            
+            _ranExpectations.Add(stepButDecorated);
             
             try
             {
@@ -122,5 +135,10 @@ public class AutoMomoClient(MomoClientFactoryOptions Options) : IMomoClient
         };
         
         OnAllExpectationsMatch?.Invoke(ExpectationFile);
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        await Task.WhenAll(_ranExpectations.Select(e => e.DisposeAsync().AsTask()));
     }
 }
