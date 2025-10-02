@@ -1,5 +1,6 @@
 ﻿using Amazon.SimpleNotificationService;
 using Amazon.SQS;
+using Momo.Exceptions;
 using Momo.Expectations.SNS.Steps;
 using Momo.Steps;
 using NJsonSchema;
@@ -20,6 +21,15 @@ public class MomoAwsSnsExpectation(IAmazonSQS sqsClient, IAmazonSimpleNotificati
             "sns" => new MomoAwsSnsStepHandler(sqsClient, snsClient),
             _ => throw new InvalidOperationException($"This type of arn ({Arn} -> {service}) is not recognized yet")
         };
+    }
+
+    public bool Validate()
+    {
+        _ = !ResourceArn.ParseArn(Arn).Service.Equals("sns", StringComparison.CurrentCultureIgnoreCase) 
+            ? throw new MomoFileValidationException(nameof(Arn), "Arn was invalid. Only SNS is allowed for SNS blocks") 
+            : true;
+
+        return true;
     }
 
     public override string ToString() => Arn;

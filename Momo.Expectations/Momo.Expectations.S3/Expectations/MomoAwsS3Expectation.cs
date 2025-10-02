@@ -1,4 +1,5 @@
 ﻿using Amazon.S3;
+using Momo.Exceptions;
 using Momo.Expectations.S3.Steps;
 using Momo.Steps;
 using NJsonSchema;
@@ -21,6 +22,20 @@ public class MomoAwsS3Expectation(IAmazonS3 s3Client) : IMomoExpectation
             "s3" => new MomoAwsS3StepHandler(s3Client),
             _ => throw new InvalidOperationException($"This type of arn ({Arn} -> {service}) is not an S3 valid format")
         };
+    }
+
+    public bool Validate()
+    {
+        _ = !ResourceArn.ParseArn(Arn).Service.Equals("s3", StringComparison.CurrentCultureIgnoreCase) 
+            ? throw new MomoFileValidationException(nameof(Arn), "Arn was invalid. Only S3 is allowed is allowed for S3 blocks") 
+            : true;
+
+        if (File.Prefix != null && File.Prefix.StartsWith("/"))
+        {
+            throw new MomoFileValidationException(nameof(File.Prefix), "File prefix must not start with '/'.");
+        }
+        
+        return true;
     }
 
     public override string ToString() => Arn;

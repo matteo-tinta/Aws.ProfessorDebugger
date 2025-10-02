@@ -5,4 +5,6 @@ namespace Momo.Expectations;
 public interface IMomoExpectation
 {
     public IStepHandler GetStepHandler(MomoClientFactoryOptions options);
+
+    public bool Validate();
 }

@@ -1,4 +1,5 @@
 ﻿using System.Text.Json.Nodes;
+using Momo.Exceptions;
 using Momo.Expectations.Mongo.Steps;
 using Momo.Steps;
 using MongoDB.Driver;
@@ -22,6 +23,23 @@ public class MomoMongoExpectation: IMomoExpectation
         {
             throw new InvalidOperationException("Not a mongo connection string", e);
         }
+    }
+
+    public bool Validate()
+    {
+        try
+        {
+            var mongoUrl = new MongoUrl(ConnectionString);
+            var client = new MongoClient(mongoUrl);
+            
+            _ = client.GetDatabase(mongoUrl.DatabaseName ?? throw new ArgumentException("Connection string must contain database name"));
+        }
+        catch (Exception)
+        {
+            throw new MomoFileValidationException(nameof(ConnectionString), "Connection String is not a valid mongo connection string");
+        }
+
+        return true;
     }
 
     public override string ToString() => ConnectionString;
