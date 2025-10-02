@@ -15,6 +15,7 @@ namespace Momo.Expectations.S3.Steps;
 internal class MomoAwsS3StepHandler(IAmazonS3 s3Client): IStepHandler
 {
     private Arn? _arn;
+    private DateTime _since = DateTime.MinValue;
     private readonly IAmazonS3 _s3Client = s3Client ?? throw new ArgumentNullException(nameof(s3Client));
 
     public ValueTask DisposeAsync() => ValueTask.CompletedTask;
@@ -26,7 +27,8 @@ internal class MomoAwsS3StepHandler(IAmazonS3 s3Client): IStepHandler
             throw new InvalidOperationException(
                 $"type of config in {nameof(MomoAwsS3StepHandler)} is invalid, expected MomoExpectation");
         }
-        
+
+        _since = DateTime.UtcNow.AddMinutes(-1); //since 1 minute this tool has started...
         _arn = Arn.ParseArn(config.Arn); 
         return Task.CompletedTask;
     }
@@ -41,6 +43,9 @@ internal class MomoAwsS3StepHandler(IAmazonS3 s3Client): IStepHandler
         var config = (MomoAwsS3Expectation)baseConfig;
 
         var file = await DownloadFileWithMetadataAsync(_arn.ResourceName, config.File, cancellationToken);
+        
+        config.File.Prefix = null;
+        config.File.Key = file.FileKey;
 
         if (config.Match is not null)
         {
@@ -48,7 +53,7 @@ internal class MomoAwsS3StepHandler(IAmazonS3 s3Client): IStepHandler
             {
                 var content = ParseFileToJson(file);
                 var validationErrors = config.Match.Validate(content.Content);
-                return  validationErrors.Count == 0;
+                return validationErrors.Count == 0;
             }
             catch (JsonException e)
             {
@@ -56,6 +61,7 @@ internal class MomoAwsS3StepHandler(IAmazonS3 s3Client): IStepHandler
                     "A schema was provided, but the file was not a json format. Only json format files can be matched", e);
             }
         }
+
 
         return true;
     }
@@ -88,7 +94,7 @@ internal class MomoAwsS3StepHandler(IAmazonS3 s3Client): IStepHandler
     }
 
     private (JObject Content, MetadataCollection Metadata) ParseFileToJson(
-        (string Content, MetadataCollection Metadata) file)
+        (string Content, string FileKey, MetadataCollection Metadata) file)
     {
         var jsonResult = JsonConvert.DeserializeObject<JObject>(file.Content);
         if (jsonResult is null)
@@ -99,7 +105,7 @@ internal class MomoAwsS3StepHandler(IAmazonS3 s3Client): IStepHandler
         return (jsonResult, file.Metadata);
     }
 
-    private async Task<(string Content, MetadataCollection Metadata)> DownloadFileWithMetadataAsync(string bucketName, MomoAwsS3FileModel file, CancellationToken cancellationToken)
+    private async Task<(string Content, string FileKey, MetadataCollection Metadata)> DownloadFileWithMetadataAsync(string bucketName, MomoAwsS3FileModel file, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(file);
         
@@ -114,10 +120,10 @@ internal class MomoAwsS3StepHandler(IAmazonS3 s3Client): IStepHandler
                     BucketName = bucketName,
                     MaxKeys = 50,
                     Prefix = file.Prefix,
-                }, cancellationToken);
-            
+                }, cancellationToken);;
+                
                 var fileResults = searchingResponse.S3Objects
-                    .Where(o => searchRegex.IsMatch(o.Key))
+                    .Where(o => searchRegex.IsMatch(o.Key) && o.LastModified >= _since)
                     .Select(o => o.Key)
                     .ToList();
 
@@ -145,7 +151,7 @@ internal class MomoAwsS3StepHandler(IAmazonS3 s3Client): IStepHandler
             using var reader = new StreamReader(stream);
             string content = await reader.ReadToEndAsync();
 
-            return (content, response.Metadata);
+            return (content, fileKey, response.Metadata);
         }
         catch (AmazonS3Exception e) when (e.StatusCode is HttpStatusCode.NotFound)
         {

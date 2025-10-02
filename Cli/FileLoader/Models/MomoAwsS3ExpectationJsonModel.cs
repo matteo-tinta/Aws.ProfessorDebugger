@@ -30,6 +30,6 @@ public class MomoAwsS3ExpectationJsonModel
 
 public record MomoAwsS3FileJsonModel
 {
-    public string Prefix { get; set; }
+    public string? Prefix { get; set; }
     public string Key { get; set; }
 }
