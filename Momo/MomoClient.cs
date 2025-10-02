@@ -66,10 +66,7 @@ public class MomoClient: IMomoClient
     {
         try
         {
-            if (options.ExpectationFile.ValidateAllExpectations())
-            {
-                throw new MomoClientValidationException("Current Expectation File Is Invalid"); 
-            }
+            options.ExpectationFile.ValidateAllExpectations();
         }
         catch (MomoFileValidationException e)
         {

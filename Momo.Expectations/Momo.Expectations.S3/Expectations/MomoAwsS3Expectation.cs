@@ -24,7 +24,7 @@ public class MomoAwsS3Expectation(IAmazonS3 s3Client) : IMomoExpectation
         };
     }
 
-    public bool Validate()
+    public void Validate()
     {
         _ = !ResourceArn.ParseArn(Arn).Service.Equals("s3", StringComparison.CurrentCultureIgnoreCase) 
             ? throw new MomoFileValidationException(nameof(Arn), "Arn was invalid. Only S3 is allowed is allowed for S3 blocks") 
@@ -34,8 +34,6 @@ public class MomoAwsS3Expectation(IAmazonS3 s3Client) : IMomoExpectation
         {
             throw new MomoFileValidationException(nameof(File.Prefix), "File prefix must not start with '/'.");
         }
-        
-        return true;
     }
 
     public override string ToString() => Arn;

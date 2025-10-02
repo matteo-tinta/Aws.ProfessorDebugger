@@ -25,7 +25,7 @@ public class MomoMongoExpectation: IMomoExpectation
         }
     }
 
-    public bool Validate()
+    public void Validate()
     {
         try
         {
@@ -38,8 +38,6 @@ public class MomoMongoExpectation: IMomoExpectation
         {
             throw new MomoFileValidationException(nameof(ConnectionString), "Connection String is not a valid mongo connection string");
         }
-
-        return true;
     }
 
     public override string ToString() => ConnectionString;

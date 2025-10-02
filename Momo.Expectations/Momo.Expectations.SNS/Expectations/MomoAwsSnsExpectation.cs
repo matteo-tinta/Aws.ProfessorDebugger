@@ -23,13 +23,11 @@ public class MomoAwsSnsExpectation(IAmazonSQS sqsClient, IAmazonSimpleNotificati
         };
     }
 
-    public bool Validate()
+    public void Validate()
     {
         _ = !ResourceArn.ParseArn(Arn).Service.Equals("sns", StringComparison.CurrentCultureIgnoreCase) 
             ? throw new MomoFileValidationException(nameof(Arn), "Arn was invalid. Only SNS is allowed for SNS blocks") 
             : true;
-
-        return true;
     }
 
     public override string ToString() => Arn;

@@ -13,7 +13,7 @@ public class MomoParallelExpectation: IMomoExpectation
         return new MomoParallelStepHandler(options);
     }
 
-    public bool Validate()
+    public void Validate()
     {
         try
         {
@@ -21,8 +21,8 @@ public class MomoParallelExpectation: IMomoExpectation
             {
                 throw new MomoFileValidationException(nameof(ParallelExpectations), "ParallelExpectations cannot be empty. Remove the block");
             }
-            
-            return ParallelExpectations.All(v => v.Validate());
+
+            ParallelExpectations.ForEach(v => v.Validate());
         }
         catch (MomoFileValidationException e)
         {

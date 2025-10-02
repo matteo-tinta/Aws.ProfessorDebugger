@@ -13,13 +13,13 @@ public record MomoExpectationFile
     
     public int Timeout { get; set; }
 
-    internal bool ValidateAllExpectations()
+    internal void ValidateAllExpectations()
     {
         if (Expectations.Count == 0)
         {
             throw new MomoFileValidationException(nameof(Expectations), "Expectations cannot be empty");
         }
-        
-        return Expectations.All(c => c.Validate());
+
+        Expectations.ToList().ForEach(c => c.Validate());
     }
 }

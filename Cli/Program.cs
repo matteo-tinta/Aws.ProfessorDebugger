@@ -49,6 +49,11 @@ class Program
         {
             Console.Error.WriteLine(messageAssertException.MessageBody);
         }
+
+        if (ex is MomoFileValidationException momoFileValidationException)
+        {
+            Console.Error.WriteLine($"Invalid Property: {momoFileValidationException.PropertyName}");
+        }
         
         if (ex.InnerException is not null)
         {
