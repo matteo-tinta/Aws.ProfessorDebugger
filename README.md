@@ -12,6 +12,7 @@ Follow these steps to get started quickly:
 
 - If you are using an SSO login run: `aws sso login --profile [profile-name]`
 - If you are using credentials file, create and store them in: `~/.aws/credentials` as described in AWS login
+- export AWS_PROFILE in your console, for example in git bash is: `export AWS_PROFILE="mastermind-dev"`
 
 ## 1. Download and build
 Download the repo, restore packages and build locally 
@@ -91,6 +92,27 @@ cli graph [aws_arn] [args]
   --help            Display this help screen.
   --version         Display version information.
 ```
+
+## Print types (output-as)
+### Cli
+Default. Prints resources as a readable dependency tree, easy to scan in the terminal.
+- `--output-at` is ignored
+
+### Json
+Outputs resources as JSON with `parents` and `children` properties, starting from the given ARN.
+- `--output-at` is ignored
+
+### Graph
+Outputs the graph structure in JSON format, suitable for graph engines or further processing.
+- `--output-at` is ignored
+
+### Momo
+Requires `--output-at`. Saves a Momo expectation file for scaffolding.
+- `--max-level` is ignored
+- No autogeneration is performed — only discovered resources (arns) are included.
+- Traversal stops at the given ARN or at its nearest children, ensuring the file is ready for future checks.
+- If a resource has multiple parents, they are output as a `ParallelExpectation` block. **Since the intended flow cannot be inferred, you’ll need to clean this up manually**.
+- S3 nodes prefix and file key are left empty and **must be manually set**
 
 ## Caching
 
@@ -261,7 +283,7 @@ public class UnitTestProject
 |---------------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | sns (Momo.Expectations.SNS)           | It will create a temporary SQS queue and attach it to the specified SNS                                                                                                                                                                               |
 | sqs                                   | **In order to avoid race conditions in your environments** direct SQS inspection isn't allowed, provide it's connected SNS topic as above. If there's no SNS, avoid checking the queue and look at the resources it triggers (like Lambda functions). |
-| s3 (Momo.Expectations.S3)             | `file` **is mandatory** and expects an S3 file key to be found in the given bucket, `content` expect a JsonPath to be found with the given value                                                                                                      |
+| s3 (Momo.Expectations.S3)             | `file` **is mandatory**, `match` expect a JsonPath to be found with the given value                                                                                                                                                                   |
 | lambda                                | (Will be available in future releases)                                                                                                                                                                                                                |
 | mongo (Momo.Expectations.Mongo)       | Connect to a mongo database (database name must be included in query string) and assert a query result. `documents` is a typed key and it must be used to access fetched documents (which is always an array).                                        
 | parallel (Momo.Expectations.Parallel) | allow previous steps to run in parallel mode. If a step fails, the whole parallel stack will throw an exception                                                                                                                                       
@@ -271,43 +293,45 @@ Values are matched by using a json schema.
 
 If an attempt of using a json schema for matching a file which is not an S3 file, it will raise an exception
 
-## S3 File searching
-To directly find a file, avoid specifying `prefix` and just type the full file key like so
+## S3 File Searching
+
+Momo can validate files in S3 buckets by matching on file keys. There are two main approaches:
+
+### Exact key
+
+If you know the full key, provide it directly:
+
 ```json
 {
-      "arn": "arn:aws:s3:::ingestion-bucket",
-      "file": {
-        "key": "worklist-ready-to-be-worked/variant-move-between-worklists/event-0.json"
-      },
-      "match": {}
-    }
+    "arn": "arn:aws:s3:::ingestion-bucket",
+    "file": {
+      "key": "worklist-ready-to-be-worked/variant-move-between-worklists/event-0.json"
+    },
+}
 ```
+        
+### Pattern-based key
 
-In order to find a file, which can be dynamically composed (such as dates in the name), you can use a regex like so:
+If keys are dynamic (e.g. contain dates or IDs), use a prefix plus a regex key:
 ```json
 {
-      "arn": "arn:aws:s3:::ingestion-bucket",
-      "file": {
-        "prefix": "worklist-ready-to-be-worked/variant-move-between-worklists",
-        "key": "event-[0-9].json"
-      },
-    }
+  "arn": "arn:aws:s3:::ingestion-bucket",
+  "file": {
+    "prefix": "worklist-ready-to-be-worked/variant-move-between-worklists",
+    "key": "event-[0-9]+\\.json"
+  }
+}
 ```
+> The search is **not recursive**. Files are matched only inside the given `prefix` path, not in subfolders.
+> To search at the bucket root, set `"prefix"`: `""`.
 
-or at root
-```json
-{
-      "arn": "arn:aws:s3:::ingestion-bucket",
-      "file": {
-        "prefix": "",
-        "key": "event-[0-9].json"
-      },
-    }
-```
+### Matching rules
+1. File key must match the regex (case-insensitive).
+2. File must have LastModified within 1 minute before the tool started. Older files are ignored.
+3. A maximum of 50 results is returned
+4. If multiple files match, Momo fails with an error.
 
-If multiple files are found, an exception will be raised. 
-
-In future release it's planned a better way to compose the complete file key
+When a match is found, Momo updates the expectation file with the resolved key so the same file won’t be re-matched in future runs.
 
 ## Json File Validation Example
 
@@ -424,6 +448,7 @@ Start from here:
 
 ### Best practices
 - Avoid (if not strictly required to your test) listening for an s3 file, listen for the push notification instead. It's safer
+- If you really want to expect an S3 file to be uploaded togheter the SNS notification that will come out, use a `parallelExpectations` to avoid missing out messages
 - If you need to test a lambda execution, you can check following resources (mongo or sns) and listen for the correct messages output
 
 ---
