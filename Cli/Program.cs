@@ -1,4 +1,6 @@
-﻿using Amazon.IdentityManagement;
+﻿using System.Text.Json;
+using System.Text.Json.Serialization;
+using Amazon.IdentityManagement;
 using Amazon.Lambda;
 using Amazon.S3;
 using Amazon.SimpleNotificationService;
@@ -95,15 +97,15 @@ class Program
         {
             Console.Error.WriteLine($"Invalid Property: {momoFileValidationException.PropertyName}");
         }
+
+        if (ex is not AssertException)
+        {
+            Console.Error.WriteLine($"{ex.StackTrace}\n{new string('-', 30)}");
+        }
         
         if (ex.InnerException is not null)
         {
             PrintException(ex.InnerException);
-        }
-
-        if (ex is not AssertException)
-        {
-            Console.Error.WriteLine($"{ex.StackTrace}");
         }
     }
     

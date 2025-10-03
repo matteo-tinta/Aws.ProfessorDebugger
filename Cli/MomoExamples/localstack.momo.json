@@ -2,13 +2,26 @@
   "traceId": "abc123",
   "expectations": [
     {
-      "arn": "arn:aws:s3:::my-local-bucket",
-      "file": {
-        "prefix": "",
-        "key": "test-.*.txt"
-      },
-      "match": null
+      "parallelExpectations": [
+        {
+          "arn": "arn:aws:s3:::my-local-bucket",
+          "file": {
+            "prefix": "",
+            "key": "test-.*.txt"
+          },
+          "match": null
+        },
+        {
+          "arn": "arn:aws:s3:::my-local-bucket",
+          "file": {
+            "prefix": "",
+            "key": "test-.*.txt"
+          },
+          "match": null
+        }
+      ]
     },
+    
     {
       "parallelExpectations": [
         {
@@ -358,5 +371,5 @@
       ]
     }
   ],
-  "timeout": 120
+  "timeout": 5
 }

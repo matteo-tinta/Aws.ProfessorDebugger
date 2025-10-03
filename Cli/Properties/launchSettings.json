@@ -2,7 +2,7 @@
   "profiles": {
     "momo": {
       "commandName": "Project",
-      "commandLineArgs": "momo $(ProjectDir)/MomoExamples/pricelist.momo.json",
+      "commandLineArgs": "momo $(ProjectDir)/MomoExamples/test.json",
       "environmentVariables": {
         "AWS_PROFILE": "mastermind-dev",
         "AWS_REGION": "eu-west-1",

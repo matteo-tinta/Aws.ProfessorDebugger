@@ -34,7 +34,7 @@ public class MomoMongoStepHandler: IStepHandler
         return Task.CompletedTask;
     }
 
-    public async Task<bool> CheckAsync(IMomoExpectation baseConfig, int timeout, CancellationToken cancellationToken)
+    public async Task<bool> CheckAsync(IMomoExpectation baseConfig, CancellationToken cancellationToken)
     {
         if (_mongoDatabase is null)
         {

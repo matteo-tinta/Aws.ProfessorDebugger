@@ -33,7 +33,7 @@ internal class MomoAwsS3StepHandler(IAmazonS3 s3Client): IStepHandler
         return Task.CompletedTask;
     }
 
-    public async Task<bool> CheckAsync(IMomoExpectation baseConfig, int timeout, CancellationToken cancellationToken)
+    public async Task<bool> CheckAsync(IMomoExpectation baseConfig, CancellationToken cancellationToken)
     {
         if (_arn is null)
         {
@@ -120,7 +120,7 @@ internal class MomoAwsS3StepHandler(IAmazonS3 s3Client): IStepHandler
                     BucketName = bucketName,
                     MaxKeys = 50,
                     Prefix = file.Prefix,
-                }, cancellationToken);;
+                }, cancellationToken);
                 
                 var fileResults = searchingResponse.S3Objects
                     .Where(o => searchRegex.IsMatch(o.Key) && o.LastModified >= _since)

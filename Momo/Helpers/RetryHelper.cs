@@ -6,34 +6,32 @@ internal static class RetryHelper
 {
     internal static async Task<T> RetryAsync<T>(
         Func<Task<T>> operationFactory,
-        TimeSpan timeout,
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken)
     {
-        if (operationFactory == null) 
-            throw new ArgumentNullException(nameof(operationFactory));
+        ArgumentNullException.ThrowIfNull(operationFactory);
 
-        var startTime = DateTime.UtcNow;
         var retryInterval = TimeSpan.FromSeconds(5);
-
+        Exception? lastException = null;
+        
         while (true)
         {
-            cancellationToken.ThrowIfCancellationRequested();
-
             try
             {
+                cancellationToken.ThrowIfCancellationRequested();
                 return await operationFactory();
             }
-            catch (Exception ex) when (ex is AssertException or MessageAssertException)
+            catch (OperationCanceledException ex)
             {
-                CheckForInternalsBreakdownThrows(ex);
+                //in case of operation cancelled throw last recorded exception
+                //otherwise throw ex;
+                throw new AssertException("Step failed internally", lastException ?? ex);
+            }
+            catch (Exception ex)
+            {
+                lastException = ex;
                 
-                if (DateTime.UtcNow - startTime >= timeout)
-                    throw;
-
-                var remaining = timeout - (DateTime.UtcNow - startTime);
-                var delay = remaining < retryInterval ? remaining : retryInterval;
-
-                await Task.Delay(delay, cancellationToken);
+                CheckForInternalsBreakdownThrows(ex);
+                await Task.Delay(retryInterval, CancellationToken.None); //checked above
             }
         }
     }

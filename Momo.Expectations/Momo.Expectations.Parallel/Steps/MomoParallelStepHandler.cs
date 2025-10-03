@@ -12,7 +12,7 @@ internal class MomoParallelStepHandler(MomoClientFactoryOptions options) : IStep
         return Task.CompletedTask;
     }
 
-    public async Task<bool> CheckAsync(IMomoExpectation config, int timeout, CancellationToken cancellationToken)
+    public async Task<bool> CheckAsync(IMomoExpectation config, CancellationToken cancellationToken)
     {
         if (config is not Expectations.MomoParallelExpectation momoExpectation)
         {

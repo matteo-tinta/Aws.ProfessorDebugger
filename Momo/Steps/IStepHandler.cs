@@ -12,7 +12,7 @@ public interface IStepHandler: IAsyncDisposable
     /// <summary>
     /// This method will be called multiple times, please register all your class dependencies in PrepareAsync
     /// </summary>
-    Task<bool> CheckAsync(IMomoExpectation config, int timeout, CancellationToken cancellationToken);
+    Task<bool> CheckAsync(IMomoExpectation config, CancellationToken cancellationToken);
     
     /// <summary>
     /// This method will be called to autogenerate an expectation

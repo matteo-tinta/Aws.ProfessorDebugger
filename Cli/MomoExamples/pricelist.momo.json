@@ -1,6 +1,6 @@
 ﻿{
   "traceId": "abc123",
-  "timeout": 120,
+  "timeout": 30,
   "expectations": [
     {
       "parallelExpectations": [

@@ -3,8 +3,9 @@ using Newtonsoft.Json;
 
 namespace Momo.Steps.Decorations;
 
-internal class StepHandlerLoggingDecorated(IStepHandler stepHandler): IStepHandler
+internal class StepHandlerLoggingDecorated(IStepHandler stepHandler, MomoClientFactoryOptions options): IStepHandler
 {
+    private readonly MomoClientFactoryOptions _options = options;
     private string? _name;
     private bool _hasAlreadyLogged = false;
 
@@ -22,10 +23,10 @@ internal class StepHandlerLoggingDecorated(IStepHandler stepHandler): IStepHandl
         await stepHandler.PrepareAsync(config, cancellationToken);
     }
 
-    public async Task<bool> CheckAsync(IMomoExpectation step, int timeout, CancellationToken cancellationToken)
+    public async Task<bool> CheckAsync(IMomoExpectation step, CancellationToken cancellationToken)
     {
-        LogCheckProcess(() => Console.WriteLine($"[{GetName()}]: Matching expectations...:"));
-        var matches = await stepHandler.CheckAsync(step, timeout, cancellationToken);
+        LogCheckProcess(() => Console.WriteLine($"[{GetName()}]: Matching expectations (timeout is {_options.ExpectationFile.Timeout})...:"));
+        var matches = await stepHandler.CheckAsync(step, cancellationToken);
 
         if (matches)
         {
@@ -41,7 +42,7 @@ internal class StepHandlerLoggingDecorated(IStepHandler stepHandler): IStepHandl
 
     public async Task<IMomoExpectation> GenerateExpectationAsync(IMomoExpectation step, CancellationToken cancellationToken)
     {
-        LogCheckProcess(() => Console.WriteLine($"[{GetName()}]: Listening..."));
+        LogCheckProcess(() => Console.WriteLine($"[{GetName()}]: Listening (timeout is {_options.ExpectationFile.Timeout})..."));
         
         var expectation = await stepHandler.GenerateExpectationAsync(step, cancellationToken);
         

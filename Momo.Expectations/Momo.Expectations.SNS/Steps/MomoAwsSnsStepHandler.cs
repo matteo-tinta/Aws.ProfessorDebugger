@@ -5,6 +5,7 @@ using Amazon.SQS.Model;
 using Models;
 using Momo.Exceptions;
 using Momo.Expectations.SNS.Commands;
+using Momo.Expectations.SNS.Exceptions;
 using Momo.Expectations.SNS.Expectations;
 using Momo.Steps;
 using Newtonsoft.Json;
@@ -21,7 +22,7 @@ internal class MomoAwsSnsStepHandler(
     private readonly IAmazonSimpleNotificationService _snsClient = snsClient ?? throw new ArgumentNullException(nameof(snsClient));
     private string? _queueUrl;
     private string? _subscriptionArn;
-    private ConcurrentDictionary<string, Message> _checkedMessages;
+    private ConcurrentDictionary<string, Message> _checkedMessages = [];
     private CreateSqsAndSubscribeCommand _command;
 
     public async Task PrepareAsync(IMomoExpectation baseConfig, CancellationToken cancellationToken)
@@ -43,7 +44,7 @@ internal class MomoAwsSnsStepHandler(
         _command = new CreateSqsAndSubscribeCommand(
             _sqsClient,
             _snsClient,
-            queueName: $"momo-debug-queue-{DateTime.UtcNow.Ticks}",
+            queueName: $"debug-momo-queue-{DateTime.UtcNow.Ticks}",
             snsTopicArn: arn.ResourceArn
         );
 
@@ -54,20 +55,24 @@ internal class MomoAwsSnsStepHandler(
         _checkedMessages = new ConcurrentDictionary<string, Message>();
     }
 
-    public async Task<bool> CheckAsync(IMomoExpectation baseConfig, int timeout, CancellationToken cancellationToken)
+    public async Task<bool> CheckAsync(IMomoExpectation baseConfig, CancellationToken cancellationToken)
     {
         var config = (MomoAwsSnsExpectation)baseConfig;
-        var messages = await CheckMessages(config, message => MessageMatches(message.ToString(), config.Match), cancellationToken);
 
-        //Return true if at least one is valid
+        var messages = await CheckMessages(message => MessageMatches(message.ToString(), config.Match), cancellationToken);
+        
         return messages.Any(c => c);
     }
 
     public async Task<IMomoExpectation> GenerateExpectationAsync(IMomoExpectation baseConfig, CancellationToken cancellationToken)
     {
         var config = (MomoAwsSnsExpectation)baseConfig;
-
-        var schemas = await CheckMessages(config, message => JsonSchema.FromSampleJson(message.ToString()), cancellationToken);
+        
+        var schemas = await CheckMessages(message =>
+        {
+            var json = JsonConvert.SerializeObject(message, Formatting.None);
+            return JsonSchema.FromSampleJson(json);
+        }, cancellationToken);
 
         return new MomoAwsSnsExpectation(_sqsClient, _snsClient)
         {
@@ -82,7 +87,6 @@ internal class MomoAwsSnsStepHandler(
     }
 
     private async Task<List<TOut>> CheckMessages<TOut>(
-        MomoAwsSnsExpectation config,
         Func<JToken, TOut> onMessageRead,
         CancellationToken cancellationToken)
     {
@@ -92,20 +96,18 @@ internal class MomoAwsSnsStepHandler(
             MaxNumberOfMessages = 10,
             WaitTimeSeconds = 20,
             MessageAttributeNames = ["All"],
-            VisibilityTimeout = 1
+            VisibilityTimeout = 60
         }, cancellationToken);
 
-        foreach (var message in response.Messages ?? [])
+        foreach (var message in response?.Messages ?? [])
             _checkedMessages[message.MessageId] = message;
+        
+        if (_checkedMessages.IsEmpty)
+            throw new AssertException($"No messages were matched on SQS {_queueUrl} on Subscription {_subscriptionArn}");
 
-        if (response.Messages is null)
-            throw new AssertException($"No messages were matched on SQS {_queueUrl} on Subscription {_subscriptionArn}",
-                new AssertException($"Current expectation failed:\n{JsonConvert.SerializeObject(config, Formatting.Indented)}",
-                    new AssertException($"Checked messages:\n{JsonConvert.SerializeObject(_checkedMessages, Formatting.Indented)}")));
-            
         var list = new List<TOut>();
                 
-        foreach (var message in response.Messages ?? [])
+        foreach (var message in response?.Messages ?? [])
         {
             var root = JObject.Parse(message.Body);
 
@@ -127,13 +129,16 @@ internal class MomoAwsSnsStepHandler(
         try
         {
             var validationErrors = schema.Validate(messageBody);
+            if (validationErrors.Count > 0)
+            {
+                throw new SchemaValidationException(validationErrors);
+            }
+            
             return validationErrors.Count == 0;
         }
         catch (Exception e)
         {
-            throw MessageAssertException.CreateExceptionWithMessageBody(
-                "Message was malformed thus cannot be checked",
-                messageBody, e);
+            throw MessageAssertException.CreateExceptionWithMessageBody("Message were not validated", messageBody, e);
         }
     }
 }
