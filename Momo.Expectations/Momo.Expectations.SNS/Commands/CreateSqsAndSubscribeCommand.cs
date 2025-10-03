@@ -15,12 +15,18 @@ internal class CreateSqsAndSubscribeCommand(
 {
     private string? _queueUrl;
     private string? _subscriptionArn;
+    private bool _disposed = false;
 
     internal string? GetQueueUrl() => _queueUrl;
     internal string? GetSubscriptionArn() => _subscriptionArn;
 
     public async Task ExecuteAsync(CancellationToken cancellationToken)
     {
+        if (_disposed)
+        {
+            throw new InvalidOperationException("This command has been already disposed");
+        }
+        
         // 1. Create the SQS queue
         var createQueueResponse = await sqsClient.CreateQueueAsync(new CreateQueueRequest
         {
@@ -78,14 +84,35 @@ internal class CreateSqsAndSubscribeCommand(
 
     public async Task UndoAsync(CancellationToken cancellationToken)
     {
+        if (_disposed)
+        {
+            return;
+        }
+        
         if (!string.IsNullOrEmpty(_subscriptionArn))
         {
-            await snsClient.UnsubscribeAsync(_subscriptionArn, cancellationToken);
+            try
+            {
+                await snsClient.UnsubscribeAsync(_subscriptionArn, cancellationToken);
+            }
+            catch (NotFoundException)
+            {
+                //Ignored (subscription does not exist or already disposed)
+            }
         }
 
         if (!string.IsNullOrEmpty(_queueUrl))
         {
-            await sqsClient.DeleteQueueAsync(_queueUrl, cancellationToken);
+            try
+            {
+                await sqsClient.DeleteQueueAsync(_queueUrl, cancellationToken);
+            }
+            catch (QueueDoesNotExistException)
+            {
+                //Ignored (queue does not exist or already disposed)
+            }
         }
+
+        _disposed = true;
     }
 }
