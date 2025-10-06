@@ -7,11 +7,15 @@ namespace Cli;
 internal class MomoCliHandler : IAsyncDisposable
 {
     private readonly IMomoClient _client;
+    private readonly CancellationTokenSource _cancellationTokenSource;
 
     public MomoCliHandler(
         MomoClientFactoryOptions options,
         MomoOptions cliMomoOptions)
     {
+        //cancellation management
+        _cancellationTokenSource = new CancellationTokenSource();
+        
         //clients
         _client = MomoClientFactory.FeedMomo(options);
         _client.OnAllExpectationsMatch = async void (updatedFile) =>
@@ -22,7 +26,7 @@ internal class MomoCliHandler : IAsyncDisposable
     
     public async Task ExecuteMomo()
     {
-        await _client.MatchExpectations(CancellationToken.None);
+        await _client.MatchExpectations(_cancellationTokenSource.Token);
     }
 
     private async Task SaveChanges(MomoOptions momoOptions, MomoExpectationFile file)
@@ -44,6 +48,10 @@ internal class MomoCliHandler : IAsyncDisposable
 
     public async ValueTask DisposeAsync()
     {
+        //Stop all inner tasks immediately...
+        await _cancellationTokenSource.CancelAsync();
+        
+        //Dispose dangling resources...
         await _client.DisposeAsync();
     }
 }

@@ -1,16 +1,14 @@
 ﻿using System.Diagnostics.CodeAnalysis;
-using System.Net;
-using System.Text.Json;
 using Amazon.SimpleNotificationService;
 using Amazon.SQS;
 using Amazon.SQS.Model;
 using Momo.Expectations.SNS.Expectations;
-using Momo.Expectations.SNS.Steps;
 using Momo.Expectations.SNS.Tests.Test.Builders;
 using Momo.Expectations.SNS.Tests.Test.Extensions;
 using Momo.Models;
 using NJsonSchema;
 using NSubstitute;
+using Tests.Shared.Builders;
 
 namespace Momo.Expectations.SNS.Tests.Steps;
 

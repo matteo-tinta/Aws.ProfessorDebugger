@@ -1,4 +1,5 @@
-﻿using Momo.Exceptions;
+﻿using System.Security.Cryptography;
+using Momo.Exceptions;
 using Momo.Expectations;
 using Momo.Helpers;
 using Momo.Models;
@@ -75,8 +76,12 @@ public class MomoClient: IMomoClient
     {
         var step = expectation.GetStepHandler(_options);
         var stepButDecorated = new StepHandlerLoggingDecorated(step, _options);
+        var disposed = false;
 
-        var registration = timedOutCancellationToken.Register(async () => await DisposeStep(stepButDecorated));
+        var registration = timedOutCancellationToken.Register(async () => {
+            disposed = true;
+            await DisposeStep(stepButDecorated);
+        });
 
         try
         {
@@ -97,7 +102,11 @@ public class MomoClient: IMomoClient
         finally
         {
             await registration.DisposeAsync();
-            await DisposeStep(stepButDecorated);
+
+            if (!disposed)
+            {
+                await DisposeStep(stepButDecorated);
+            }
         }
     }
 }

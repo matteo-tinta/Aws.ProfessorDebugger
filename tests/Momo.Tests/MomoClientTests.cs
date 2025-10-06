@@ -1,75 +1,129 @@
-﻿using Momo.Exceptions;
+﻿using System.Diagnostics.CodeAnalysis;
+using System.Globalization;
 using Momo.Expectations;
 using Momo.Models;
 using Momo.Steps;
+using Momo.Tests.Test.Extensions;
 using NSubstitute;
+using Tests.Shared.Builders;
 
 namespace Momo.Tests;
 
+[SuppressMessage("Structure", "NUnit1032:An IDisposable field/property should be Disposed in a TearDown method")]
 public class MomoClientTests
 {
-    private Func<MomoExpectationFile, MomoClient> _createSut;
-    private MomoClientFactoryOptions _options;
+    private ModelBuilder<MomoClientFactoryOptions> _options;
+    private ModelBuilder<MomoExpectationFile> _expectationFile;
+    private IStepHandler _momoStep;
+    private IMomoExpectation _momoExpectation;
+
+    private MomoClientFactoryOptions Options => _options.Build();
+    private MomoExpectationFile ExpectationFile => _expectationFile.Build();
 
     [SetUp]
     public void Setup()
     {
-        _options = new MomoClientFactoryOptions
-        {
-            ExpectationFile = null,
-        };
+        _momoStep = Substitute.For<IStepHandler>();
+        _momoExpectation = Substitute.For<IMomoExpectation>();
         
-        _createSut = (expectations) =>
+        _expectationFile = new ModelBuilder<MomoExpectationFile>(() => new MomoExpectationFile()
         {
-            _options.ExpectationFile = expectations;
-            return MomoClient.ValidateAndCreate(_options);
-        };
+            Timeout = 3,
+            Expectations = [_momoExpectation]
+        });
+        
+        _options = new ModelBuilder<MomoClientFactoryOptions>(() => new MomoClientFactoryOptions
+        {
+            ExpectationFile = _expectationFile.Build(),
+        });
+        
+        _momoExpectation.GetStepHandler(Options).Returns(_momoStep);
     }
     
     [Test]
-    public async Task MatchExpectations_StepThatSucceed_ShouldPass()
+    public async Task MatchExpectations_IfStepSucceed_Then_ShouldPass()
     {
-        var momoStep = Substitute.For<IStepHandler>();
-        var momoExpectation = Substitute.For<IMomoExpectation>();
+        _momoStep
+            .CheckAsync(_momoExpectation,Arg.Any<CancellationToken>())
+            .Passes();
 
-        momoStep.CheckAsync(momoExpectation!,TestContext.CurrentContext.CancellationToken)
-            .Returns(true);
+        _expectationFile.Set(x => x.Expectations, [
+            _momoExpectation,
+            _momoExpectation,
+            _momoExpectation
+        ]);
         
-        momoExpectation.GetStepHandler(_options).Returns(momoStep);
-        var expectationFile = new MomoExpectationFile()
-        {
-            Expectations = [momoExpectation]
-        };
-        
-        var sut = _createSut(expectationFile);
+        var sut = CreateMomoClientUnderTest(ExpectationFile);
         
         //Act
         await sut.MatchExpectations(TestContext.CurrentContext.CancellationToken);
         
+        //Disposing
+        await sut.DisposeAsync();
+        
         //Assert
-        Assert.Pass("If nothing has been thrown, then expectations passed");
+        await sut.ShouldMatchExpectationAsync(_momoStep, _momoExpectation, calledTimes: 3); //3 times because we have 3 handlers
     }
     
     [Test]
-    public void MatchExpectations_StepThatFails_ShouldFail()
+    [Category("Slow")]
+    public async Task MatchExpectations_IfStepFails_Then_ShouldFailAfterRetriedMultipleTimes()
     {
-        var momoStep = Substitute.For<IStepHandler>();
-        var momoExpectation = Substitute.For<IMomoExpectation>();
+        _momoStep
+            .CheckAsync(_momoExpectation, Arg.Any<CancellationToken>())
+            .Fails();
 
-        momoStep.CheckAsync(momoExpectation!,TestContext.CurrentContext.CancellationToken)
-            .Returns(false);
-        
-        momoExpectation.GetStepHandler(_options).Returns(momoStep);
-        var expectationFile = new MomoExpectationFile()
-        {
-            Expectations = [momoExpectation]
-        };
-        
-        var sut = _createSut(expectationFile);
+        //longer timeouts to check retrying
+        _options.Set(x => x.ExpectationFile.Timeout, 5);
+
+        var sut = CreateMomoClientUnderTest(ExpectationFile);
         
         //Act & Assert
-        Assert.ThrowsAsync<AssertException>(
-            () => sut.MatchExpectations(TestContext.CurrentContext.CancellationToken),
-            "Step {} failed");
+        await sut.ShouldFailMatchingExpectationsAsync(_momoStep, _momoExpectation);
+        sut.ShouldBeRetriedMultipleTimes(_momoStep);
     }
+    
+    [Test]
+    [Category("Slow")]
+    public async Task MatchExpectations_IfStepHangs_Then_ShouldFailInTimeout()
+    {
+        _momoStep
+            .CheckAsync(_momoExpectation,Arg.Any<CancellationToken>())
+            .HangsForever();
+
+        var sut = CreateMomoClientUnderTest(ExpectationFile);
+        
+        //Act & Assert
+        await sut.ShouldFailInTimeoutAsync(_momoStep, _momoExpectation, TestContext.CurrentContext.CancellationToken);
+    }
+    
+    [Test]
+    [Category("Slow")]
+    public async Task MatchExpectations_IfStepAborted_Then_ShouldFailAndDispose()
+    {
+        var cancellationSource = CancellationTokenSource.CreateLinkedTokenSource(TestContext.CurrentContext.CancellationToken);
+        
+        _momoStep
+            .CheckAsync(_momoExpectation,Arg.Any<CancellationToken>())
+            .HangsFor(TimeSpan.FromSeconds(3));
+
+        var sut = CreateMomoClientUnderTest(ExpectationFile);
+        
+        //Act
+        _ = sut.MatchExpectations(cancellationSource.Token);
+        await cancellationSource.CancelAsync(); //Simulate a canceling
+        
+        //Assert
+        await _momoStep.Received(1).DisposeAsync();
+    }
+
+    #region private
+
+    private MomoClient CreateMomoClientUnderTest(MomoExpectationFile expectations)
+    {
+        _options.Set(x => x.ExpectationFile, expectations);
+        return MomoClient.ValidateAndCreate(Options);
+    }
+
+    #endregion
 }
