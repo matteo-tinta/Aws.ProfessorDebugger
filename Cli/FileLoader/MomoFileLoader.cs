@@ -8,18 +8,29 @@ namespace Cli.FileLoader;
 
 public static class MomoFileLoader
 {
-    private static readonly JsonSerializerOptions _jsonOptions = new()
+    private static JsonSerializerOptions? JsonOptions { get; set; }
+
+    private static JsonSerializerOptions CreateJsonOptions(string path)
     {
-        Converters =
+        if (JsonOptions is not null)
+            return JsonOptions;
+
+        JsonOptions = new JsonSerializerOptions
         {
-            new IMomoExpectationConverter(),
-            new JsonSchemaConverter(Formatting.Indented),
-        },
-        PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
-        DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
-        PropertyNameCaseInsensitive = true,
-        WriteIndented = true,
-    };
+            Converters =
+            {
+                new IMomoExpectationConverter(),
+                new IMomoCommandConverter(GetFullPath(path)),
+                new JsonSchemaConverter(Formatting.Indented),
+            },
+            PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+            DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
+            PropertyNameCaseInsensitive = true,
+            WriteIndented = true,
+        };
+        
+        return JsonOptions;
+    }
     
     public static async Task<MomoExpectationFile> LoadAsync(string path)
     {
@@ -28,7 +39,7 @@ public static class MomoFileLoader
 
         var content = await File.ReadAllTextAsync(path);
 
-        var result = JsonSerializer.Deserialize<MomoExpectationFile>(content, _jsonOptions);
+        var result = JsonSerializer.Deserialize<MomoExpectationFile>(content, CreateJsonOptions(path));
 
         if (result is null)
             throw new InvalidDataException("Failed to deserialize input file into correct format. Check readme");
@@ -38,7 +49,7 @@ public static class MomoFileLoader
     
     public static void Print(MomoExpectationFile file)
     {
-        var serializedFile = JsonSerializer.Serialize(file, _jsonOptions);
+        var serializedFile = JsonSerializer.Serialize(file, CreateJsonOptions(""));
 
         if (serializedFile is null)
             throw new InvalidDataException("Failed to deserialize input file into correct format. Check readme");
@@ -48,7 +59,7 @@ public static class MomoFileLoader
     
     public static async Task SaveAsync(MomoExpectationFile file, string path)
     {
-        var serializedFile = JsonSerializer.Serialize(file, _jsonOptions);
+        var serializedFile = JsonSerializer.Serialize(file, CreateJsonOptions(path));
 
         if (serializedFile is null)
             throw new InvalidDataException("Failed to deserialize input file into correct format. Check readme");

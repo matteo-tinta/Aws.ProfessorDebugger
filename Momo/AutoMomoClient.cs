@@ -1,4 +1,5 @@
-﻿using Momo.Exceptions;
+﻿using Momo.Commands.Decorations;
+using Momo.Exceptions;
 using Momo.Expectations;
 using Momo.Helpers;
 using Momo.Models;
@@ -16,6 +17,8 @@ public class AutoMomoClient(MomoClientFactoryOptions Options) : IMomoClient
     
     public Action<MomoExpectationFile>? OnAllExpectationsMatch { get; set; }
     
+    public Action<IMomoExpectation, IStepHandler>? OnExpectationPrepared { get; set; }
+
     private readonly List<IStepHandler> _ranExpectations = [];
 
     public async Task MatchExpectations(CancellationToken cancellationToken)
@@ -49,6 +52,27 @@ public class AutoMomoClient(MomoClientFactoryOptions Options) : IMomoClient
         OnAllExpectationsMatch?.Invoke(ExpectationFile);
     }
     
+    public async Task ExecuteCommands(CancellationToken cancellationToken)
+    {
+        foreach (var commands in Options.ExpectationFile.Commands ?? [])
+        {
+            try
+            {
+                var commandButLoggingDecorated = new MomoCommandLoggingDecorated(commands.Command);
+                await commandButLoggingDecorated.ExecuteAsync(cancellationToken);
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e);
+                if (commands.Undo is not null)
+                {
+                    var commandButLoggingDecorated = new MomoCommandLoggingDecorated(commands.Undo);
+                    await commandButLoggingDecorated.ExecuteAsync(cancellationToken);
+                }
+            }
+        }
+    }
+    
     private async Task DisposeStep(IStepHandler step)
     {
         await step.DisposeAsync();
@@ -67,6 +91,8 @@ public class AutoMomoClient(MomoClientFactoryOptions Options) : IMomoClient
         try
         {
             await stepButDecorated.PrepareAsync(expectation, cancellationToken);
+            
+            OnExpectationPrepared?.Invoke(expectation, step);
             
             _ranExpectations.Add(stepButDecorated);
                 

@@ -1,144 +1,17 @@
 {
   "traceId": "abc123",
+  "do": [
+    {
+      "_type": "s3",
+      "operation": "Publish",
+      "bucketName": "my-local-bucket",
+      "destinationCompleteFileKey": "test-file.json",
+      "sourceFilePath": "./bucket-test-file.json"
+    }
+  ],
   "expectations": [
     {
       "parallelExpectations": [
-        {
-          "arn": "arn:aws:s3:::my-local-bucket",
-          "file": {
-            "prefix": "",
-            "key": "test-.*.txt"
-          },
-          "match": null
-        },
-        {
-          "arn": "arn:aws:s3:::my-local-bucket",
-          "file": {
-            "prefix": "",
-            "key": "test-.*.txt"
-          },
-          "match": null
-        }
-      ]
-    },
-    
-    {
-      "parallelExpectations": [
-        {
-          "arn": "arn:aws:s3:::my-local-bucket",
-          "file": {
-            "prefix": "",
-            "key": "test-.*.json"
-          },
-          "match": {
-            "$schema": "http://json-schema.org/draft-04/schema#",
-            "type": "object",
-            "properties": {
-              "id": {
-                "type": "string"
-              },
-              "number": {
-                "type": "string"
-              },
-              "internal": {
-                "type": "boolean"
-              },
-              "dc": {
-                "type": "string"
-              },
-              "channel": {
-                "type": "string"
-              },
-              "createdDate": {
-                "type": "string",
-                "format": "date-time"
-              },
-              "lastModifiedDate": {
-                "type": "string",
-                "format": "date-time"
-              },
-              "status": {
-                "type": "string"
-              },
-              "department": {
-                "type": "string"
-              },
-              "orderVariants": {
-                "type": "array",
-                "items": {
-                  "$ref": "#/definitions/OrderVariant"
-                }
-              }
-            },
-            "definitions": {
-              "Pricing": {
-                "type": "object",
-                "properties": {
-                  "landedCost": {
-                    "$ref": "#/definitions/LandedCost"
-                  }
-                }
-              },
-              "LandedCost": {
-                "type": "object",
-                "properties": {
-                  "value": {
-                    "type": "integer"
-                  },
-                  "currency": {
-                    "type": "string"
-                  }
-                }
-              },
-              "Variant": {
-                "type": "object",
-                "properties": {
-                  "brandCode": {
-                    "type": "string"
-                  },
-                  "colourName": {
-                    "type": "string"
-                  },
-                  "colourCode": {
-                    "type": "string"
-                  },
-                  "modelFabric": {
-                    "type": "string"
-                  },
-                  "sizeSchema": {
-                    "type": "string"
-                  },
-                  "category": {
-                    "type": "string"
-                  },
-                  "subCategory": {
-                    "type": "string"
-                  },
-                  "id": {
-                    "type": "string"
-                  }
-                }
-              },
-              "OrderVariant": {
-                "type": "object",
-                "properties": {
-                  "id": {
-                    "type": "string"
-                  },
-                  "status": {
-                    "type": "string"
-                  },
-                  "pricing": {
-                    "$ref": "#/definitions/Pricing"
-                  },
-                  "variant": {
-                    "$ref": "#/definitions/Variant"
-                  }
-                }
-              }
-            }
-          }
-        },
         {
           "arn": "arn:aws:sns:us-east-1:000000000000:my-sns-topic",
           "match": {
@@ -263,6 +136,120 @@
               }
             }
           }
+        },
+        {
+          "arn": "arn:aws:s3:::my-local-bucket",
+          "file": {
+            "key": "test-file.json"
+          },
+          "match": {
+            "$schema": "http://json-schema.org/draft-04/schema#",
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string"
+              },
+              "number": {
+                "type": "string"
+              },
+              "internal": {
+                "type": "boolean"
+              },
+              "dc": {
+                "type": "string"
+              },
+              "channel": {
+                "type": "string"
+              },
+              "createdDate": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "lastModifiedDate": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "status": {
+                "type": "string"
+              },
+              "department": {
+                "type": "string"
+              },
+              "orderVariants": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/definitions/OrderVariant"
+                }
+              }
+            },
+            "definitions": {
+              "Pricing": {
+                "type": "object",
+                "properties": {
+                  "landedCost": {
+                    "$ref": "#/definitions/LandedCost"
+                  }
+                }
+              },
+              "LandedCost": {
+                "type": "object",
+                "properties": {
+                  "value": {
+                    "type": "integer"
+                  },
+                  "currency": {
+                    "type": "string"
+                  }
+                }
+              },
+              "Variant": {
+                "type": "object",
+                "properties": {
+                  "brandCode": {
+                    "type": "string"
+                  },
+                  "colourName": {
+                    "type": "string"
+                  },
+                  "colourCode": {
+                    "type": "string"
+                  },
+                  "modelFabric": {
+                    "type": "string"
+                  },
+                  "sizeSchema": {
+                    "type": "string"
+                  },
+                  "category": {
+                    "type": "string"
+                  },
+                  "subCategory": {
+                    "type": "string"
+                  },
+                  "id": {
+                    "type": "string"
+                  }
+                }
+              },
+              "OrderVariant": {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "string"
+                  },
+                  "status": {
+                    "type": "string"
+                  },
+                  "pricing": {
+                    "$ref": "#/definitions/Pricing"
+                  },
+                  "variant": {
+                    "$ref": "#/definitions/Variant"
+                  }
+                }
+              }
+            }
+          }
         }
       ]
     },
@@ -326,6 +313,22 @@
                   }
                 }
               },
+              "Variant": {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "string"
+                  },
+                  "isEipOverridden": {
+                    "type": "boolean"
+                  },
+                  "eip": {},
+                  "isWhatsNewOverridden": {
+                    "type": "boolean"
+                  },
+                  "whatsNew": {}
+                }
+              },
               "Anonymous": {
                 "type": "object",
                 "properties": {
@@ -361,7 +364,9 @@
                   "scheduleDate": {},
                   "variants": {
                     "type": "array",
-                    "items": {}
+                    "items": {
+                      "$ref": "#/definitions/Variant"
+                    }
                   }
                 }
               }
@@ -371,5 +376,5 @@
       ]
     }
   ],
-  "timeout": 5
+  "timeout": 20
 }

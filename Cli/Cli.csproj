@@ -20,6 +20,8 @@
     
     <ItemGroup>
       <ProjectReference Include="..\Core\Core.csproj" />
+      <ProjectReference Include="..\Momo.Commands\Momo.Commands.Rest\Momo.Commands.Rest.csproj" />
+      <ProjectReference Include="..\Momo.Commands\Momo.Commands.S3\Momo.Commands.S3.csproj" />
       <ProjectReference Include="..\Momo.Expectations\Momo.Expectations.Mongo\Momo.Expectations.Mongo.csproj" />
       <ProjectReference Include="..\Momo.Expectations\Momo.Expectations.Parallel\Momo.Expectations.Parallel.csproj" />
       <ProjectReference Include="..\Momo.Expectations\Momo.Expectations.S3\Momo.Expectations.S3.csproj" />

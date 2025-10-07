@@ -43,7 +43,8 @@ aws --endpoint-url=$ENDPOINT sns subscribe \
     --region $REGION
 
 echo "Setting up SQS policy to allow SNS to send messages..."
-POLICY=$(cat <<EOF
+
+cat > sqs-policy.json <<EOF
 {
   "Version": "2012-10-17",
   "Statement": [{
@@ -59,24 +60,12 @@ POLICY=$(cat <<EOF
   }]
 }
 EOF
-)
 
 aws --endpoint-url=$ENDPOINT sqs set-queue-attributes \
-    --queue-url $QUEUE_URL \
-    --attributes Policy="$(echo $POLICY)"
+  --queue-url $QUEUE_URL \
+  --attributes Policy=file://sqs-policy.json
 
 echo "Setting S3 event notification to publish to SNS on object creation..."
-NOTIFICATION_CONFIG=$(cat <<EOF
-{
-  "TopicConfigurations": [
-    {
-      "TopicArn": "$TOPIC_ARN",
-      "Events": ["s3:ObjectCreated:*"]
-    }
-  ]
-}
-EOF
-)
 
 aws --endpoint-url=http://localhost:4566 s3api put-bucket-notification-configuration \
   --bucket my-local-bucket \
@@ -88,5 +77,6 @@ aws --endpoint-url=http://localhost:4566 s3api put-bucket-notification-configura
       }
     ]
   }'
+
 
 echo "✅ All resources created and wired up in LocalStack!"

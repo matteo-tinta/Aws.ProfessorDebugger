@@ -16,8 +16,20 @@ internal class MomoCliHandler : IAsyncDisposable
         //cancellation management
         _cancellationTokenSource = new CancellationTokenSource();
         
-        //clients
+        //client and callbacks
+        bool commandsRan = false;
         _client = MomoClientFactory.FeedMomo(options);
+        
+        _client.OnExpectationPrepared = async void (_,_) =>
+        {
+            if (commandsRan) 
+                return;
+            
+            commandsRan = true;
+            
+            await _client.ExecuteCommands(_cancellationTokenSource.Token);
+        };
+        
         _client.OnAllExpectationsMatch = async void (updatedFile) =>
         {
             await SaveChanges(cliMomoOptions, updatedFile);
@@ -26,7 +38,15 @@ internal class MomoCliHandler : IAsyncDisposable
     
     public async Task ExecuteMomo()
     {
-        await _client.MatchExpectations(_cancellationTokenSource.Token);
+        try
+        {
+            await _client.MatchExpectations(_cancellationTokenSource.Token);
+        }
+        catch (Exception)
+        {
+            await DisposeAsync();
+            throw;
+        }
     }
 
     private async Task SaveChanges(MomoOptions momoOptions, MomoExpectationFile file)

@@ -1,15 +1,26 @@
-﻿using Momo.Exceptions;
+﻿using System.Text.Json.Serialization;
+using Momo.Commands;
+using Momo.Exceptions;
 using Momo.Expectations;
 using Newtonsoft.Json;
 
 namespace Momo.Models;
 
+public class MomoClientCommand
+{
+    public required IMomoCommand Command { get; set; }
+    public IMomoCommand? Undo { get; set; }
+}
+
+
 public record MomoExpectationFile
 {
     public string TraceId { get; set; }
+
+    [JsonPropertyName("do")]
+    public IReadOnlyCollection<MomoClientCommand> Commands { get; init; } = [];
     
-    [JsonProperty("expect")]
-    public IReadOnlyCollection<IMomoExpectation> Expectations { get; set; }
+    public required IReadOnlyCollection<IMomoExpectation> Expectations { get; set; } = [];
     
     public int Timeout { get; set; }
 

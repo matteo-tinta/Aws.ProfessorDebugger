@@ -38,6 +38,12 @@ public class MomoMongoExpectation: IMomoExpectation
         {
             throw new MomoFileValidationException(nameof(ConnectionString), "Connection String is not a valid mongo connection string");
         }
+
+        var someQueryIsNull = Match?.Any(c => c?.Query is null) ?? true;
+        if (someQueryIsNull)
+        {
+            throw new MomoFileValidationException(nameof(Match), "Query cannot be null inside Matchers of Mongo Expectations. Please provide a query");
+        }
     }
 
     public override string ToString() => ConnectionString;

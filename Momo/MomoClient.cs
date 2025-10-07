@@ -1,4 +1,5 @@
 ﻿using System.Security.Cryptography;
+using Momo.Commands.Decorations;
 using Momo.Exceptions;
 using Momo.Expectations;
 using Momo.Helpers;
@@ -22,6 +23,8 @@ public class MomoClient: IMomoClient
     
     public Action<MomoExpectationFile>? OnAllExpectationsMatch { get; set; }
     
+    public Action<IMomoExpectation, IStepHandler>? OnExpectationPrepared { get; set; }
+
     private readonly List<IStepHandler> _ranExpectations = [];
 
     public async Task MatchExpectations(CancellationToken cancellationToken)
@@ -46,7 +49,28 @@ public class MomoClient: IMomoClient
         
         OnAllExpectationsMatch?.Invoke(_options.ExpectationFile);
     }
-    
+
+    public async Task ExecuteCommands(CancellationToken cancellationToken)
+    {
+        foreach (var commands in _options.ExpectationFile.Commands ?? [])
+        {
+            try
+            {
+                var commandButLoggingDecorated = new MomoCommandLoggingDecorated(commands.Command);
+                await commandButLoggingDecorated.ExecuteAsync(cancellationToken);
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e);
+                if (commands.Undo is not null)
+                {
+                    var commandButLoggingDecorated = new MomoCommandLoggingDecorated(commands.Undo);
+                    await commandButLoggingDecorated.ExecuteAsync(cancellationToken);
+                }
+            }
+        }
+    }
+
     internal static MomoClient ValidateAndCreate(MomoClientFactoryOptions options)
     {
         try
@@ -63,7 +87,12 @@ public class MomoClient: IMomoClient
 
     public async ValueTask DisposeAsync()
     {
+        //dispose expectations
         await Task.WhenAll(_ranExpectations.Select(e => e.DisposeAsync().AsTask()));
+        
+        //and undo commands
+        await Task.WhenAll(_options.ExpectationFile.Commands.Where(c => c.Undo is not null)
+            .Select(c => c.Undo!.ExecuteAsync(CancellationToken.None)));
     }
     
     private async Task DisposeStep(IStepHandler step)
@@ -86,7 +115,9 @@ public class MomoClient: IMomoClient
         try
         {
             await stepButDecorated.PrepareAsync(expectation, timedOutCancellationToken);
-
+            
+            OnExpectationPrepared?.Invoke(expectation, step);
+            
             _ranExpectations.Add(stepButDecorated);
 
             await RetryHelper.RetryAsync(
