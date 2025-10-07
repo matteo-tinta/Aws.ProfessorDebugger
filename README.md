@@ -277,7 +277,59 @@ public class UnitTestProject
 }
 ```
 
-## Available services (in CLI)
+## Declarative Flow (cli)
+
+## Basic Example
+This is a basic example of structure of a momo generated file
+```json
+{
+  "traceId": "abc123",
+  "timeout": 20,
+  "do": [
+    {
+      "_type": "s3",
+      "operation": "Publish",
+      "bucketName": "my-local-bucket",
+      "destinationCompleteFileKey": "test-file.json",
+      "sourceFilePath": "./bucket-test-file.json"
+    }
+  ],
+  "expectations": [
+    {
+      "parallelExpectations": [
+        {
+          "arn": "arn:aws:sns:us-east-1:000000000000:my-sns-topic",
+          "match": null
+        },
+        {
+          "arn": "arn:aws:s3:::my-local-bucket",
+          "file": {
+            "key": "test-file.json"
+          },
+          "match": null
+        }
+      ]
+    },
+    {
+      "connectionString": "mongodb://mongo:mongo@localhost:27017/NAP_Mastermind_lcl?directConnection=true\u0026authSource=admin\u0026retryWrites=true\u0026w=majority",
+      "match": [
+        {
+          "query": {
+            "find": "uploadList",
+            "filter": {
+              "name": "123123"
+            },
+            "limit": 1
+          },
+          "match": null
+        }
+      ]
+    }
+  ]
+}
+```
+
+### Available services
 
 | Type                                  | Notes                                                                                                                                                                                                                                                 |
 |---------------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
@@ -286,7 +338,89 @@ public class UnitTestProject
 | s3 (Momo.Expectations.S3)             | `file` **is mandatory**, `match` expect a JsonPath to be found with the given value                                                                                                                                                                   |
 | lambda                                | (Will be available in future releases)                                                                                                                                                                                                                |
 | mongo (Momo.Expectations.Mongo)       | Connect to a mongo database (database name must be included in query string) and assert a query result. `documents` is a typed key and it must be used to access fetched documents (which is always an array).                                        
-| parallel (Momo.Expectations.Parallel) | allow previous steps to run in parallel mode. If a step fails, the whole parallel stack will throw an exception                                                                                                                                       
+| parallel (Momo.Expectations.Parallel) | allow previous steps to run in parallel mode. If a step fails, the whole parallel stack will throw an exception
+
+## Commands
+Momo declarative flow supports now commands!
+
+Commands allow you to automate some actions in order to trigger your async flows. Commands are declared as follow in the `do` directive
+
+```json
+{
+  "traceId": "abc123",
+  "timeout": 30,
+  "do": [
+    {
+      "_type": "expectation type",
+      "other": "properties",
+      "goes": "here",
+      "_undo": {
+        "other": "properties",
+        "goes": "here",
+      }
+    }
+  ],
+  "expectations": [
+    
+  ]
+}
+```
+> `_undo` is the same type of command, but is executed in case of test going bad or when the command fails. The contract is the same
+
+> You can launch multiple commands at the start of the test. Commands are executed after the first step is prepared (example: if you are watching an SNS resource as first step, the commands will wait until the SQS is ready)
+> In case of parallel steps, commands are executed after all parallel steps are prepared.
+
+Available services are:
+
+- ### S3
+S3 command allows you to publish a file in a given bucket at a specified key. Here an example of S3 Publish operation:
+```json
+{
+  "traceId": "abc123",
+  "timeout": 30,
+  "do": [
+    {
+      "_type": "s3",
+      "operation": "Publish",
+      "bucketName": "my-local-bucket",
+      "destinationCompleteFileKey": "test-file.json",
+      "sourceFilePath": "./bucket-test-file.json"
+    }
+  ],
+  "expectations": [
+    ...expectations
+  ]
+}
+```
+> More actions will be available in future such as `Delete`.
+> You can use `Publish` to also trigger a reload of an already present file reloading the same file again
+
+- ### Rest
+Rest command allows you to make a REST call in whatever methods you need. Only JSON payload can be used
+```json
+{
+  "traceId": "abc123",
+  "timeout": 30,
+  "do": [
+    {
+      "_type": "rest",
+      "endpoint": "http://rest.endpoint",
+      "method": "POST",
+      "jsonBody": {
+        "this object is your body": true,
+        "as it is": "true",
+        "also nested": {
+          "is it true": true
+        }
+      }
+    }
+  ],
+  "expectations": [
+    ...expectations
+  ]
+}
+```
+
 
 ## Value matching
 Values are matched by using a json schema.
@@ -339,6 +473,7 @@ When a match is found, Momo updates the expectation file with the resolved key s
 {
   "traceId": "abc123",
   "timeout": 30,
+  "do": [],
   "expectations": [
     {
       "arn": "arn:aws:sns:us-east-1:000000000000:my-test-topic",
@@ -406,6 +541,7 @@ Start from here:
 {
   "traceId": "abc123",
   "timeout": 30,
+  "do": [],
   "expectations": [
     {
       "parallelExpectations": [
