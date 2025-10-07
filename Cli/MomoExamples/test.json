@@ -1,245 +1,140 @@
 {
-  "traceId": "0bb44b77-0d42-4641-8870-d1ed8bc1beb1",
+  "traceId": "806ed001-a1a5-4069-9719-441bf06ccbd8",
+  "do": [
+    {
+      "_type": "s3",
+      "operation": "Publish",
+      "bucketName": "my-local-bucket",
+      "destinationCompleteFileKey": "test-file.json",
+      "sourceFilePath": "./bucket-test-file.json"
+    }
+  ],
   "expectations": [
     {
-      "parallelExpectations": [
-        {
-          "arn": "arn:aws:sns:eu-west-1:297244223532:pricelist-s3-event-notification-dev",
-          "match": {
-            "$schema": "http://json-schema.org/draft-04/schema#",
-            "type": "object",
-            "properties": {
-              "Records": {
-                "type": "array",
-                "items": {
-                  "$ref": "#/definitions/Record"
-                }
-              }
-            },
-            "definitions": {
-              "UserIdentity": {
-                "type": "object",
-                "properties": {
-                  "principalId": {
-                    "type": "string"
-                  }
-                }
-              },
-              "RequestParameters": {
-                "type": "object",
-                "properties": {
-                  "sourceIPAddress": {
-                    "type": "string"
-                  }
-                }
-              },
-              "ResponseElements": {
-                "type": "object",
-                "properties": {
-                  "x-amz-request-id": {
-                    "type": "string"
-                  },
-                  "x-amz-id-2": {
-                    "type": "string"
-                  }
-                }
-              },
-              "S3": {
-                "type": "object",
-                "properties": {
-                  "s3SchemaVersion": {
-                    "type": "string"
-                  },
-                  "configurationId": {
-                    "type": "string"
-                  },
-                  "bucket": {
-                    "$ref": "#/definitions/Bucket"
-                  },
-                  "object": {
-                    "$ref": "#/definitions/Object"
-                  }
-                }
-              },
-              "Bucket": {
-                "type": "object",
-                "properties": {
-                  "name": {
-                    "type": "string"
-                  },
-                  "ownerIdentity": {
-                    "$ref": "#/definitions/UserIdentity"
-                  },
-                  "arn": {
-                    "type": "string"
-                  }
-                }
-              },
-              "Object": {
-                "type": "object",
-                "properties": {
-                  "key": {
-                    "type": "string"
-                  },
-                  "size": {
-                    "type": "integer"
-                  },
-                  "eTag": {
-                    "type": "string"
-                  },
-                  "versionId": {
-                    "type": "string"
-                  },
-                  "sequencer": {
-                    "type": "string"
-                  }
-                }
-              },
-              "Record": {
-                "type": "object",
-                "properties": {
-                  "eventVersion": {
-                    "type": "string"
-                  },
-                  "eventSource": {
-                    "type": "string"
-                  },
-                  "awsRegion": {
-                    "type": "string"
-                  },
-                  "eventTime": {
-                    "type": "string",
-                    "format": "date-time"
-                  },
-                  "eventName": {
-                    "type": "string"
-                  },
-                  "userIdentity": {
-                    "$ref": "#/definitions/UserIdentity"
-                  },
-                  "requestParameters": {
-                    "$ref": "#/definitions/RequestParameters"
-                  },
-                  "responseElements": {
-                    "$ref": "#/definitions/ResponseElements"
-                  },
-                  "s3": {
-                    "$ref": "#/definitions/S3"
-                  }
-                }
-              }
-            }
-          }
-        },
-        {
-          "arn": "arn:aws:sns:eu-west-1:297244223532:price-info-changes-dev",
-          "match": {
-            "$schema": "http://json-schema.org/draft-04/schema#",
-            "type": "object",
-            "properties": {
-              "channel": {
-                "type": "string"
-              },
-              "modelId": {
-                "type": "string"
-              },
-              "market": {
-                "type": "string"
-              },
-              "timestamp": {
-                "type": "string",
-                "format": "date-time"
-              },
-              "version": {
-                "type": "integer"
-              }
-            }
-          }
-        }
-      ]
-    },
-    {
-      "arn": "arn:aws:sns:eu-west-1:297244223532:mastermind-dataloader-price-searchinfochanged-dev",
+      "arn": "arn:aws:sns:us-east-1:000000000000:my-sns-topic",
       "match": {
         "$schema": "http://json-schema.org/draft-04/schema#",
         "type": "object",
         "properties": {
-          "brand": {
-            "type": "string"
-          },
-          "variantId": {
-            "type": "string"
-          },
-          "salesCatalogs": {
-            "$ref": "#/definitions/SalesCatalogs"
-          },
-          "version": {
-            "type": "integer"
+          "Records": {
+            "type": "array",
+            "items": {
+              "$ref": "#/definitions/Record"
+            }
           }
         },
         "definitions": {
-          "SalesCatalogs": {
+          "UserIdentity": {
             "type": "object",
             "properties": {
-              "NAP_AM": {
-                "$ref": "#/definitions/NAP_AM"
-              },
-              "NAP_INTL": {
-                "$ref": "#/definitions/NAP_AM"
-              },
-              "NAP_UKME": {
-                "$ref": "#/definitions/NAP_AM"
-              }
-            }
-          },
-          "NAP_AM": {
-            "type": "object",
-            "properties": {
-              "price": {
-                "$ref": "#/definitions/Price"
-              }
-            }
-          },
-          "Price": {
-            "type": "object",
-            "properties": {
-              "details": {
-                "$ref": "#/definitions/Details"
-              },
-              "status": {
-                "type": "string"
-              },
-              "incompleteChannels": {
-                "type": "array",
-                "items": {
-                  "$ref": "#/definitions/IncompleteChannel"
-                }
-              }
-            }
-          },
-          "Details": {
-            "type": "object",
-            "properties": {
-              "fullPrice": {
-                "type": "integer"
-              },
-              "salePrice": {
-                "type": "integer"
-              },
-              "markdownPercentageFromFullPrice": {
-                "type": "integer"
-              },
-              "currency": {
+              "principalId": {
                 "type": "string"
               }
             }
           },
-          "IncompleteChannel": {
-            "type": "string"
+          "RequestParameters": {
+            "type": "object",
+            "properties": {
+              "sourceIPAddress": {
+                "type": "string"
+              }
+            }
+          },
+          "ResponseElements": {
+            "type": "object",
+            "properties": {
+              "x-amz-request-id": {
+                "type": "string"
+              },
+              "x-amz-id-2": {
+                "type": "string"
+              }
+            }
+          },
+          "S3": {
+            "type": "object",
+            "properties": {
+              "s3SchemaVersion": {
+                "type": "string"
+              },
+              "configurationId": {
+                "type": "string"
+              },
+              "bucket": {
+                "$ref": "#/definitions/Bucket"
+              },
+              "object": {
+                "$ref": "#/definitions/Object"
+              }
+            }
+          },
+          "Bucket": {
+            "type": "object",
+            "properties": {
+              "name": {
+                "type": "string"
+              },
+              "ownerIdentity": {
+                "$ref": "#/definitions/UserIdentity"
+              },
+              "arn": {
+                "type": "string"
+              }
+            }
+          },
+          "Object": {
+            "type": "object",
+            "properties": {
+              "key": {
+                "type": "string"
+              },
+              "sequencer": {
+                "type": "string"
+              },
+              "eTag": {
+                "type": "string"
+              },
+              "size": {
+                "type": "integer"
+              }
+            }
+          },
+          "Record": {
+            "type": "object",
+            "properties": {
+              "eventVersion": {
+                "type": "string"
+              },
+              "eventSource": {
+                "type": "string"
+              },
+              "awsRegion": {
+                "type": "string"
+              },
+              "eventTime": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "eventName": {
+                "type": "string"
+              },
+              "userIdentity": {
+                "$ref": "#/definitions/UserIdentity"
+              },
+              "requestParameters": {
+                "$ref": "#/definitions/RequestParameters"
+              },
+              "responseElements": {
+                "$ref": "#/definitions/ResponseElements"
+              },
+              "s3": {
+                "$ref": "#/definitions/S3"
+              }
+            }
           }
         }
       }
     }
   ],
-  "timeout": 60
+  "timeout": 120
 }

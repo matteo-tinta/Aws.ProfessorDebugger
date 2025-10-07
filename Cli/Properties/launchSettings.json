@@ -1,17 +1,16 @@
 {
   "profiles": {
-    "momo": {
+    "graph (local)": {
       "commandName": "Project",
-      "commandLineArgs": "momo $(ProjectDir)/MomoExamples/test.json",
+      "commandLineArgs": "graph arn:aws:s3:::my-local-bucket",
       "environmentVariables": {
-        "AWS_PROFILE": "mastermind-dev",
-        "AWS_REGION": "eu-west-1",
-        "AWS__AuthenticationRegion": "eu-west-1"
+        "AWS_S3_ENDPOINT": "http://localhost:4566",
+        "AWS_PROFILE": "localstack"
       }
     },
-    "momo (local)": {
+    "graph generate momo (local)": {
       "commandName": "Project",
-      "commandLineArgs": "momo $(ProjectDir)/MomoExamples/localstack.momo.json",
+      "commandLineArgs": "graph arn:aws:s3:::my-local-bucket --output-as Momo --output-to $(ProjectDir)/MomoExamples/test.json",
       "environmentVariables": {
         "AWS_S3_ENDPOINT": "http://localhost:4566",
         "AWS_PROFILE": "localstack"
@@ -19,10 +18,27 @@
     },
     "momo auto (local)": {
       "commandName": "Project",
-      "commandLineArgs": "momo $(ProjectDir)/MomoExamples/localstack.momo.json -a",
+      "commandLineArgs": "momo $(ProjectDir)/MomoExamples/test.json -a",
       "environmentVariables": {
         "AWS_S3_ENDPOINT": "http://localhost:4566",
         "AWS_PROFILE": "localstack"
+      }
+    },
+    "momo (local)": {
+      "commandName": "Project",
+      "commandLineArgs": "momo $(ProjectDir)/MomoExamples/test.json",
+      "environmentVariables": {
+        "AWS_S3_ENDPOINT": "http://localhost:4566",
+        "AWS_PROFILE": "localstack"
+      }
+    },
+    "momo": {
+      "commandName": "Project",
+      "commandLineArgs": "momo $(ProjectDir)/MomoExamples/test.json",
+      "environmentVariables": {
+        "AWS_PROFILE": "mastermind-dev",
+        "AWS_REGION": "eu-west-1",
+        "AWS__AuthenticationRegion": "eu-west-1"
       }
     },
     "worklist-ready-to-be-worked (local)": {
