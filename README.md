@@ -155,7 +155,6 @@ This project includes a set of tools that generates a dependency graph of resour
 starting from a single AWS ARN.
 
 Currently, the tool focuses on the following AWS services:
-- Lambda
 - SQS
 - SNS
 - S3
@@ -267,7 +266,7 @@ it especially useful for integration testing, debugging, and validating event-dr
 - **Shared infrastructure risk:** In environments with shared SNS topics, SQS queues, or databases, Momo cannot guarantee that observed messages or data changes originated from the current test. External activity may cause false positives.
 - **No automatic resource detection:** Momo does not detect new resources created during tests. Always explicitly clean up resources in `DisposeAsync` to avoid dangling resources.
 - **Message correlation limitations:** Without enforced trace IDs or unique identifiers, Momo cannot strictly correlate messages with test actions. Use isolated or controlled environments for high-confidence testing.
-- **Partial AWS coverage:** Only SNS, SQS, S3, and MongoDB are currently supported; Lambda support is planned. Complex AWS resource relationships may be missed or inferred incorrectly.
+- **Partial AWS coverage:** Only SNS, SQS, S3, and MongoDB are currently supported;
 - **Cache sensitivity:** Momo relies on a local JSON cache to prevent redundant API calls. Clearing the cache frequently defeats this purpose and may cause slower runs or inconsistent results.
 
 ## Cli
@@ -282,7 +281,7 @@ cli momo [json_validation_file]
   --version         Display version information.
 ```
 
-## DLL
+## Using Momo as a Library
 
 The core functionality of this project is also available as an independent DLL that you can include in your C# projects.
 Base functionalities must be installed as well (indipendent libraries, see table below)
@@ -382,14 +381,13 @@ public class UnitTestProject
 
 ## Available services (in CLI)
 
-| Type                                  | Notes                                                                                                                                                                                                                                                 |
-|---------------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| sns (Momo.Expectations.SNS)           | It will create a temporary SQS queue and attach it to the specified SNS                                                                                                                                                                               |
-| sqs                                   | **In order to avoid race conditions in your environments** direct SQS inspection isn't allowed, provide it's connected SNS topic as above. If there's no SNS, avoid checking the queue and look at the resources it triggers (like Lambda functions). |
-| s3 (Momo.Expectations.S3)             | `file` **is mandatory**, `match` expect a JsonPath to be found with the given value                                                                                                                                                                   |
-| lambda                                | (Will be available in future releases)                                                                                                                                                                                                                |
-| mongo (Momo.Expectations.Mongo)       | Connect to a mongo database (database name must be included in query string) and assert a query result. `documents` is a typed key and it must be used to access fetched documents (which is always an array).                                        
-| parallel (Momo.Expectations.Parallel) | allow previous steps to run in parallel mode. If a step fails, the whole parallel stack will throw an exception                                                                                                                                       
+| Type                                  | Notes                                                                                                                                                                                                                         |
+|---------------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| sns (Momo.Expectations.SNS)           | It will create a temporary SQS queue and attach it to the specified SNS                                                                                                                                                       |
+| sqs                                   | **In order to avoid race conditions in your environments** direct SQS inspection isn't allowed, provide it's connected SNS topic as above. If there's no SNS, avoid checking the queue and look at the resources it triggers  |
+| s3 (Momo.Expectations.S3)             | `file` **is mandatory**, `match` expect a JsonPath to be found with the given value                                                                                                                                           |
+| mongo (Momo.Expectations.Mongo)       | Connect to a mongo database (database name must be included in query string) and assert a query result. `documents` is a typed key and it must be used to access fetched documents (which is always an array).                | 
+| parallel (Momo.Expectations.Parallel) | allow previous steps to run in parallel mode. If a step fails, the whole parallel stack will throw an exception                                                                                                               |
 
 ## Value matching
 Values are matched by using a json schema.
@@ -436,109 +434,12 @@ If keys are dynamic (e.g. contain dates or IDs), use a prefix plus a regex key:
 
 When a match is found, Momo updates the expectation file with the resolved key so the same file won’t be re-matched in future runs.
 
-## Json File Validation Example
-
-```json
-{
-  "traceId": "abc123",
-  "timeout": 30,
-  "expectations": [
-    {
-      "arn": "arn:aws:sns:us-east-1:000000000000:my-test-topic",
-      "match": {
-        ...json schema
-      }
-    },
-    {
-      "arn": "arn:aws:s3:::ingestion-bucket",
-      "file": {
-        "prefix": "worklist-ready-to-be-worked/variant-move-between-worklists",
-        "key": "event-[0-9].json"
-      },
-      "match": {
-        ...content json schema
-      }
-    },
-    {
-      "parallelExpectations": [
-        {
-          "arn": "arn:aws:s3:::ingestion-bucket",
-          "file": {
-            "prefix": "worklist-ready-to-be-worked/variant-move-between-worklists",
-            "key": "event-[0-9].json"
-          },
-          "match": {
-            ...content json schema 
-          }
-        },
-        {
-          "arn": "arn:aws:sns:us-east-1:000000000000:my-second-test-topic",
-          "match": {
-            ...content json schema
-          }
-        },
-        {
-          "connectionString": "mongodb://mongo:mongo@localhost:27017/NAP_Mastermind_lcl?directConnection=true&authSource=admin&retryWrites=true&w=majority",
-          "match": [
-            {
-              "query": {
-                "find": "uploadList",
-                "filter": { "name": "123123" }
-              },
-              "match": {
-                ...query result schema
-              }
-            }
-          ]
-        }
-      ]
-    }
-  ]
-}
-```
----
 ## Autogeneration Mode (`--auto` or `-a`)
 
 When the `--auto` flag is passed to the CLI, Momo actively listens to your infrastructure and **auto-generates a base 
 expectation file** by capturing live events and generating minimal JSON schemas.
 
 This is ideal for **quick scaffolding**, but you'll likely want to refine the generated schemas for production-grade tests.
-
-Start from here:
-```json
-{
-  "traceId": "abc123",
-  "timeout": 30,
-  "expectations": [
-    {
-      "parallelExpectations": [
-        {
-          "arn": "arn:aws:s3:::ingestion-bucket",
-          "file": {
-            "prefix": "worklist-ready-to-be-worked/variant-move-between-worklists",
-            "key": "event-[0-9].json"
-          }
-        },
-        {
-          "arn": "arn:aws:sns:us-east-1:000000000000:my-second-test-topic"
-        },
-        {
-          "connectionString": "mongodb://mongo:mongo@localhost:27017/NAP_Mastermind_lcl?directConnection=true&authSource=admin&retryWrites=true&w=majority",
-          "match": [
-            {
-              "query": {
-                "find": "uploadList",
-                "filter": { "name": "123123" }
-              }
-            }
-          ]
-        }
-      ]
-    }
-  ]
-}
-```
----
 
 ### What It Does (Per Service)
 
@@ -552,17 +453,13 @@ Start from here:
 ### Best practices
 - Avoid (if not strictly required to your test) listening for an s3 file, listen for the push notification instead. It's safer
 - If you really want to expect an S3 file to be uploaded togheter the SNS notification that will come out, use a `parallelExpectations` to avoid missing out messages
-- If you need to test a lambda execution, you can check following resources (mongo or sns) and listen for the correct messages output
-
----
+- If you need to test a lambda execution, you can check downstreams resources (mongo or sns) and listen for the correct messages output
 
 ### Notes
 
 - Generated schemas are **minimal** and **intended as a starting point**.
 - You should **manually adjust and validate the schemas** to ensure accurate test coverage.
 - Reference: [JSON Schema documentation](https://json-schema.org/understanding-json-schema/reference)
-
----
 
 # How to develop this tool
 1. You do need to set your SSO AWS Profile called mastermind-dev (use AWS Explorer vs extension)
