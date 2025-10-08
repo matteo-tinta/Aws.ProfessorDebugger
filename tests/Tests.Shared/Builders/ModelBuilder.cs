@@ -17,7 +17,7 @@ namespace Tests.Shared.Builders;
 ///
 /// // built.Id = "00000000-0000-0000-0000-000000000000"
 /// </code>
-internal sealed class ModelBuilder<T>(Func<T> happyPathFactory)
+public sealed class ModelBuilder<T>(Func<T> happyPathFactory)
     where T : class
 {
     private readonly T _model = happyPathFactory();

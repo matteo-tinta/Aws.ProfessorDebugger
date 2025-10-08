@@ -25,114 +25,114 @@ internal class AwsResourceSingleFlightCache(
     private readonly SingleFlightCache _cache = new();
 
     // Example for S3 buckets
-    public Task<List<S3Bucket>> GetBucketsAsync()
+    public async Task<List<S3Bucket>> GetBucketsAsync()
     {
         string cacheKey = nameof(AwsResourceCache.GetBuckets);
-        return _cache.GetAsync(cacheKey, () => AwsResourceCache.GetBuckets(s3Client));
+        return await _cache.GetAsync(cacheKey, () => AwsResourceCache.GetBuckets(s3Client)) ?? [];
     }
 
     // Lambda functions
-    public Task<List<FunctionConfiguration>> GetLambdaFunctionsAsync()
+    public async Task<List<FunctionConfiguration>> GetLambdaFunctionsAsync()
     {
         string cacheKey = nameof(AwsResourceCache.GetLambdaFunctions);
-        return _cache.GetAsync(cacheKey, () => AwsResourceCache.GetLambdaFunctions(lambdaClient));
+        return await _cache.GetAsync(cacheKey, () => AwsResourceCache.GetLambdaFunctions(lambdaClient)) ?? [];
     }
 
     // SSM Parameter
-    public Task<Parameter> GetSsmParameterAsync(string parameterPath)
+    public async Task<Parameter?> GetSsmParameterAsync(string parameterPath)
     {
         string cacheKey = $"{nameof(AwsResourceCache.GetSsmParameter)}:{parameterPath}";
-        return _cache.GetAsync(cacheKey, () => AwsResourceCache.GetSsmParameter(ssmClient, parameterPath));
+        return await _cache.GetAsync(cacheKey, () => AwsResourceCache.GetSsmParameter(ssmClient, parameterPath));
     }
 
     // Lambda Config
-    public Task<GetFunctionConfigurationResponse> GetLambdaConfigAsync(string functionName)
+    public async Task<GetFunctionConfigurationResponse?> GetLambdaConfigAsync(string functionName)
     {
         string cacheKey = $"{nameof(AwsResourceCache.GetLambdaConfigAsync)}:{functionName}";
-        return _cache.GetAsync(cacheKey, () => AwsResourceCache.GetLambdaConfigAsync(lambdaClient, functionName));
+        return await _cache.GetAsync(cacheKey, () => AwsResourceCache.GetLambdaConfigAsync(lambdaClient, functionName));
     }
 
     // SQS Lambda triggers
-    public Task<ListEventSourceMappingsResponse> GetSqsLambdaTriggersAsync(string sqsArn)
+    public async Task<ListEventSourceMappingsResponse?> GetSqsLambdaTriggersAsync(string sqsArn)
     {
         string cacheKey = $"{nameof(AwsResourceCache.GetSqsLambdaTriggersAsync)}:{sqsArn}";
-        return _cache.GetAsync(cacheKey, () => AwsResourceCache.GetSqsLambdaTriggersAsync(lambdaClient, sqsArn));
+        return await _cache.GetAsync(cacheKey, () => AwsResourceCache.GetSqsLambdaTriggersAsync(lambdaClient, sqsArn));
     }
     
     // SQS Attributes
-    public Task<GetQueueAttributesResponse> GetSqsQueueAttributes(string sqsUrl)
+    public async Task<GetQueueAttributesResponse?> GetSqsQueueAttributes(string sqsUrl)
     {
         string cacheKey = $"{nameof(AwsResourceCache.GetSqsQueueAttributes)}:{sqsUrl}";
-        return _cache.GetAsync(cacheKey, () => AwsResourceCache.GetSqsQueueAttributes(sqsClient, sqsUrl));
+        return await _cache.GetAsync(cacheKey, () => AwsResourceCache.GetSqsQueueAttributes(sqsClient, sqsUrl));
     }
     
     // SQS QueueUrl
-    public Task<GetQueueUrlResponse> GetSqsQueueUrl(string sqsName)
+    public async Task<GetQueueUrlResponse?> GetSqsQueueUrl(string sqsName)
     {
         string cacheKey = $"{nameof(AwsResourceCache.GetSqsQueueUrl)}:{sqsName}";
-        return _cache.GetAsync(cacheKey, () => AwsResourceCache.GetSqsQueueUrl(sqsClient, sqsName));
+        return await _cache.GetAsync(cacheKey, () => AwsResourceCache.GetSqsQueueUrl(sqsClient, sqsName));
     }
 
     // Lambda EventSourceMappings
-    public Task<ListEventSourceMappingsResponse> GetLambdaEventSourceMappingAsync(string functionName)
+    public async Task<ListEventSourceMappingsResponse?> GetLambdaEventSourceMappingAsync(string functionName)
     {
         string cacheKey = $"{nameof(AwsResourceCache.GetLambdaEventSourceMappingAsync)}:{functionName}";
-        return _cache.GetAsync(cacheKey, () => AwsResourceCache.GetLambdaEventSourceMappingAsync(lambdaClient, functionName));
+        return await _cache.GetAsync(cacheKey, () => AwsResourceCache.GetLambdaEventSourceMappingAsync(lambdaClient, functionName));
     }
     
     // Lambda EventSourceMappings
-    public Task<GetPolicyResponse> GetLambdaPolicyAsync(string functionName)
+    public async Task<GetPolicyResponse?> GetLambdaPolicyAsync(string functionName)
     {
         string cacheKey = $"{nameof(AwsResourceCache.GetLambdaPolicyAsync)}:{functionName}";
-        return _cache.GetAsync(cacheKey, () => AwsResourceCache.GetLambdaPolicyAsync(lambdaClient, functionName));
+        return await _cache.GetAsync(cacheKey, () => AwsResourceCache.GetLambdaPolicyAsync(lambdaClient, functionName));
     }
 
     // Bucket notifications
-    public Task<GetBucketNotificationResponse> GetBucketNotificationAsync(string bucketName)
+    public async Task<GetBucketNotificationResponse?> GetBucketNotificationAsync(string bucketName)
     {
         string cacheKey = $"{nameof(AwsResourceCache.GetBucketNotificationAsync)}:{bucketName}";
-        return _cache.GetAsync(cacheKey, () => AwsResourceCache.GetBucketNotificationAsync(s3Client, bucketName));
+        return await _cache.GetAsync(cacheKey, () => AwsResourceCache.GetBucketNotificationAsync(s3Client, bucketName));
     }
 
     // SNS subscriptions
-    public Task<ListSubscriptionsByTopicResponse> GetSnsSubscriptionsByTopicArnAsync(string snsArn)
+    public async Task<ListSubscriptionsByTopicResponse?> GetSnsSubscriptionsByTopicArnAsync(string snsArn)
     {
         string cacheKey = $"{nameof(AwsResourceCache.GetSnsSubscriptionsByTopicArnAsync)}:{snsArn}";
-        return _cache.GetAsync(cacheKey, () => AwsResourceCache.GetSnsSubscriptionsByTopicArnAsync(snsClient, snsArn));
+        return await _cache.GetAsync(cacheKey, () => AwsResourceCache.GetSnsSubscriptionsByTopicArnAsync(snsClient, snsArn));
     }
 
     // Inline Policy List
-    public Task<ListRolePoliciesResponse> GetInlinePolicyListAsync(string roleName)
+    public async Task<ListRolePoliciesResponse?> GetInlinePolicyListAsync(string roleName)
     {
         string cacheKey = $"{nameof(AwsResourceCache.GetInlinePolicyListAsync)}:{roleName}";
-        return _cache.GetAsync(cacheKey, () => AwsResourceCache.GetInlinePolicyListAsync(iamClient, roleName));
+        return await _cache.GetAsync(cacheKey, () => AwsResourceCache.GetInlinePolicyListAsync(iamClient, roleName));
     }
 
     // Inline Policy
-    public Task<GetRolePolicyResponse> GetInlinePolicyAsync(string roleName, string policyName)
+    public async Task<GetRolePolicyResponse?> GetInlinePolicyAsync(string roleName, string policyName)
     {
         string cacheKey = $"{nameof(AwsResourceCache.GetInlinePolicyAsync)}:{roleName}|{policyName}";
-        return _cache.GetAsync(cacheKey, () => AwsResourceCache.GetInlinePolicyAsync(iamClient, roleName, policyName));
+        return await _cache.GetAsync(cacheKey, () => AwsResourceCache.GetInlinePolicyAsync(iamClient, roleName, policyName));
     }
 
     // Attached Policies
-    public Task<ListAttachedRolePoliciesResponse> GetAttachedPoliciesAsync(string roleName)
+    public async Task<ListAttachedRolePoliciesResponse?> GetAttachedPoliciesAsync(string roleName)
     {
         string cacheKey = $"{nameof(AwsResourceCache.GetAttachedPoliciesAsync)}:{roleName}";
-        return _cache.GetAsync(cacheKey, () => AwsResourceCache.GetAttachedPoliciesAsync(iamClient, roleName));
+        return await _cache.GetAsync(cacheKey, () => AwsResourceCache.GetAttachedPoliciesAsync(iamClient, roleName));
     }
 
     // Policy metadata
-    public Task<Amazon.IdentityManagement.Model.GetPolicyResponse> GetPolicyMetadataAsync(string policyArn)
+    public async Task<Amazon.IdentityManagement.Model.GetPolicyResponse?> GetPolicyMetadataAsync(string policyArn)
     {
         string cacheKey = $"{nameof(AwsResourceCache.GetPolicyMetadataAsync)}:{policyArn}";
-        return _cache.GetAsync(cacheKey, () => AwsResourceCache.GetPolicyMetadataAsync(iamClient, policyArn));
+        return await _cache.GetAsync(cacheKey, () => AwsResourceCache.GetPolicyMetadataAsync(iamClient, policyArn));
     }
 
     // Policy version
-    public Task<GetPolicyVersionResponse> GetPolicyVersionAsync(string policyArn, string versionId)
+    public async Task<GetPolicyVersionResponse?> GetPolicyVersionAsync(string policyArn, string versionId)
     {
         string cacheKey = $"{nameof(AwsResourceCache.GetPolicyVersionAsync)}:{policyArn}|{versionId}";
-        return _cache.GetAsync(cacheKey, () => AwsResourceCache.GetPolicyVersionAsync(iamClient, policyArn, versionId));
+        return await _cache.GetAsync(cacheKey, () => AwsResourceCache.GetPolicyVersionAsync(iamClient, policyArn, versionId));
     }
 }
