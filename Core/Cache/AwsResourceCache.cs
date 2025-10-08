@@ -14,6 +14,7 @@ using Amazon.SQS.Model;
 using Core.Cache.Enumerators;
 using Core.Cache.Models;
 using Core.Cache.Providers;
+using Environment = System.Environment;
 using GetPolicyRequest = Amazon.Lambda.Model.GetPolicyRequest;
 
 namespace Core.Cache
@@ -28,6 +29,8 @@ namespace Core.Cache
     /// </summary>
     internal static class AwsResourceCache
     {
+        private static SerializableAwsCache? _cache;
+        
         private static readonly List<FunctionConfiguration> LambdaFunctions = new();
         private static readonly List<S3Bucket> Buckets = new();
         private static readonly ConcurrentDictionary<string, ListEventSourceMappingsResponse> LambdaEventSourceEvents = new();
@@ -68,6 +71,13 @@ namespace Core.Cache
             try
             {
                 var cache = await cacheProvider.GetAsync();
+                if (cache is null) return; //ignore cache
+
+                var profile = Environment.GetEnvironmentVariable("AWS_PROFILE") ?? "default";
+
+                if (!cache.IsValid(profile)) return; //Ignore cache;
+
+                _cache = cache;
 
                 LambdaFunctions.AddRange(cache.LambdaFunctions ?? []);
                 Buckets.AddRange(cache.Buckets ?? []);
@@ -99,6 +109,9 @@ namespace Core.Cache
         {
             var cache = new SerializableAwsCache
             {
+                Checksum = Environment.GetEnvironmentVariable("AWS_PROFILE") ?? "default",
+                TTL = (int)TimeSpan.FromDays(1).TotalMinutes,
+                CreatedAt = _cache?.CreatedAt ?? DateTime.UtcNow,
                 LambdaFunctions = LambdaFunctions.ToList(),
                 Buckets = Buckets.ToList(),
                 BucketNotifications = BucketNotifications.ToDictionary(kvp => kvp.Key, kvp => kvp.Value),

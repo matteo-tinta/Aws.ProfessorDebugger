@@ -1,5 +1,13 @@
 {
   "profiles": {
+    "graph (local)": {
+      "commandName": "Project",
+      "commandLineArgs": "graph arn:aws:s3:::ingestion-bucket",
+      "environmentVariables": {
+        "AWS_S3_ENDPOINT": "http://localhost:4566",
+        "AWS_PROFILE": "localstack"
+      }
+    },
     "momo": {
       "commandName": "Project",
       "commandLineArgs": "momo $(ProjectDir)/MomoExamples/test.json",
