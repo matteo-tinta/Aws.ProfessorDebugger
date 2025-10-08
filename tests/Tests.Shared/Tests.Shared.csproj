@@ -9,6 +9,7 @@
     <ItemGroup>
         <InternalsVisibleTo Include="Momo.Expectations.SNS.Tests" />
         <InternalsVisibleTo Include="Momo.Tests" />
+        <InternalsVisibleTo Include="Momo.Commands.S3.Tests" />
     </ItemGroup>
 
 </Project>

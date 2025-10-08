@@ -1,5 +1,6 @@
 ﻿using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
+using Momo.Commands;
 using Momo.Expectations;
 using Momo.Models;
 using Momo.Steps;
@@ -16,6 +17,8 @@ public class MomoClientTests
     private ModelBuilder<MomoExpectationFile> _expectationFile;
     private IStepHandler _momoStep;
     private IMomoExpectation _momoExpectation;
+    private IMomoCommand _momoCommand;
+    private IMomoCommand _momoUndoCommand;
 
     private MomoClientFactoryOptions Options => _options.Build();
     private MomoExpectationFile ExpectationFile => _expectationFile.Build();
@@ -23,6 +26,8 @@ public class MomoClientTests
     [SetUp]
     public void Setup()
     {
+        _momoCommand = Substitute.For<IMomoCommand>();
+        _momoUndoCommand = Substitute.For<IMomoCommand>();
         _momoStep = Substitute.For<IStepHandler>();
         _momoExpectation = Substitute.For<IMomoExpectation>();
         
@@ -41,7 +46,7 @@ public class MomoClientTests
     }
     
     [Test]
-    public async Task MatchExpectations_IfStepSucceed_Then_ShouldPass()
+    public async Task MatchExpectations_Should_RanCommands_And_IfStepSucceed_Then_ShouldPass_And_DisposeAllResourcesAndUndoRegisteredCommands()
     {
         _momoStep
             .CheckAsync(_momoExpectation,Arg.Any<CancellationToken>())
@@ -52,8 +57,10 @@ public class MomoClientTests
             _momoExpectation,
             _momoExpectation
         ]);
-        
-        var sut = CreateMomoClientUnderTest(ExpectationFile);
+
+        var commands = _expectationFile.WithCommands(Substitute.For<IMomoCommand>());
+
+        var sut = CreateMomoClientUnderTest(ExpectationFile).WithOnExpectationPreparedExecuteCommands();
         
         //Act
         await sut.MatchExpectations(TestContext.CurrentContext.CancellationToken);
@@ -63,6 +70,8 @@ public class MomoClientTests
         
         //Assert
         await sut.ShouldMatchExpectationAsync(_momoStep, _momoExpectation, calledTimes: 3); //3 times because we have 3 handlers
+        
+        await sut.ShouldHaveRunCommands(commands.Command, undoCommand: null, Arg.Any<CancellationToken>());
     }
     
     [Test]
@@ -115,6 +124,30 @@ public class MomoClientTests
         
         //Assert
         await _momoStep.Received(1).DisposeAsync();
+    }
+    
+    [Test]
+    [Category("Slow")]
+    public async Task MatchExpectations_IfDisposed_Then_ShouldDisposeAllExpectationsAndUndoRecordedCommands()
+    {
+        var cancellationSource = CancellationTokenSource.CreateLinkedTokenSource(TestContext.CurrentContext.CancellationToken);
+        
+        _momoStep
+            .CheckAsync(_momoExpectation,Arg.Any<CancellationToken>())
+            .HangsFor(TimeSpan.FromSeconds(3));
+
+        var commands = _expectationFile.WithCommands(
+            Substitute.For<IMomoCommand>(), Substitute.For<IMomoCommand>());
+
+        var sut = CreateMomoClientUnderTest(ExpectationFile).WithOnExpectationPreparedExecuteCommands();
+        
+        //Act
+        _ = sut.MatchExpectations(cancellationSource.Token);
+        await sut.DisposeAsync();
+        
+        //Assert
+        await _momoStep.Received(1).DisposeAsync();
+        await commands.Undo!.Received(1).ExecuteAsync(CancellationToken.None);
     }
 
     #region private

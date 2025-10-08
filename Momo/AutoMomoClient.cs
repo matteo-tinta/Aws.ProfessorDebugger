@@ -20,6 +20,7 @@ public class AutoMomoClient(MomoClientFactoryOptions Options) : IMomoClient
     public Action<IMomoExpectation, IStepHandler>? OnExpectationPrepared { get; set; }
 
     private readonly List<IStepHandler> _ranExpectations = [];
+    private List<MomoClientCommand> _executedCommands = [];
 
     public async Task MatchExpectations(CancellationToken cancellationToken)
     {
@@ -60,6 +61,7 @@ public class AutoMomoClient(MomoClientFactoryOptions Options) : IMomoClient
             {
                 var commandButLoggingDecorated = new MomoCommandLoggingDecorated(commands.Command);
                 await commandButLoggingDecorated.ExecuteAsync(cancellationToken);
+                _executedCommands.Add(commands);
             }
             catch (Exception e)
             {
@@ -116,6 +118,11 @@ public class AutoMomoClient(MomoClientFactoryOptions Options) : IMomoClient
 
     public async ValueTask DisposeAsync()
     {
+        //dispose all expectations
         await Task.WhenAll(_ranExpectations.Select(e => e.DisposeAsync().AsTask()));
+        
+        //and undo commands
+        await Task.WhenAll(_executedCommands.Where(c => c.Undo is not null)
+            .Select(c => c.Undo!.ExecuteAsync(CancellationToken.None)));
     }
 }

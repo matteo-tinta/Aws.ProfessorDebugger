@@ -26,6 +26,7 @@ public class MomoClient: IMomoClient
     public Action<IMomoExpectation, IStepHandler>? OnExpectationPrepared { get; set; }
 
     private readonly List<IStepHandler> _ranExpectations = [];
+    private List<MomoClientCommand> _executedCommands = [];
 
     public async Task MatchExpectations(CancellationToken cancellationToken)
     {
@@ -58,6 +59,7 @@ public class MomoClient: IMomoClient
             {
                 var commandButLoggingDecorated = new MomoCommandLoggingDecorated(commands.Command);
                 await commandButLoggingDecorated.ExecuteAsync(cancellationToken);
+                _executedCommands.Add(commands);
             }
             catch (Exception e)
             {
@@ -91,7 +93,7 @@ public class MomoClient: IMomoClient
         await Task.WhenAll(_ranExpectations.Select(e => e.DisposeAsync().AsTask()));
         
         //and undo commands
-        await Task.WhenAll(_options.ExpectationFile.Commands.Where(c => c.Undo is not null)
+        await Task.WhenAll(_executedCommands.Where(c => c.Undo is not null)
             .Select(c => c.Undo!.ExecuteAsync(CancellationToken.None)));
     }
     

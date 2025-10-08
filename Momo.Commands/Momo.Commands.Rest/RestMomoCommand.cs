@@ -3,7 +3,8 @@
 public class RestMomoCommand(
     string Endpoint,
     HttpMethod Method,
-    string? JsonBody) : IMomoCommand
+    string? JsonBody,
+    HttpClient httpClient) : IMomoCommand
 {
     public async Task ExecuteAsync(CancellationToken cancellationToken)
     {
@@ -11,8 +12,6 @@ public class RestMomoCommand(
         {
             AllowAutoRedirect = true,
         };
-        
-        var httpClient = new HttpClient(handler);
         
         httpClient.BaseAddress = new Uri(Endpoint);
         httpClient.Timeout = TimeSpan.FromSeconds(60);

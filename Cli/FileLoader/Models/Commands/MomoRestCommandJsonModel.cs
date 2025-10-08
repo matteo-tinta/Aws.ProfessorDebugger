@@ -25,5 +25,5 @@ public class MomoRestCommandJsonModel: BaseMomoCommandBuildable
     public string Method { get; set; } = "GET";
     public JsonObject? JsonBody { get; set; }
 
-    public IMomoCommand Build() => new RestMomoCommand(Endpoint, HttpMethod.Parse(Method.ToUpper()), JsonBody?.ToJsonString());
+    public IMomoCommand Build() => new RestMomoCommand(Endpoint, HttpMethod.Parse(Method.ToUpper()), JsonBody?.ToJsonString(), new HttpClient());
 }

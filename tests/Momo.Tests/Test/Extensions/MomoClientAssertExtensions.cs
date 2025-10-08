@@ -1,5 +1,7 @@
-﻿using Momo.Exceptions;
+﻿using Momo.Commands;
+using Momo.Exceptions;
 using Momo.Expectations;
+using Momo.Models;
 using Momo.Steps;
 using NSubstitute;
 
@@ -46,5 +48,16 @@ internal static class MomoClientAssertExtensions
     {
         await calledStepHandler.Received(calledTimes).PrepareAsync(calledExpectation,  Arg.Any<CancellationToken>());
         await calledStepHandler.Received(calledTimes).DisposeAsync();
+    }
+
+    internal static async Task ShouldHaveRunCommands(this MomoClient sut, IMomoCommand command, IMomoCommand? undoCommand, CancellationToken usedCancellationToken)
+    {
+        await command.Received(1).ExecuteAsync(usedCancellationToken);
+        
+        if (undoCommand is not null)
+        {
+            await undoCommand.Received(1).ExecuteAsync(CancellationToken.None);
+        }
+        
     }
 }
