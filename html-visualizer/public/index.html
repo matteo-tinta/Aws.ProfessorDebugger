@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <script type="text/javascript" src="https://unpkg.com/vis-network/standalone/umd/vis-network.min.js"></script>
+  <link href="https://unpkg.com/vis-network@9.1.2/dist/vis-network.min.css" rel="stylesheet" type="text/css" />
+  <style>
+    body {
+      margin: 0
+    }
+
+    #network {
+      width: 99vw;
+      height: 100vh;
+    }
+  </style>
+</head>
+
+<body>
+  <div id="network"></div>
+
+  <script>
+    fetch("/public/graph.json")
+      .then(res => res.json())
+      .then(data => {
+        const nodesData = data.Nodes || {};
+        const nodesArray = Object.values(nodesData);
+
+
+        // Map AWS types to colors
+        const typeColors = {
+          "s3": "#228B22",       // Dark Blue? (AWS style S3) or Dark Green (#006400)
+          "sqs": "#FDD03B",      // Yellow
+          "sns": "#FF9900",      // Orange
+          "lambda": "#90EE90"    // Light green
+        };
+
+        const nodes = new vis.DataSet(
+          nodesArray.map(n => ({
+            id: n.Arn,
+            label: `<b>${n.Type.toUpperCase()}</b>:${n.Name}` || "(no name)",
+            group: n.Type || "default",
+            title: `${n.Type?.toUpperCase() || "UNKNOWN"}\n${n.Arn}`,
+            shape: "box",
+            font: { color: "#000000", size: 30, face: "arial", multi: "html" }, // bigger font
+            margin: 15, // add padding around text
+            widthConstraint: {
+              maximum: 600, // wrap text at 250px
+            },
+            scaling: { label: true },
+            color: typeColors[n.Type] || "#CCCCCC" // fallback gray if type unknown // ensure box scales to fit label
+          }))
+        );
+
+        const edges = new vis.DataSet(
+          nodesArray.flatMap(n => {
+            const childEdges = (n.Children || []).map(childArn => ({
+              from: n.Arn,
+              to: childArn,
+              arrows: "to"
+            }));
+
+            const parentEdges = (n.Parents || []).map(parentArn => ({
+              from: parentArn,
+              to: n.Arn,
+              arrows: "to"
+            }));
+
+            return [...childEdges, ...parentEdges];
+          }));
+
+        const container = document.getElementById("network");
+        const dataSet = { nodes, edges };
+
+        const options = {
+          autoResize: true,
+          layout: {
+            hierarchical: {
+              enabled: true,
+              direction: "UD",
+              levelSeparation: 150,  // vertical space between levels
+              nodeSpacing: 650,      // horizontal space between nodes at same level
+              treeSpacing: 150,       // extra horizontal space for parent nodes
+              sortMethod: "directed"    // important! accounts for node width
+            }
+          },
+          nodes: {
+            color: { background: "#ffffff", border: "#333333" },
+          },
+          edges: { color: "#888" },
+          physics: false
+        };
+
+        new vis.Network(container, dataSet, options);
+      })
+      .catch(err => console.error("Error loading graph:", err));
+  </script>
+
+
+</body>
+</body>
+
+</html>

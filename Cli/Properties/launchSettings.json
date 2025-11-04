@@ -51,7 +51,7 @@
     },
     "offer-min-reference-price-ingestor-dev": {
       "commandName": "Project",
-      "commandLineArgs": "graph arn:aws:lambda:eu-west-1:297244223532:function:offer-min-reference-price-ingestor-dev",
+      "commandLineArgs": "graph arn:aws:lambda:eu-west-1:297244223532:function:offer-min-reference-price-ingestor-dev --output-as Json",
       "environmentVariables": {
         "AWS_PROFILE": "mastermind-dev",
         "AWS__AuthenticationRegion": "eu-west-1"

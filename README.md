@@ -232,6 +232,19 @@ In future releases, a **Redis** backend (or possibly **S3**) will be supported f
 > The cache exists to save time, reduce AWS calls, and prevent throttling.  
 > Clearing it too often defeats its purpose and will slow you down.
 
+## HTML Graph Visualizer
+
+This repository contains a folder called `html-visualizer`.
+
+By copying the contents of `aws-graph.json` into `graph.json`, you can generate a **comprehensive HTML graph visualization** in your browser.
+
+### How to Run
+
+Start the Node.js server:
+
+```bash
+node server.js
+
 # Momo Tool (Message Observer & Matching Operator)
 **THIS TOOL IS IN PREVIEW, USE AT YOUR OWN RISK**
 
